@@ -1024,6 +1024,7 @@ void _case() {
         getsym(yes);
         _const();    // 常量
         if (symbol == COLON) {   // :
+            getsym(yes);
             _statement();    // 语句
         }
     }
