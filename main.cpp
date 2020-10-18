@@ -14,7 +14,7 @@
 using namespace std;
 
 
-//  Óï·¨·ÖÎö
+//  è¯­æ³•åˆ†æ
 enum SymbolType {
     IDENFR, INTCON,   CHARCON,  STRCON,     CONSTTK,
     INTTK,  CHARTK,   VOIDTK,   MAINTK,     IFTK,
@@ -86,8 +86,8 @@ int line = 1;
 FILE *f_in, *f_out;
 
 void getBuffer() {
-    f_in = fopen("../testfile.txt", "rb");
-    f_out = fopen("../output.txt", "wb");
+    f_in = fopen("testfile.txt", "rb");
+    f_out = fopen("output.txt", "wb");
     fread(buffer,1, 8888888, f_in);
 }
 
@@ -227,8 +227,8 @@ void Reserver_Token() {
 
 void getsym(bool output) {
     if (symbol != FOUL && output) {
-//        fprintf(f_out, "%s %s\n", SymbolType_String[symbol].c_str(), token.c_str());
-        printf("%s %s\n", SymbolType_String[symbol].c_str(), token.c_str());
+        fprintf(f_out, "%s %s\n", SymbolType_String[symbol].c_str(), token.c_str());
+//        printf("%s %s\n", SymbolType_String[symbol].c_str(), token.c_str());
 
     }
     clearToken();
@@ -317,80 +317,80 @@ void getsym(bool output) {
     }
 }
 
-// ´Ê·¨·ÖÎö
+// è¯æ³•åˆ†æ
 
-void program(); // ³ÌĞò
-void _string(); // ×Ö·û´®
-void _const(); // ³£Á¿
-void _const_define(); // ³£Á¿¶¨Òå
-void _const_statement(); // ³£Á¿ËµÃ÷
-void _var_define(); // ±äÁ¿¶¨Òå
-void _var_statement(); // ±äÁ¿ËµÃ÷
-void _var_define_no_initialization(); // ±äÁ¿¶¨ÒåÎŞ³õÊ¼»¯
-void _var_define_with_initialization(); // ±äÁ¿¶¨Òå¼°³õÊ¼»¯
-void scanf(); // ¶ÁÓï¾ä
-void _printf(); // Ğ´Óï¾ä
-void _term(); // Ïî
-void _factor(); // Òò×Ó
-void _expression(); // ±í´ïÊ½
-void _statement(); // Óï¾ä
-void _default(); // È±Ê¡
-void _return(); // ·µ»ØÓï¾ä
-void _unsigned_int(); // ÎŞ·ûºÅÕûÊı
-void _step(); // ²½³¤
-void _main(); // Ö÷º¯Êı
-void _head_statement(); // ÉùÃ÷Í·²¿
-void _int(); // ÕûÊı
-void _assign(); // ¸³ÖµÓï¾ä
-void _switch(); // Çé¿öÓï¾ä
-void _case(); // Çé¿ö×ÓÓï¾ä
-void _table_cases(); // Çé¿ö±í
-void _function_no_return_define(); // ÎŞ·µ»ØÖµº¯Êı¶¨Òå
-void _function_with_return_define(); // ÓĞ·µ»ØÖµº¯Êı¶¨Òå
-void _function_no_return_call(); // ÎŞ·µ»ØÖµº¯Êıµ÷ÓÃÓï¾ä
-void _function_with_return_call(); // ÓĞ·µ»ØÖµº¯Êıµ÷ÓÃÓï¾ä
-void _loop(); // Ñ­»·Óï¾ä
-void _table_parameter(); // ²ÎÊı±í
-void _table_parameter_value(); // Öµ²ÎÊı±í
-void _condition(); // Ìõ¼ş
-void _if(); // Ìõ¼şÓï¾ä
-void _list_statement(); // Óï¾äÁĞ
-void _statement_combination(); // ¸´ºÏÓï¾ä
-void _char(); // ×Ö·û
+void program(); // ç¨‹åº
+void _string(); // å­—ç¬¦ä¸²
+void _const(); // å¸¸é‡
+void _const_define(); // å¸¸é‡å®šä¹‰
+void _const_statement(); // å¸¸é‡è¯´æ˜
+void _var_define(); // å˜é‡å®šä¹‰
+void _var_statement(); // å˜é‡è¯´æ˜
+void _var_define_no_initialization(); // å˜é‡å®šä¹‰æ— åˆå§‹åŒ–
+void _var_define_with_initialization(); // å˜é‡å®šä¹‰åŠåˆå§‹åŒ–
+void scanf(); // è¯»è¯­å¥
+void _printf(); // å†™è¯­å¥
+void _term(); // é¡¹
+void _factor(); // å› å­
+void _expression(); // è¡¨è¾¾å¼
+void _statement(); // è¯­å¥
+void _default(); // ç¼ºçœ
+void _return(); // è¿”å›è¯­å¥
+void _unsigned_int(); // æ— ç¬¦å·æ•´æ•°
+void _step(); // æ­¥é•¿
+void _main(); // ä¸»å‡½æ•°
+void _head_statement(); // å£°æ˜å¤´éƒ¨
+void _int(); // æ•´æ•°
+void _assign(); // èµ‹å€¼è¯­å¥
+void _switch(); // æƒ…å†µè¯­å¥
+void _case(); // æƒ…å†µå­è¯­å¥
+void _table_cases(); // æƒ…å†µè¡¨
+void _function_no_return_define(); // æ— è¿”å›å€¼å‡½æ•°å®šä¹‰
+void _function_with_return_define(); // æœ‰è¿”å›å€¼å‡½æ•°å®šä¹‰
+void _function_no_return_call(); // æ— è¿”å›å€¼å‡½æ•°è°ƒç”¨è¯­å¥
+void _function_with_return_call(); // æœ‰è¿”å›å€¼å‡½æ•°è°ƒç”¨è¯­å¥
+void _loop(); // å¾ªç¯è¯­å¥
+void _table_parameter(); // å‚æ•°è¡¨
+void _table_parameter_value(); // å€¼å‚æ•°è¡¨
+void _condition(); // æ¡ä»¶
+void _if(); // æ¡ä»¶è¯­å¥
+void _list_statement(); // è¯­å¥åˆ—
+void _statement_combination(); // å¤åˆè¯­å¥
+void _char(); // å­—ç¬¦
 
-// ÀÏ×ÓÊÇ·Ö¸îÏß //
+// è€å­æ˜¯åˆ†å‰²çº¿ //
 SymbolType symbol_pre;
-string array_function_with_return[1000]; // ÓĞ·µ»ØÖµº¯ÊıÃû
-string array_function_no_return[1000];    // ÎŞ·µ»ØÖµº¯ÊıÃû
+string array_function_with_return[1000]; // æœ‰è¿”å›å€¼å‡½æ•°å
+string array_function_no_return[1000];    // æ— è¿”å›å€¼å‡½æ•°å
 int index_array_function_with_return;
 int index_array_function_no_return;
 
 void pre_read_Symbol(int n){
-    // Ô¤¶Á
+    // é¢„è¯»
     SymbolType symbol_origin = symbol;
     string token_origin = token;
     int index_buffer_origin = index_buffer;
     while (n--) {
         getsym(no);
     }
-    symbol_pre = symbol;    // Ô¤¶ÁµÃµ½µÄsymbol
-    symbol = symbol_origin; // »¹Ô­symbol
-    token = token_origin;   // »¹Ô­token
-    index_buffer = index_buffer_origin; // »¹Ô­Ö¸Õë
-} // Ô¤¶Á
+    symbol_pre = symbol;    // é¢„è¯»å¾—åˆ°çš„symbol
+    symbol = symbol_origin; // è¿˜åŸsymbol
+    token = token_origin;   // è¿˜åŸtoken
+    index_buffer = index_buffer_origin; // è¿˜åŸæŒ‡é’ˆ
+} // é¢„è¯»
 
-// ÀÏ×ÓÒ²ÊÇ·Ö¸îÏß //
+// è€å­ä¹Ÿæ˜¯åˆ†å‰²çº¿ //
 
 void program() {
-    /* £¼³ÌĞò£¾    ::= £Û£¼³£Á¿ËµÃ÷£¾£İ£Û£¼±äÁ¿ËµÃ÷£¾£İ{£¼ÓĞ·µ»ØÖµº¯Êı¶¨Òå£¾
-     *              | £¼ÎŞ·µ»ØÖµº¯Êı¶¨Òå£¾}£¼Ö÷º¯Êı£¾
+    /* ï¼œç¨‹åºï¼    ::= ï¼»ï¼œå¸¸é‡è¯´æ˜ï¼ï¼½ï¼»ï¼œå˜é‡è¯´æ˜ï¼ï¼½{ï¼œæœ‰è¿”å›å€¼å‡½æ•°å®šä¹‰ï¼
+     *              | ï¼œæ— è¿”å›å€¼å‡½æ•°å®šä¹‰ï¼}ï¼œä¸»å‡½æ•°ï¼
      */
     if (symbol == CONSTTK) {
-        _const_statement(); // ³£Á¿ËµÃ÷
+        _const_statement(); // å¸¸é‡è¯´æ˜
     }
     pre_read_Symbol(2);
     if (symbol_pre != LPARENT) {
-        _var_statement();   // ±äÁ¿ËµÃ÷
+        _var_statement();   // å˜é‡è¯´æ˜
     }
     while (yes) {
         pre_read_Symbol(1);
@@ -404,28 +404,30 @@ void program() {
         }
     }
     _main();
-    cout << "<³ÌĞò>" << endl;
+    fprintf(f_out, "<ç¨‹åº>\n");
+//    cout << "<ç¨‹åº>" << endl;
 }
 
 void _const_statement() {
-    // £¼³£Á¿ËµÃ÷£¾ ::=  const£¼³£Á¿¶¨Òå£¾;{ const£¼³£Á¿¶¨Òå£¾;}
+    // ï¼œå¸¸é‡è¯´æ˜ï¼ ::=  constï¼œå¸¸é‡å®šä¹‰ï¼;{ constï¼œå¸¸é‡å®šä¹‰ï¼;}
     if (symbol == CONSTTK) {
         while (symbol == CONSTTK) {
             getsym(yes);
-            _const_define(); // ³£Á¿¶¨Òå
+            _const_define(); // å¸¸é‡å®šä¹‰
             if (symbol == SEMICN) { // ;
                 getsym(yes);
             }
         }
     }
-    cout << "<³£Á¿ËµÃ÷>" << endl;
+    fprintf(f_out, "<å¸¸é‡è¯´æ˜>\n");
+//    cout << "<å¸¸é‡è¯´æ˜>" << endl;
 }
 
 ////////////////////
 void _var_statement() {
-    // £¼±äÁ¿ËµÃ÷£¾  ::= £¼±äÁ¿¶¨Òå£¾;{£¼±äÁ¿¶¨Òå£¾;}
+    // ï¼œå˜é‡è¯´æ˜ï¼  ::= ï¼œå˜é‡å®šä¹‰ï¼;{ï¼œå˜é‡å®šä¹‰ï¼;}
     do {
-        _var_define();  // ±äÁ¿¶¨Òå
+        _var_define();  // å˜é‡å®šä¹‰
         if (symbol == SEMICN) { // ;
             getsym(yes);
         }
@@ -437,28 +439,29 @@ void _var_statement() {
             break;
         }
     }   while (yes);
-    cout << "<±äÁ¿ËµÃ÷>" << endl;
+    fprintf(f_out, "<å˜é‡è¯´æ˜>\n");
+//    cout << "<å˜é‡è¯´æ˜>" << endl;
 }
 ////////////////////
 
 void _const_define() {
-    // £¼³£Á¿¶¨Òå£¾   ::=   int£¼±êÊ¶·û£¾£½£¼ÕûÊı£¾{,£¼±êÊ¶·û£¾£½£¼ÕûÊı£¾}
-    //                  | char£¼±êÊ¶·û£¾£½£¼×Ö·û£¾{,£¼±êÊ¶·û£¾£½£¼×Ö·û£¾}
+    // ï¼œå¸¸é‡å®šä¹‰ï¼   ::=   intï¼œæ ‡è¯†ç¬¦ï¼ï¼ï¼œæ•´æ•°ï¼{,ï¼œæ ‡è¯†ç¬¦ï¼ï¼ï¼œæ•´æ•°ï¼}
+    //                  | charï¼œæ ‡è¯†ç¬¦ï¼ï¼ï¼œå­—ç¬¦ï¼{,ï¼œæ ‡è¯†ç¬¦ï¼ï¼ï¼œå­—ç¬¦ï¼}
     if (symbol == INTTK) { // int
         getsym(yes);
-        if (symbol == IDENFR) { // ±êÊ¶·û
+        if (symbol == IDENFR) { // æ ‡è¯†ç¬¦
             getsym(yes);
             if (symbol == ASSIGN) { // =
                 getsym(yes);
-                _int(); // ÕûÊı
+                _int(); // æ•´æ•°
                 while (symbol == COMMA) { // ,
                     getsym(yes);
-                    if (symbol == IDENFR) { // ±êÊ¶·û
+                    if (symbol == IDENFR) { // æ ‡è¯†ç¬¦
                         getsym(yes);
                     }
                     if (symbol == ASSIGN) { // =
                         getsym(yes);
-                        _int(); // ÕûÊı
+                        _int(); // æ•´æ•°
                     }
                 }
             }
@@ -467,110 +470,115 @@ void _const_define() {
 
     else if (symbol == CHARTK) { // char
         getsym(yes);
-        if (symbol == IDENFR) { // ±êÊ¶·û
+        if (symbol == IDENFR) { // æ ‡è¯†ç¬¦
             getsym(yes);
             if (symbol == ASSIGN) { // =
                 getsym(yes);
-                _char(); // ×Ö·û
+                _char(); // å­—ç¬¦
                 while (symbol == COMMA) { // ,
                     getsym(yes);
-                    if (symbol == IDENFR) { // ±êÊ¶·û
+                    if (symbol == IDENFR) { // æ ‡è¯†ç¬¦
                         getsym(yes);
                     }
                     if (symbol == ASSIGN) { // =
                         getsym(yes);
-                        _char(); // ×Ö·û
+                        _char(); // å­—ç¬¦
                     }
                 }
             }
         }
     }
-    cout << "<³£Á¿¶¨Òå>" << endl;
+    fprintf(f_out, "<å¸¸é‡å®šä¹‰>\n");
+//    cout << "<å¸¸é‡å®šä¹‰>" << endl;
 }
 
 void _function_with_return_define() {
-    // £¼ÓĞ·µ»ØÖµº¯Êı¶¨Òå£¾  ::=  £¼ÉùÃ÷Í·²¿£¾'('£¼²ÎÊı±í£¾')' '{'£¼¸´ºÏÓï¾ä£¾'}'
-    _head_statement();  // ÉùÃ÷Í·²¿
+    // ï¼œæœ‰è¿”å›å€¼å‡½æ•°å®šä¹‰ï¼  ::=  ï¼œå£°æ˜å¤´éƒ¨ï¼'('ï¼œå‚æ•°è¡¨ï¼')' '{'ï¼œå¤åˆè¯­å¥ï¼'}'
+    _head_statement();  // å£°æ˜å¤´éƒ¨
     if (symbol == LPARENT) { // (
         getsym(yes);
-        _table_parameter(); // ²ÎÊı±í
+        _table_parameter(); // å‚æ•°è¡¨
         if (symbol == RPARENT) { // )
             getsym(yes);
             if (symbol == LBRACE) { // {
                 getsym(yes);
-                _statement_combination(); // ¸´ºÏÓï¾ä
+                _statement_combination(); // å¤åˆè¯­å¥
                 if (symbol == RBRACE) { // }
                     getsym(yes);
                 }
             }
         }
     }
-    cout << "<ÓĞ·µ»ØÖµº¯Êı¶¨Òå>" << endl;
+    fprintf(f_out, "<æœ‰è¿”å›å€¼å‡½æ•°å®šä¹‰>\n");
+//    cout << "<æœ‰è¿”å›å€¼å‡½æ•°å®šä¹‰>" << endl;
 }
 
 void _head_statement() {
-    // £¼ÉùÃ÷Í·²¿£¾   ::=  int£¼±êÊ¶·û£¾
-    //                |  char£¼±êÊ¶·û£¾
+    // ï¼œå£°æ˜å¤´éƒ¨ï¼   ::=  intï¼œæ ‡è¯†ç¬¦ï¼
+    //                |  charï¼œæ ‡è¯†ç¬¦ï¼
     if (symbol == CHARTK || symbol == INTTK) { // int || char
         getsym(yes);
         array_function_with_return[index_array_function_with_return++] = token;
-        if (symbol == IDENFR) { // ±êÊ¶·û
+        if (symbol == IDENFR) { // æ ‡è¯†ç¬¦
             getsym(yes);
         }
     }
-    cout << "<ÉùÃ÷Í·²¿>" << endl;
+    fprintf(f_out, "<å£°æ˜å¤´éƒ¨>\n");
+//    cout << "<å£°æ˜å¤´éƒ¨>" << endl;
 }
 
 void _table_parameter() {
-    // £¼²ÎÊı±í£¾    ::=  £¼ÀàĞÍ±êÊ¶·û£¾£¼±êÊ¶·û£¾{,£¼ÀàĞÍ±êÊ¶·û£¾£¼±êÊ¶·û£¾}
-    //               |  £¼¿Õ£¾
-    if (symbol == INTTK || symbol == CHARTK) { // ÀàĞÍ±êÊ¶·û
+    // ï¼œå‚æ•°è¡¨ï¼    ::=  ï¼œç±»å‹æ ‡è¯†ç¬¦ï¼ï¼œæ ‡è¯†ç¬¦ï¼{,ï¼œç±»å‹æ ‡è¯†ç¬¦ï¼ï¼œæ ‡è¯†ç¬¦ï¼}
+    //               |  ï¼œç©ºï¼
+    if (symbol == INTTK || symbol == CHARTK) { // ç±»å‹æ ‡è¯†ç¬¦
         getsym(yes);
-        if (symbol == IDENFR) { // ±êÊ¶·û
+        if (symbol == IDENFR) { // æ ‡è¯†ç¬¦
             getsym(yes);
         }
         if (symbol == COMMA) { // ,
             while (symbol == COMMA) { // ,
                 getsym(yes);
-                if (symbol == INTTK || symbol == CHARTK) { // ÀàĞÍ±êÊ¶·û
+                if (symbol == INTTK || symbol == CHARTK) { // ç±»å‹æ ‡è¯†ç¬¦
                     getsym(yes);
-                    if (symbol == IDENFR) { // ±êÊ¶·û
+                    if (symbol == IDENFR) { // æ ‡è¯†ç¬¦
                         getsym(yes);
                     }
                 }
             }
         }
     }
-    cout << "<²ÎÊı±í>" << endl;
+    fprintf(f_out, "<å‚æ•°è¡¨>\n");
+//    cout << "<å‚æ•°è¡¨>" << endl;
 }
 
 void _statement_combination() {
-    // £¼¸´ºÏÓï¾ä£¾   ::=  £Û£¼³£Á¿ËµÃ÷£¾£İ£Û£¼±äÁ¿ËµÃ÷£¾£İ£¼Óï¾äÁĞ£¾
-    if (symbol == CONSTTK) { // ³£Á¿ËµÃ÷
+    // ï¼œå¤åˆè¯­å¥ï¼   ::=  ï¼»ï¼œå¸¸é‡è¯´æ˜ï¼ï¼½ï¼»ï¼œå˜é‡è¯´æ˜ï¼ï¼½ï¼œè¯­å¥åˆ—ï¼
+    if (symbol == CONSTTK) { // å¸¸é‡è¯´æ˜
         _const_statement();
     }
-    if (symbol == INTTK || symbol == CHARTK) { // ±äÁ¿ËµÃ÷
+    if (symbol == INTTK || symbol == CHARTK) { // å˜é‡è¯´æ˜
         _var_statement();
     }
-    _list_statement();  // Óï¾äÁĞ
-    cout << "<¸´ºÏÓï¾ä>" << endl;
+    _list_statement();  // è¯­å¥åˆ—
+    fprintf(f_out, "<å¤åˆè¯­å¥>\n");
+//    cout << "<å¤åˆè¯­å¥>" << endl;
 }
 
 void _function_no_return_define() {
-    // £¼ÎŞ·µ»ØÖµº¯Êı¶¨Òå£¾  ::= void£¼±êÊ¶·û£¾'('£¼²ÎÊı±í£¾')''{'£¼¸´ºÏÓï¾ä£¾'}'
+    // ï¼œæ— è¿”å›å€¼å‡½æ•°å®šä¹‰ï¼  ::= voidï¼œæ ‡è¯†ç¬¦ï¼'('ï¼œå‚æ•°è¡¨ï¼')''{'ï¼œå¤åˆè¯­å¥ï¼'}'
     if (symbol == VOIDTK) { // void
         getsym(yes);
-        if (symbol == IDENFR) { // ±êÊ¶·û
+        if (symbol == IDENFR) { // æ ‡è¯†ç¬¦
             array_function_no_return[index_array_function_no_return++] = token;
             getsym(yes);
             if (symbol == LPARENT) { // (
                 getsym(yes);
-                _table_parameter(); // ²ÎÊı±í
+                _table_parameter(); // å‚æ•°è¡¨
                 if (symbol == RPARENT) { // )
                     getsym(yes);
                     if (symbol == LBRACE) { // {
                         getsym(yes);
-                        _statement_combination(); // ¸´ºÏÓï¾ä
+                        _statement_combination(); // å¤åˆè¯­å¥
                         if (symbol == RBRACE) { // }
                             getsym(yes);
                         }
@@ -579,11 +587,12 @@ void _function_no_return_define() {
             }
         }
     }
-    cout << "<ÎŞ·µ»ØÖµº¯Êı¶¨Òå>" << endl;
+    fprintf(f_out, "<æ— è¿”å›å€¼å‡½æ•°å®šä¹‰>\n");
+//    cout << "<æ— è¿”å›å€¼å‡½æ•°å®šä¹‰>" << endl;
 }
 
 void _main() {
-    // £¼Ö÷º¯Êı£¾    ::= void main¡®(¡¯¡®)¡¯ ¡®{¡¯£¼¸´ºÏÓï¾ä£¾¡®}¡¯
+    // ï¼œä¸»å‡½æ•°ï¼    ::= void mainâ€˜(â€™â€˜)â€™ â€˜{â€™ï¼œå¤åˆè¯­å¥ï¼â€˜}â€™
     if (symbol == VOIDTK) { // void
         getsym(yes);
         if (symbol == MAINTK) { // main
@@ -594,7 +603,7 @@ void _main() {
                     getsym(yes);
                     if (symbol == LBRACE) { // {
                         getsym(yes);
-                        _statement_combination(); // ¸´ºÏÓï¾ä
+                        _statement_combination(); // å¤åˆè¯­å¥
                         if (symbol == RBRACE) { // }
                             getsym(yes);
                         }
@@ -603,86 +612,92 @@ void _main() {
             }
         }
     }
-    cout << "<Ö÷º¯Êı>" << endl;
+    fprintf(f_out, "<ä¸»å‡½æ•°>\n");
+//    cout << "<ä¸»å‡½æ•°>" << endl;
 }
 
 void _list_statement() {
-    // £¼Óï¾äÁĞ£¾   ::= £û£¼Óï¾ä£¾£ı
+    // ï¼œè¯­å¥åˆ—ï¼   ::= ï½›ï¼œè¯­å¥ï¼ï½
     while (symbol == IFTK || symbol == WHILETK || symbol == FORTK || symbol == LBRACE
            || symbol == IDENFR || symbol == SCANFTK || symbol == PRINTFTK || symbol == SEMICN
-           || symbol == RETURNTK || symbol == SWITCHTK ) { // if while for ( ±êÊ¶·û scanf printf ; return switch
-        _statement(); // Óï¾ä
+           || symbol == RETURNTK || symbol == SWITCHTK ) { // if while for ( æ ‡è¯†ç¬¦ scanf printf ; return switch
+        _statement(); // è¯­å¥
     }
-    cout << "Óï¾äÁĞ>" << endl;
+    fprintf(f_out, "<è¯­å¥åˆ—>\n");
+//    cout << "<è¯­å¥åˆ—>" << endl;
 }
 
 void _if() {
-    // £¼Ìõ¼şÓï¾ä£¾  ::= if '('£¼Ìõ¼ş£¾')'£¼Óï¾ä£¾£Ûelse£¼Óï¾ä£¾£İ
+    // ï¼œæ¡ä»¶è¯­å¥ï¼  ::= if '('ï¼œæ¡ä»¶ï¼')'ï¼œè¯­å¥ï¼ï¼»elseï¼œè¯­å¥ï¼ï¼½
     if (symbol == IFTK) { // if
         getsym(yes);
         if (symbol == LPARENT) { // (
             getsym(yes);
-            _condition(); // Ìõ¼ş
+            _condition(); // æ¡ä»¶
             if (symbol == RPARENT) { // )
                 getsym(yes);
-                _statement(); // Óï¾ä
+                _statement(); // è¯­å¥
                 if (symbol == ELSETK) { // else
                     getsym(yes);
-                    _statement(); // Óï¾ä
+                    _statement(); // è¯­å¥
                 }
             }
         }
     }
-    cout << "<Ìõ¼şÓï¾ä>" << endl;
+    fprintf(f_out, "<æ¡ä»¶è¯­å¥>\n");
+//    cout << "<æ¡ä»¶è¯­å¥>" << endl;
 }
 
 void _condition() {
-    // £¼Ìõ¼ş£¾    ::=  £¼±í´ïÊ½£¾£¼¹ØÏµÔËËã·û£¾£¼±í´ïÊ½£¾
-    _expression(); // ±í´ïÊ½
+    // ï¼œæ¡ä»¶ï¼    ::=  ï¼œè¡¨è¾¾å¼ï¼ï¼œå…³ç³»è¿ç®—ç¬¦ï¼ï¼œè¡¨è¾¾å¼ï¼
+    _expression(); // è¡¨è¾¾å¼
     if (symbol == LSS || symbol == LEQ
         || symbol == GRE || symbol == GEQ
         || symbol == NEQ || symbol == EQL) {
         // < <= > >= != ==
         getsym(yes);
-        _expression(); // ±í´ïÊ½
+        _expression(); // è¡¨è¾¾å¼
     }
-    cout << "<Ìõ¼ş>" << endl;
+    fprintf(f_out, "<æ¡ä»¶>\n");
+//    cout << "<æ¡ä»¶>" << endl;
 }
 
 void _expression() {
-    //  £¼±í´ïÊ½£¾    ::= £Û£«£ü£­£İ£¼Ïî£¾{£¼¼Ó·¨ÔËËã·û£¾£¼Ïî£¾}
-    if (symbol == PLUS || symbol == MINU) { // ¼Ó·¨ÔËËã·û
+    //  ï¼œè¡¨è¾¾å¼ï¼    ::= ï¼»ï¼‹ï½œï¼ï¼½ï¼œé¡¹ï¼{ï¼œåŠ æ³•è¿ç®—ç¬¦ï¼ï¼œé¡¹ï¼}
+    if (symbol == PLUS || symbol == MINU) { // åŠ æ³•è¿ç®—ç¬¦
         getsym(yes);
     }
-    _term(); // Ïî
-    while (symbol == PLUS || symbol == MINU) { // ¼Ó·¨ÔËËã·û
+    _term(); // é¡¹
+    while (symbol == PLUS || symbol == MINU) { // åŠ æ³•è¿ç®—ç¬¦
         getsym(yes);
-        _term(); // Ïî
+        _term(); // é¡¹
     }
-    cout << "<±í´ïÊ½>" << endl;
+    fprintf(f_out, "<è¡¨è¾¾å¼>\n");
+//    cout << "<è¡¨è¾¾å¼>" << endl;
 }
 
 void _term() {
-    // £¼Ïî£¾     ::= £¼Òò×Ó£¾{£¼³Ë·¨ÔËËã·û£¾£¼Òò×Ó£¾}
-    _factor(); // Òò×Ó
-    while (symbol == MULT || symbol == DIV) { // ³Ë·¨ÔËËã·û
+    // ï¼œé¡¹ï¼     ::= ï¼œå› å­ï¼{ï¼œä¹˜æ³•è¿ç®—ç¬¦ï¼ï¼œå› å­ï¼}
+    _factor(); // å› å­
+    while (symbol == MULT || symbol == DIV) { // ä¹˜æ³•è¿ç®—ç¬¦
         getsym(yes);
-        _factor();  // Òò×Ó
+        _factor();  // å› å­
     }
-    cout << "<Ïî>" << endl;
+    fprintf(f_out, "<é¡¹>\n");
+//    cout << "<é¡¹>" << endl;
 }
 
 void _loop() {
-    // £¼Ñ­»·Óï¾ä£¾   ::=  while '('£¼Ìõ¼ş£¾')'£¼Óï¾ä£¾
-    // | for'('£¼±êÊ¶·û£¾£½£¼±í´ïÊ½£¾;£¼Ìõ¼ş£¾;£¼±êÊ¶·û£¾£½£¼±êÊ¶·û£¾(+|-)£¼²½³¤£¾')'£¼Óï¾ä£¾
+    // ï¼œå¾ªç¯è¯­å¥ï¼   ::=  while '('ï¼œæ¡ä»¶ï¼')'ï¼œè¯­å¥ï¼
+    // | for'('ï¼œæ ‡è¯†ç¬¦ï¼ï¼ï¼œè¡¨è¾¾å¼ï¼;ï¼œæ¡ä»¶ï¼;ï¼œæ ‡è¯†ç¬¦ï¼ï¼ï¼œæ ‡è¯†ç¬¦ï¼(+|-)ï¼œæ­¥é•¿ï¼')'ï¼œè¯­å¥ï¼
     if (symbol == WHILETK) { // while
         getsym(yes);
         if (symbol == LPARENT) { // (
             getsym(yes);
-            _condition();   // Ìõ¼ş
+            _condition();   // æ¡ä»¶
             if (symbol == RPARENT) { // )
                 getsym(yes);
-                _statement();   // Óï¾ä
+                _statement();   // è¯­å¥
             }
         }
     }
@@ -691,28 +706,28 @@ void _loop() {
         getsym(yes);
         if (symbol == LPARENT) { // (
             getsym(yes);
-            if (symbol == IDENFR) { // ±êÊ¶·û
+            if (symbol == IDENFR) { // æ ‡è¯†ç¬¦
                 getsym(yes);
                 if (symbol == ASSIGN) { // =
                     getsym(yes);
-                    _expression(); // ±í´ïÊ½
+                    _expression(); // è¡¨è¾¾å¼
                     if (symbol == SEMICN) { // ;
                         getsym(yes);
-                        _condition(); // Ìõ¼ş
+                        _condition(); // æ¡ä»¶
                         if (symbol == SEMICN) { // ;
                             getsym(yes);
-                            if (symbol == IDENFR) { // ±êÊ¶·û
+                            if (symbol == IDENFR) { // æ ‡è¯†ç¬¦
                                 getsym(yes);
                                 if (symbol == ASSIGN) { // =
                                     getsym(yes);
-                                    if (symbol == IDENFR) { // ±êÊ¶·û
+                                    if (symbol == IDENFR) { // æ ‡è¯†ç¬¦
                                         getsym(yes);
                                         if (symbol == PLUS || symbol == MINU) { // + || -
                                             getsym(yes);
-                                            _step();    // ²½³¤
+                                            _step();    // æ­¥é•¿
                                             if (symbol == RPARENT) { // )
                                                 getsym(yes);
-                                                _statement(); // Óï¾ä
+                                                _statement(); // è¯­å¥
                                             }
                                         }
                                     }
@@ -723,53 +738,58 @@ void _loop() {
                 }
             }
         }
-        cout << "<Ñ­»·Óï¾ä>" << endl;
+        fprintf(f_out, "<å¾ªç¯è¯­å¥>\n");
+//        cout << "<å¾ªç¯è¯­å¥>" << endl;
     }
 }
 
 void _string() {
-    // £¼×Ö·û´®£¾   ::=  "£ûÊ®½øÖÆ±àÂëÎª32,33,35-126µÄASCII×Ö·û£ı"
-    if (symbol == STRCON) { // ×Ö·û´®
+    // ï¼œå­—ç¬¦ä¸²ï¼   ::=  "ï½›åè¿›åˆ¶ç¼–ç ä¸º32,33,35-126çš„ASCIIå­—ç¬¦ï½"
+    if (symbol == STRCON) { // å­—ç¬¦ä¸²
         getsym(yes);
     }
-    cout << "<×Ö·û´®>" << endl;
+    fprintf(f_out, "<å­—ç¬¦ä¸²>\n");
+//    cout << "<å­—ç¬¦ä¸²>" << endl;
 }
 
 void _step() {
-    // £¼²½³¤£¾::= £¼ÎŞ·ûºÅÕûÊı£¾
-    _unsigned_int(); // ÎŞ·ûºÅÕûÊı
-    cout << "<²½³¤>" << endl;
+    // ï¼œæ­¥é•¿ï¼::= ï¼œæ— ç¬¦å·æ•´æ•°ï¼
+    _unsigned_int(); // æ— ç¬¦å·æ•´æ•°
+    fprintf(f_out, "<æ­¥é•¿>\n");
+//    cout << "<æ­¥é•¿>" << endl;
 }
 
 void _unsigned_int() {
-    // £¼ÎŞ·ûºÅÕûÊı£¾  ::= £¼Êı×Ö£¾£û£¼Êı×Ö£¾£ı
+    // ï¼œæ— ç¬¦å·æ•´æ•°ï¼  ::= ï¼œæ•°å­—ï¼ï½›ï¼œæ•°å­—ï¼ï½
     if (symbol == INTCON) {
         getsym(yes);
     }
-    cout << "<ÎŞ·ûºÅÕûÊı>" << endl;
+    fprintf(f_out, "<æ— ç¬¦å·æ•´æ•°>\n");
+//    cout << "<æ— ç¬¦å·æ•´æ•°>" << endl;
 }
 
 void _int() {
     if (symbol == PLUS || symbol == MINU) {
         getsym(yes);
     }
-    _unsigned_int(); // ÎŞ·ûºÅÕûÊı
-    cout << "<ÕûÊı>" << endl;
+    _unsigned_int(); // æ— ç¬¦å·æ•´æ•°
+    fprintf(f_out, "<æ•´æ•°>\n");
+//    cout << "<æ•´æ•°>" << endl;
 }
 
 void _char() {
-    if (symbol == CHARCON) { // ×Ö·û
+    if (symbol == CHARCON) { // å­—ç¬¦
         getsym(yes);
     }
 }
 
 void _scanf() {
-    // £¼¶ÁÓï¾ä£¾    ::=  scanf '('£¼±êÊ¶·û£¾')'
+    // ï¼œè¯»è¯­å¥ï¼    ::=  scanf '('ï¼œæ ‡è¯†ç¬¦ï¼')'
     if (symbol == SCANFTK) { // scanf
         getsym(yes);
         if (symbol == LPARENT) { // (
             getsym(yes);
-            if (symbol == IDENFR) { // ±êÊ¶·û
+            if (symbol == IDENFR) { // æ ‡è¯†ç¬¦
                 getsym(yes);
             }
             if (symbol == RPARENT) { // }
@@ -777,137 +797,144 @@ void _scanf() {
             }
         }
     }
-    cout << "<¶ÁÓï¾ä>" << endl;
+    fprintf(f_out, "<è¯»è¯­å¥>\n");
+//    cout << "<è¯»è¯­å¥>" << endl;
 }
 
 void _printf() {
-    // £¼Ğ´Óï¾ä£¾    ::= printf '(' £¼×Ö·û´®£¾,£¼±í´ïÊ½£¾ ')'
-    //              |  printf '('£¼×Ö·û´®£¾ ')'
-    //              | printf '('£¼±í´ïÊ½£¾')'
+    // ï¼œå†™è¯­å¥ï¼    ::= printf '(' ï¼œå­—ç¬¦ä¸²ï¼,ï¼œè¡¨è¾¾å¼ï¼ ')'
+    //              |  printf '('ï¼œå­—ç¬¦ä¸²ï¼ ')'
+    //              | printf '('ï¼œè¡¨è¾¾å¼ï¼')'
     if (symbol == PRINTFTK) { // printf
         getsym(yes);
         if (symbol == LPARENT) { // (
             getsym(yes);
-            if (symbol == STRCON) { // ×Ö·û´®
-                _string();  // ×Ö·û´®
+            if (symbol == STRCON) { // å­—ç¬¦ä¸²
+                _string();  // å­—ç¬¦ä¸²
                 if (symbol == COMMA) { // ,
                     getsym(yes);
-                    _expression();  // ±í´ïÊ½
+                    _expression();  // è¡¨è¾¾å¼
                 }
             }
             else {
-                _expression(); // ±í´ïÊ½
+                _expression(); // è¡¨è¾¾å¼
             }
             if (symbol == RPARENT) { // )
                 getsym(yes);
             }
         }
     }
-    cout << "<Ğ´Óï¾ä>" << endl;
+    fprintf(f_out, "<å†™è¯­å¥>\n");
+//    cout << "<å†™è¯­å¥>" << endl;
 }
 
 void _return() {
-    // £¼·µ»ØÓï¾ä£¾   ::=  return['('£¼±í´ïÊ½£¾')']
+    // ï¼œè¿”å›è¯­å¥ï¼   ::=  return['('ï¼œè¡¨è¾¾å¼ï¼')']
     if (symbol == RETURNTK) { // return
         getsym(yes);
         if (symbol == LPARENT) { // (
             getsym(yes);
-            _expression();  // ±í´ïÊ½
+            _expression();  // è¡¨è¾¾å¼
             if (symbol == RPARENT) { // )
                 getsym(yes);
             }
         }
     }
-    cout << "<·µ»ØÓï¾ä>" << endl;
+    fprintf(f_out, "<è¿”å›è¯­å¥>\n");
+//    cout << "<è¿”å›è¯­å¥>" << endl;
 }
 
 void _function_with_return_call() {
-    // £¼ÓĞ·µ»ØÖµº¯Êıµ÷ÓÃÓï¾ä£¾ ::= £¼±êÊ¶·û£¾'('£¼Öµ²ÎÊı±í£¾')'
-    if (symbol == IDENFR) { // ±êÊ¶·û
+    // ï¼œæœ‰è¿”å›å€¼å‡½æ•°è°ƒç”¨è¯­å¥ï¼ ::= ï¼œæ ‡è¯†ç¬¦ï¼'('ï¼œå€¼å‚æ•°è¡¨ï¼')'
+    if (symbol == IDENFR) { // æ ‡è¯†ç¬¦
         getsym(yes);
         if (symbol == LPARENT) { // (
             getsym(yes);
-            _table_parameter_value(); // Öµ²ÎÊı±í
+            _table_parameter_value(); // å€¼å‚æ•°è¡¨
             if (symbol == RPARENT) { // )
                 getsym(yes);
             }
         }
     }
-    cout << "<ÓĞ·µ»ØÖµº¯Êıµ÷ÓÃÓï¾ä>" << endl;
+    fprintf(f_out, "<æœ‰è¿”å›å€¼å‡½æ•°è°ƒç”¨è¯­å¥>\n");
+//    cout << "<æœ‰è¿”å›å€¼å‡½æ•°è°ƒç”¨è¯­å¥>" << endl;
 }
 
 void _function_no_return_call() {
-    // £¼ÎŞ·µ»ØÖµº¯Êıµ÷ÓÃÓï¾ä£¾ ::= £¼±êÊ¶·û£¾'('£¼Öµ²ÎÊı±í£¾')'
-    if (symbol == IDENFR) { // ±êÊ¶·û
+    // ï¼œæ— è¿”å›å€¼å‡½æ•°è°ƒç”¨è¯­å¥ï¼ ::= ï¼œæ ‡è¯†ç¬¦ï¼'('ï¼œå€¼å‚æ•°è¡¨ï¼')'
+    if (symbol == IDENFR) { // æ ‡è¯†ç¬¦
         getsym(yes);
         if (symbol == LPARENT) { // (
             getsym(yes);
-            _table_parameter_value(); // Öµ²ÎÊı±í
+            _table_parameter_value(); // å€¼å‚æ•°è¡¨
             if (symbol == RPARENT) { // )
                 getsym(yes);
             }
         }
     }
-    cout << "<ÎŞ·µ»ØÖµº¯Êıµ÷ÓÃÓï¾ä>" << endl;
+    fprintf(f_out, "<æ— è¿”å›å€¼å‡½æ•°è°ƒç”¨è¯­å¥>\n");
+//    cout << "<æ— è¿”å›å€¼å‡½æ•°è°ƒç”¨è¯­å¥>" << endl;
 }
 
 void _table_parameter_value() {
-    // £¼Öµ²ÎÊı±í£¾   ::= £¼±í´ïÊ½£¾{,£¼±í´ïÊ½£¾}
-    //              £ü   £¼¿Õ£¾
-    if (symbol == RPARENT) { // ¿Õ
-        cout << "<Öµ²ÎÊı±í>" << endl;
+    // ï¼œå€¼å‚æ•°è¡¨ï¼   ::= ï¼œè¡¨è¾¾å¼ï¼{,ï¼œè¡¨è¾¾å¼ï¼}
+    //              ï½œ   ï¼œç©ºï¼
+    if (symbol == RPARENT) { // ç©º
+        fprintf(f_out, "<å€¼å‚æ•°è¡¨>\n");
+//        cout << "<å€¼å‚æ•°è¡¨>" << endl;
     }
     else {
-        _expression();  // ±í´ïÊ½
+        _expression();  // è¡¨è¾¾å¼
         while (symbol == COMMA) { // ,
             getsym(yes);
-            _expression();  // ±í´ïÊ½
+            _expression();  // è¡¨è¾¾å¼
         }
-        cout << "<Öµ²ÎÊı±í>" << endl;
+        fprintf(f_out, "<å€¼å‚æ•°è¡¨>\n");
+//        cout << "<å€¼å‚æ•°è¡¨>" << endl;
     }
 }
 
 void _statement() {
-    // £¼Óï¾ä£¾    ::= £¼Ñ­»·Óï¾ä£¾
-    //              £ü£¼Ìõ¼şÓï¾ä£¾
-    //              | £¼ÓĞ·µ»ØÖµº¯Êıµ÷ÓÃÓï¾ä£¾;
-    //              | £¼ÎŞ·µ»ØÖµº¯Êıµ÷ÓÃÓï¾ä£¾;
-    //              £ü£¼¸³ÖµÓï¾ä£¾;
-    //              £ü£¼¶ÁÓï¾ä£¾;
-    //              £ü£¼Ğ´Óï¾ä£¾;
-    //              £ü£¼Çé¿öÓï¾ä£¾
-    //              £ü£¼¿Õ£¾;
-    //              |£¼·µ»ØÓï¾ä£¾;
-    //              | '{'£¼Óï¾äÁĞ£¾'}'
-    if (symbol == SWITCHTK) {   // Çé¿öÓï¾ä
-        _switch();  // Çé¿öÓï¾ä
+    // ï¼œè¯­å¥ï¼    ::= ï¼œå¾ªç¯è¯­å¥ï¼
+    //              ï½œï¼œæ¡ä»¶è¯­å¥ï¼
+    //              | ï¼œæœ‰è¿”å›å€¼å‡½æ•°è°ƒç”¨è¯­å¥ï¼;
+    //              | ï¼œæ— è¿”å›å€¼å‡½æ•°è°ƒç”¨è¯­å¥ï¼;
+    //              ï½œï¼œèµ‹å€¼è¯­å¥ï¼;
+    //              ï½œï¼œè¯»è¯­å¥ï¼;
+    //              ï½œï¼œå†™è¯­å¥ï¼;
+    //              ï½œï¼œæƒ…å†µè¯­å¥ï¼
+    //              ï½œï¼œç©ºï¼;
+    //              |ï¼œè¿”å›è¯­å¥ï¼;
+    //              | '{'ï¼œè¯­å¥åˆ—ï¼'}'
+    if (symbol == SWITCHTK) {   // æƒ…å†µè¯­å¥
+        _switch();  // æƒ…å†µè¯­å¥
     }
-    else if (symbol == IFTK) {   // Ìõ¼şÓï¾ä
-        _if();  // Ìõ¼şÓï¾ä
+    else if (symbol == IFTK) {   // æ¡ä»¶è¯­å¥
+        _if();  // æ¡ä»¶è¯­å¥
     }
-    else if (symbol == WHILETK || symbol == FORTK) {    // Ñ­»·Óï¾ä
-        _loop();    // Ñ­»·Óï¾ä
+    else if (symbol == WHILETK || symbol == FORTK) {    // å¾ªç¯è¯­å¥
+        _loop();    // å¾ªç¯è¯­å¥
     }
-    else if (symbol == LBRACE) { // {Óï¾äÁĞ}
+    else if (symbol == LBRACE) { // {è¯­å¥åˆ—}
         getsym(yes);
-        _list_statement();  // Óï¾äÁĞ
+        _list_statement();  // è¯­å¥åˆ—
         if (symbol == RBRACE) { // }
             getsym(yes);
         }
     }
-    else if (symbol == IDENFR) {    // ¸³ÖµÓï¾ä ÓĞÎŞ·µ»ØÖµº¯Êıµ÷ÓÃÓï¾ä
+    else if (symbol == IDENFR) {    // èµ‹å€¼è¯­å¥ æœ‰æ— è¿”å›å€¼å‡½æ•°è°ƒç”¨è¯­å¥
         pre_read_Symbol(1);
         if (symbol_pre == LPARENT) { // (
-            // ÓĞÎŞ·µ»ØÖµº¯Êıµ÷ÓÃÓï¾ä
+            // æœ‰æ— è¿”å›å€¼å‡½æ•°è°ƒç”¨è¯­å¥
             for (int i = 0; i < index_array_function_with_return; ++i) {
                 if (array_function_with_return[i] == token) {
-                    _function_with_return_call(); // ÓĞ·µ»ØÖµº¯Êıµ÷ÓÃÓï¾ä
+                    _function_with_return_call(); // æœ‰è¿”å›å€¼å‡½æ•°è°ƒç”¨è¯­å¥
                     break;
                 }
             }
             for (int i = 0; i < index_array_function_no_return; ++i) {
                 if (array_function_no_return[i] == token) {
-                    _function_no_return_call(); // ÎŞ·µ»ØÖµº¯Êıµ÷ÓÃÓï¾ä
+                    _function_no_return_call(); // æ— è¿”å›å€¼å‡½æ•°è°ƒç”¨è¯­å¥
                     break;
                 }
             }
@@ -916,7 +943,7 @@ void _statement() {
             }
         }
         else {
-            // ¸³ÖµÓï¾ä
+            // èµ‹å€¼è¯­å¥
             _assign();
             if (symbol == SEMICN) { // ;
                 getsym(yes);
@@ -924,59 +951,61 @@ void _statement() {
         }
     }
     else if (symbol == SEMICN) { // ;
-        // ¿Õ
+        // ç©º
         getsym(yes);
     }
     else if (symbol == PRINTFTK) {
-        // Ğ´Óï¾ä
+        // å†™è¯­å¥
         _printf();
         if (symbol == SEMICN) { // ;
             getsym(yes);
         }
     }
     else if (symbol == SCANFTK) {
-        // ¶ÁÓï¾ä
+        // è¯»è¯­å¥
         _scanf();
         if (symbol == SEMICN) { // ;
             getsym(yes);
         }
     }
     else if (symbol == RETURNTK) {
-        // ·µ»ØÓï¾ä
+        // è¿”å›è¯­å¥
         _return();
         if (symbol == SEMICN) {
             getsym(yes);
         }
     }
-    cout << "<Óï¾ä>" << endl;
+    fprintf(f_out, "<è¯­å¥>\n");
+//    cout << "<è¯­å¥>" << endl;
 }
 
 void _default() {
-    // £¼È±Ê¡£¾   ::=  default :£¼Óï¾ä£¾
+    // ï¼œç¼ºçœï¼   ::=  default :ï¼œè¯­å¥ï¼
     if (symbol == DEFAULTTK) { // default
         getsym(yes);
         if (symbol == COLON) { // :
             getsym(yes);
-            _statement();   // Óï¾ä
+            _statement();   // è¯­å¥
         }
     }
-    cout << "<È±Ê¡>" << endl;
+    fprintf(f_out, "<ç¼ºçœ>\n");
+//    cout << "<ç¼ºçœ>" << endl;
 }
 
 void _switch() {
-    // £¼Çé¿öÓï¾ä£¾  ::=  switch ¡®(¡¯£¼±í´ïÊ½£¾¡®)¡¯ ¡®{¡¯£¼Çé¿ö±í£¾£¼È±Ê¡£¾¡®}¡¯
+    // ï¼œæƒ…å†µè¯­å¥ï¼  ::=  switch â€˜(â€™ï¼œè¡¨è¾¾å¼ï¼â€˜)â€™ â€˜{â€™ï¼œæƒ…å†µè¡¨ï¼ï¼œç¼ºçœï¼â€˜}â€™
     if (symbol == SWITCHTK) { // switch
         getsym(yes);
         if (symbol == LPARENT) { // (
             getsym(yes);
-            _expression();   // ±í´ïÊ½
+            _expression();   // è¡¨è¾¾å¼
             if (symbol == RPARENT) { // )
                 getsym(yes);
                 {
                     if (symbol == LBRACE) { // {
                         getsym(yes);
-                        _table_cases();  // Çé¿ö±í
-                        _default();  // È±Ê¡
+                        _table_cases();  // æƒ…å†µè¡¨
+                        _default();  // ç¼ºçœ
                         if (symbol == RBRACE) {
                             getsym(yes);
                         }
@@ -985,116 +1014,122 @@ void _switch() {
             }
         }
     }
-    cout << "<Çé¿öÓï¾ä>" << endl;
+    fprintf(f_out, "<æƒ…å†µè¯­å¥>\n");
+//    cout << "<æƒ…å†µè¯­å¥>" << endl;
 }
 
 void _case() {
-    // £¼Çé¿ö×ÓÓï¾ä£¾  ::=  case£¼³£Á¿£¾£º£¼Óï¾ä£¾
+    // ï¼œæƒ…å†µå­è¯­å¥ï¼  ::=  caseï¼œå¸¸é‡ï¼ï¼šï¼œè¯­å¥ï¼
     if (symbol == CASETK) {  // case
         getsym(yes);
-        _const();    // ³£Á¿
+        _const();    // å¸¸é‡
         if (symbol == COLON) {   // :
-            _statement();    // Óï¾ä
+            _statement();    // è¯­å¥
         }
     }
-    cout << "<Çé¿ö×ÓÓï¾ä>" << endl;
+    fprintf(f_out, "<æƒ…å†µå­è¯­å¥>\n");
+//    cout << "<æƒ…å†µå­è¯­å¥>" << endl;
 }
 
 void _table_cases() {
-    // £¼Çé¿ö±í£¾   ::=  £¼Çé¿ö×ÓÓï¾ä£¾{£¼Çé¿ö×ÓÓï¾ä£¾}
+    // ï¼œæƒ…å†µè¡¨ï¼   ::=  ï¼œæƒ…å†µå­è¯­å¥ï¼{ï¼œæƒ…å†µå­è¯­å¥ï¼}
     while (symbol == CASETK) {
         _case();
     }
-    cout << "<Çé¿ö±í>" << endl;
+    fprintf(f_out, "<æƒ…å†µè¡¨>\n");
+//    cout << "<æƒ…å†µè¡¨>" << endl;
 }
 
 void _const() {
-    // £¼³£Á¿£¾   ::=  £¼ÕûÊı£¾
-    //             |  £¼×Ö·û£¾
-    if (symbol == INTCON) { // ÕûÊı
-        _int(); // ÕûÊı
+    // ï¼œå¸¸é‡ï¼   ::=  ï¼œæ•´æ•°ï¼
+    //             |  ï¼œå­—ç¬¦ï¼
+    if (symbol == INTCON) { // æ•´æ•°
+        _int(); // æ•´æ•°
     }
-    else if (symbol == CHARCON) { // ×Ö·û
-        _char();    // ×Ö·û
+    else if (symbol == CHARCON) { // å­—ç¬¦
+        _char();    // å­—ç¬¦
     }
-    cout << "<³£Á¿>" << endl;
+    fprintf(f_out, "<å¸¸é‡>\n");
+//    cout << "<å¸¸é‡>" << endl;
 }
 
 void _var_define() {
-    // £¼±äÁ¿¶¨Òå£¾ ::= £¼±äÁ¿¶¨ÒåÎŞ³õÊ¼»¯£¾
-    //              | £¼±äÁ¿¶¨Òå¼°³õÊ¼»¯£¾
+    // ï¼œå˜é‡å®šä¹‰ï¼ ::= ï¼œå˜é‡å®šä¹‰æ— åˆå§‹åŒ–ï¼
+    //              | ï¼œå˜é‡å®šä¹‰åŠåˆå§‹åŒ–ï¼
 
-    // £¼±äÁ¿¶¨ÒåÎŞ³õÊ¼»¯£¾  ::= £¼ÀàĞÍ±êÊ¶·û£¾(£¼±êÊ¶·û£¾
-    //                      | £¼±êÊ¶·û£¾'['£¼ÎŞ·ûºÅÕûÊı£¾']'
-    //                      | £¼±êÊ¶·û£¾'['£¼ÎŞ·ûºÅÕûÊı£¾']''['£¼ÎŞ·ûºÅÕûÊı£¾']'){,(£¼±êÊ¶·û£¾
-    //                      | £¼±êÊ¶·û£¾'['£¼ÎŞ·ûºÅÕûÊı£¾']'
-    //                      | £¼±êÊ¶·û£¾'['£¼ÎŞ·ûºÅÕûÊı£¾']''['£¼ÎŞ·ûºÅÕûÊı£¾']' )}
+    // ï¼œå˜é‡å®šä¹‰æ— åˆå§‹åŒ–ï¼  ::= ï¼œç±»å‹æ ‡è¯†ç¬¦ï¼(ï¼œæ ‡è¯†ç¬¦ï¼
+    //                      | ï¼œæ ‡è¯†ç¬¦ï¼'['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']'
+    //                      | ï¼œæ ‡è¯†ç¬¦ï¼'['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']''['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']'){,(ï¼œæ ‡è¯†ç¬¦ï¼
+    //                      | ï¼œæ ‡è¯†ç¬¦ï¼'['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']'
+    //                      | ï¼œæ ‡è¯†ç¬¦ï¼'['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']''['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']' )}
 
-    // £¼±äÁ¿¶¨Òå¼°³õÊ¼»¯£¾  ::= £¼ÀàĞÍ±êÊ¶·û£¾£¼±êÊ¶·û£¾=£¼³£Á¿£¾
-    //                      | £¼ÀàĞÍ±êÊ¶·û£¾£¼±êÊ¶·û£¾'['£¼ÎŞ·ûºÅÕûÊı£¾']'='{'£¼³£Á¿£¾{,£¼³£Á¿£¾}'}'
-    //                      | £¼ÀàĞÍ±êÊ¶·û£¾£¼±êÊ¶·û£¾'['£¼ÎŞ·ûºÅÕûÊı£¾']''['£¼ÎŞ·ûºÅÕûÊı£¾']'='
-    //                      {''{'£¼³£Á¿£¾{,£¼³£Á¿£¾}'}'{, '{'£¼³£Á¿£¾{,£¼³£Á¿£¾}'}'}'}'
+    // ï¼œå˜é‡å®šä¹‰åŠåˆå§‹åŒ–ï¼  ::= ï¼œç±»å‹æ ‡è¯†ç¬¦ï¼ï¼œæ ‡è¯†ç¬¦ï¼=ï¼œå¸¸é‡ï¼
+    //                      | ï¼œç±»å‹æ ‡è¯†ç¬¦ï¼ï¼œæ ‡è¯†ç¬¦ï¼'['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']'='{'ï¼œå¸¸é‡ï¼{,ï¼œå¸¸é‡ï¼}'}'
+    //                      | ï¼œç±»å‹æ ‡è¯†ç¬¦ï¼ï¼œæ ‡è¯†ç¬¦ï¼'['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']''['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']'='
+    //                      {''{'ï¼œå¸¸é‡ï¼{,ï¼œå¸¸é‡ï¼}'}'{, '{'ï¼œå¸¸é‡ï¼{,ï¼œå¸¸é‡ï¼}'}'}'}'
 
-    if (symbol == INTTK || symbol == CHARTK) { // ÀàĞÍ±êÊ¶·û
+    if (symbol == INTTK || symbol == CHARTK) { // ç±»å‹æ ‡è¯†ç¬¦
         pre_read_Symbol(2);
         if (symbol_pre == SEMICN || symbol_pre == COMMA) { // ; ,
-            _var_define_no_initialization();    // ±äÁ¿¶¨ÒåÎŞ³õÊ¼»¯
+            _var_define_no_initialization();    // å˜é‡å®šä¹‰æ— åˆå§‹åŒ–
         }
         else {
             pre_read_Symbol(1);
-            if (symbol_pre == IDENFR) {    // ±êÊ¶·û
-                _var_define_with_initialization();  // ±äÁ¿¶¨Òå¼°³õÊ¼»¯
+            if (symbol_pre == IDENFR) {    // æ ‡è¯†ç¬¦
+                _var_define_with_initialization();  // å˜é‡å®šä¹‰åŠåˆå§‹åŒ–
             }
         }
     }
-    cout << "<±äÁ¿¶¨Òå>" << endl;
+    fprintf(f_out, "<å˜é‡å®šä¹‰>\n");
+//    cout << "<å˜é‡å®šä¹‰>" << endl;
 }
 
 void _assign() {
-    // £¼¸³ÖµÓï¾ä£¾   ::=  £¼±êÊ¶·û£¾£½£¼±í´ïÊ½£¾
-    //                |  £¼±êÊ¶·û£¾'['£¼±í´ïÊ½£¾']'=£¼±í´ïÊ½£¾
-    //                |  £¼±êÊ¶·û£¾'['£¼±í´ïÊ½£¾']''['£¼±í´ïÊ½£¾']' =£¼±í´ïÊ½£¾
-    if (symbol == IDENFR) { // ±êÊ¶·û
+    // ï¼œèµ‹å€¼è¯­å¥ï¼   ::=  ï¼œæ ‡è¯†ç¬¦ï¼ï¼ï¼œè¡¨è¾¾å¼ï¼
+    //                |  ï¼œæ ‡è¯†ç¬¦ï¼'['ï¼œè¡¨è¾¾å¼ï¼']'=ï¼œè¡¨è¾¾å¼ï¼
+    //                |  ï¼œæ ‡è¯†ç¬¦ï¼'['ï¼œè¡¨è¾¾å¼ï¼']''['ï¼œè¡¨è¾¾å¼ï¼']' =ï¼œè¡¨è¾¾å¼ï¼
+    if (symbol == IDENFR) { // æ ‡è¯†ç¬¦
         getsym(yes);
         if (symbol == ASSIGN) { // =
             getsym(yes);
-            _expression();  // ±í´ïÊ½
+            _expression();  // è¡¨è¾¾å¼
         }
         else if (symbol == LBRACK) {    // [
             getsym(yes);
-            _expression();  // ±í´ïÊ½
+            _expression();  // è¡¨è¾¾å¼
             if (symbol == RBRACK) { // ]
                 getsym(yes);
                 if (symbol == ASSIGN) { // =
                     getsym(yes);
-                    _expression(); // ±í´ïÊ½
+                    _expression(); // è¡¨è¾¾å¼
                 }
                 else if (symbol == LBRACK) {    // [
                     getsym(yes);
-                    _expression();  // ±í´ïÊ½
+                    _expression();  // è¡¨è¾¾å¼
                     if (symbol == RBRACK) { // ]
                         getsym(yes);
                         if (symbol == ASSIGN) { // =
                             getsym(yes);
-                            _expression();  // ±í´ïÊ½
+                            _expression();  // è¡¨è¾¾å¼
                         }
                     }
                 }
             }
         }
     }
-    cout << "<¸³ÖµÓï¾ä>" << endl;
+    fprintf(f_out, "<èµ‹å€¼è¯­å¥>\n");
+//    cout << "<èµ‹å€¼è¯­å¥>" << endl;
 }
 
 void _factor() {
-    // £¼Òò×Ó£¾    ::= £¼±êÊ¶·û£¾
-    //              £ü£¼±êÊ¶·û£¾'['£¼±í´ïÊ½£¾']'
-    //              | £¼±êÊ¶·û£¾'['£¼±í´ïÊ½£¾']''['£¼±í´ïÊ½£¾']'
-    //              |'('£¼±í´ïÊ½£¾')'
-    //              £ü£¼ÕûÊı£¾
-    //              | £¼×Ö·û£¾
-    //              £ü£¼ÓĞ·µ»ØÖµº¯Êıµ÷ÓÃÓï¾ä£¾
-    if (symbol == IDENFR) { // ±êÊ¶·û ÓĞ·µ»ØÖµº¯Êıµ÷ÓÃÓï¾ä
+    // ï¼œå› å­ï¼    ::= ï¼œæ ‡è¯†ç¬¦ï¼
+    //              ï½œï¼œæ ‡è¯†ç¬¦ï¼'['ï¼œè¡¨è¾¾å¼ï¼']'
+    //              | ï¼œæ ‡è¯†ç¬¦ï¼'['ï¼œè¡¨è¾¾å¼ï¼']''['ï¼œè¡¨è¾¾å¼ï¼']'
+    //              |'('ï¼œè¡¨è¾¾å¼ï¼')'
+    //              ï½œï¼œæ•´æ•°ï¼
+    //              | ï¼œå­—ç¬¦ï¼
+    //              ï½œï¼œæœ‰è¿”å›å€¼å‡½æ•°è°ƒç”¨è¯­å¥ï¼
+    if (symbol == IDENFR) { // æ ‡è¯†ç¬¦ æœ‰è¿”å›å€¼å‡½æ•°è°ƒç”¨è¯­å¥
         pre_read_Symbol(1);
         if (symbol_pre == LPARENT) {    // (
             _function_with_return_call();
@@ -1103,12 +1138,12 @@ void _factor() {
             getsym(yes);
             if (symbol == LBRACK) { // [
                 getsym(yes);
-                _expression();  // ±í´ïÊ½
+                _expression();  // è¡¨è¾¾å¼
                 if (symbol == RBRACK) { // ]
                     getsym(yes);
                     if (symbol == LBRACK) { // [
                         getsym(yes);
-                        _expression();  // ±í´ïÊ½
+                        _expression();  // è¡¨è¾¾å¼
                         if (symbol == RBRACK) { // ]
                             getsym(yes);
                         }
@@ -1119,40 +1154,41 @@ void _factor() {
     }
     else if (symbol == LPARENT) {   // (
         getsym(yes);
-        _expression();  // ±í´ïÊ½
+        _expression();  // è¡¨è¾¾å¼
         if (symbol == RPARENT) {    // )
             getsym(yes);
         }
     }
     else if (symbol == PLUS || symbol == MINU || symbol == INTCON) {
-        _int(); // ÕûÊı
+        _int(); // æ•´æ•°
     }
     else if (symbol == CHARCON) {
-        _char();    // ×Ö·û
+        _char();    // å­—ç¬¦
     }
-    cout << "<Òò×Ó>" << endl;
+    fprintf(f_out, "<å› å­>\n");
+//    cout << "<å› å­>" << endl;
 }
 
 void _var_define_no_initialization() {
-    // £¼±äÁ¿¶¨ÒåÎŞ³õÊ¼»¯£¾  ::= £¼ÀàĞÍ±êÊ¶·û£¾(£¼±êÊ¶·û£¾
-    //                      | £¼±êÊ¶·û£¾'['£¼ÎŞ·ûºÅÕûÊı£¾']'
-    //                      | £¼±êÊ¶·û£¾'['£¼ÎŞ·ûºÅÕûÊı£¾']''['£¼ÎŞ·ûºÅÕûÊı£¾']')
-    //                      {,(£¼±êÊ¶·û£¾
-    //                      | £¼±êÊ¶·û£¾'['£¼ÎŞ·ûºÅÕûÊı£¾']'
-    //                      | £¼±êÊ¶·û£¾'['£¼ÎŞ·ûºÅÕûÊı£¾']''['£¼ÎŞ·ûºÅÕûÊı£¾']' )}
-    if (symbol == INTTK || symbol == CHARTK) { // ÀàĞÍ±êÊ¶·û
+    // ï¼œå˜é‡å®šä¹‰æ— åˆå§‹åŒ–ï¼  ::= ï¼œç±»å‹æ ‡è¯†ç¬¦ï¼(ï¼œæ ‡è¯†ç¬¦ï¼
+    //                      | ï¼œæ ‡è¯†ç¬¦ï¼'['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']'
+    //                      | ï¼œæ ‡è¯†ç¬¦ï¼'['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']''['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']')
+    //                      {,(ï¼œæ ‡è¯†ç¬¦ï¼
+    //                      | ï¼œæ ‡è¯†ç¬¦ï¼'['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']'
+    //                      | ï¼œæ ‡è¯†ç¬¦ï¼'['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']''['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']' )}
+    if (symbol == INTTK || symbol == CHARTK) { // ç±»å‹æ ‡è¯†ç¬¦
         do {
             getsym(yes);
-            if (symbol == IDENFR) { // ±êÊ¶·û
+            if (symbol == IDENFR) { // æ ‡è¯†ç¬¦
                 getsym(yes);
                 if (symbol == LBRACK) { // [
                     getsym(yes);
-                    _unsigned_int();    // ÎŞ·ûºÅÕûÊı
+                    _unsigned_int();    // æ— ç¬¦å·æ•´æ•°
                     if (symbol == RBRACK) { // ]
                         getsym(yes);
                         if (symbol == LBRACK) { // [
                             getsym(yes);
-                            _unsigned_int();    // ÎŞ·ûºÅÕûÊı
+                            _unsigned_int();    // æ— ç¬¦å·æ•´æ•°
                             if (symbol == RBRACK) { // ]
                                 getsym(yes);
                             }
@@ -1162,24 +1198,25 @@ void _var_define_no_initialization() {
             }
         }   while (symbol == COMMA);    // ;
     }
-    cout << "<±äÁ¿¶¨ÒåÎŞ³õÊ¼»¯>" << endl;
+    fprintf(f_out, "<å˜é‡å®šä¹‰æ— åˆå§‹åŒ–>\n");
+//    cout << "<å˜é‡å®šä¹‰æ— åˆå§‹åŒ–>" << endl;
 }
 
 void _var_define_with_initialization() {
-    // £¼±äÁ¿¶¨Òå¼°³õÊ¼»¯£¾  ::= £¼ÀàĞÍ±êÊ¶·û£¾£¼±êÊ¶·û£¾=£¼³£Á¿£¾
-    //                      | £¼ÀàĞÍ±êÊ¶·û£¾£¼±êÊ¶·û£¾'['£¼ÎŞ·ûºÅÕûÊı£¾']'='{'£¼³£Á¿£¾{,£¼³£Á¿£¾}'}'
-    //                      |£¼ÀàĞÍ±êÊ¶·û£¾£¼±êÊ¶·û£¾'['£¼ÎŞ·ûºÅÕûÊı£¾']''['£¼ÎŞ·ûºÅÕûÊı£¾']'=
-    //                      '{''{'£¼³£Á¿£¾{,£¼³£Á¿£¾}'}'{, '{'£¼³£Á¿£¾{,£¼³£Á¿£¾}'}'}'}'
-    if (symbol == INTTK || symbol == CHARTK) {  // ÀàĞÍ±êÊ¶·û
+    // ï¼œå˜é‡å®šä¹‰åŠåˆå§‹åŒ–ï¼  ::= ï¼œç±»å‹æ ‡è¯†ç¬¦ï¼ï¼œæ ‡è¯†ç¬¦ï¼=ï¼œå¸¸é‡ï¼
+    //                      | ï¼œç±»å‹æ ‡è¯†ç¬¦ï¼ï¼œæ ‡è¯†ç¬¦ï¼'['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']'='{'ï¼œå¸¸é‡ï¼{,ï¼œå¸¸é‡ï¼}'}'
+    //                      |ï¼œç±»å‹æ ‡è¯†ç¬¦ï¼ï¼œæ ‡è¯†ç¬¦ï¼'['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']''['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']'=
+    //                      '{''{'ï¼œå¸¸é‡ï¼{,ï¼œå¸¸é‡ï¼}'}'{, '{'ï¼œå¸¸é‡ï¼{,ï¼œå¸¸é‡ï¼}'}'}'}'
+    if (symbol == INTTK || symbol == CHARTK) {  // ç±»å‹æ ‡è¯†ç¬¦
         getsym(yes);
-        if (symbol == IDENFR) { // ±êÊ¶·û
+        if (symbol == IDENFR) { // æ ‡è¯†ç¬¦
             if (symbol == ASSIGN) { // =
                 getsym(yes);
-                _const();   // ³£Á¿
+                _const();   // å¸¸é‡
             }
             else if (symbol == LBRACK) {    // [
                 getsym(yes);
-                _unsigned_int();    // ÎŞ·ûºÅÕûÊı
+                _unsigned_int();    // æ— ç¬¦å·æ•´æ•°
                 if (symbol == RBRACK) { // ]
                     getsym(yes);
                     if (symbol == ASSIGN) { // =
@@ -1187,7 +1224,7 @@ void _var_define_with_initialization() {
                         if (symbol == LBRACE) { // {
                             do {
                                 getsym(yes);
-                                _const();    // ³£Á¿
+                                _const();    // å¸¸é‡
                             }   while (symbol == COMMA);    // ,
                             if (symbol == RBRACE) { // }
                                 getsym(yes);
@@ -1196,7 +1233,7 @@ void _var_define_with_initialization() {
                     }
                     else if (symbol == LBRACK) {    // [
                         getsym(yes);
-                        _unsigned_int();    // ÎŞ·ûºÅÕûÊı
+                        _unsigned_int();    // æ— ç¬¦å·æ•´æ•°
                         if (symbol == RBRACK) { // ]
                             getsym(yes);
                             if (symbol == ASSIGN) { // =
@@ -1205,7 +1242,7 @@ void _var_define_with_initialization() {
                                     do {
                                         do {
                                             getsym(yes);
-                                            _const();   // ³£Á¿
+                                            _const();   // å¸¸é‡
                                         }   while (symbol == COMMA);    // ,
                                         if (symbol == RBRACE) { // }
                                             getsym(yes);
@@ -1225,7 +1262,8 @@ void _var_define_with_initialization() {
             }
         }
     }
-    cout << "<±äÁ¿¶¨Òå¼°³õÊ¼»¯>" << endl;
+    fprintf(f_out, "<å˜é‡å®šä¹‰åŠåˆå§‹åŒ–>\n");
+//    cout << "<å˜é‡å®šä¹‰åŠåˆå§‹åŒ–>" << endl;
 }
 
 // main
