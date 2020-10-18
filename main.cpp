@@ -226,6 +226,11 @@ void Reserver_Token() {
 }
 
 void getsym(bool output) {
+    if (symbol != FOUL && output) {
+//        fprintf(f_out, "%s %s\n", SymbolType_String[symbol].c_str(), token.c_str());
+        printf("%s %s\n", SymbolType_String[symbol].c_str(), token.c_str());
+
+    }
     clearToken();
     clearSymbol();
     getChar();
@@ -309,11 +314,6 @@ void getsym(bool output) {
         symbol = reservedSymbol[c];
     } else if (!isEOF()) {
         error();
-    }
-    if (symbol != FOUL && output) {
-//        fprintf(f_out, "%s %s\n", SymbolType_String[symbol].c_str(), token.c_str());
-        printf("%s %s\n", SymbolType_String[symbol].c_str(), token.c_str());
-
     }
 }
 
@@ -526,7 +526,7 @@ void _table_parameter() {
     //               |  ＜空＞
     if (symbol == INTTK || symbol == CHARTK) { // 类型标识符
         getsym(yes);
-        if (symbol = IDENFR) { // 标识符
+        if (symbol == IDENFR) { // 标识符
             getsym(yes);
         }
         if (symbol == COMMA) { // ,
@@ -1036,12 +1036,15 @@ void _var_define() {
     //                      {''{'＜常量＞{,＜常量＞}'}'{, '{'＜常量＞{,＜常量＞}'}'}'}'
 
     if (symbol == INTTK || symbol == CHARTK) { // 类型标识符
-        pre_read_Symbol(1);
-        if (symbol_pre == LPARENT) { // (
+        pre_read_Symbol(2);
+        if (symbol_pre == SEMICN || symbol_pre == COMMA) { // ; ,
             _var_define_no_initialization();    // 变量定义无初始化
         }
-        else if (symbol_pre == IDENFR) {    // 标识符
-            _var_define_with_initialization();  // 变量定义及初始化
+        else {
+            pre_read_Symbol(1);
+            if (symbol_pre == IDENFR) {    // 标识符
+                _var_define_with_initialization();  // 变量定义及初始化
+            }
         }
     }
     cout << "<变量定义>" << endl;
@@ -1214,7 +1217,7 @@ void _var_define_with_initialization() {
                                 }
                             }
                         }
-                        if (symbol = RBRACE) {  // }
+                        if (symbol == RBRACE) {  // }
                             getsym(yes);
                         }
                     }
@@ -1228,9 +1231,9 @@ void _var_define_with_initialization() {
 // main
 int main() {
     getBuffer();
-    getsym(yes);
+    getsym(no);
     program();
-    return 0;           
+    return 0;
 }
 
 
