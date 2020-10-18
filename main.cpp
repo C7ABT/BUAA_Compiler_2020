@@ -228,7 +228,7 @@ void Reserver_Token() {
 void getsym(bool output) {
     if (symbol != FOUL && output) {
         fprintf(f_out, "%s %s\n", SymbolType_String[symbol].c_str(), token.c_str());
-//        printf("%s %s\n", SymbolType_String[symbol].c_str(), token.c_str());
+        printf("%s %s\n", SymbolType_String[symbol].c_str(), token.c_str());
 
     }
     clearToken();
@@ -405,7 +405,7 @@ void program() {
     }
     _main();
     fprintf(f_out, "<程序>\n");
-//    cout << "<程序>" << endl;
+    cout << "<程序>" << endl;
 }
 
 void _const_statement() {
@@ -440,7 +440,7 @@ void _var_statement() {
         }
     }   while (yes);
     fprintf(f_out, "<变量说明>\n");
-//    cout << "<变量说明>" << endl;
+    cout << "<变量说明>" << endl;
 }
 ////////////////////
 
@@ -489,7 +489,7 @@ void _const_define() {
         }
     }
     fprintf(f_out, "<常量定义>\n");
-//    cout << "<常量定义>" << endl;
+    cout << "<常量定义>" << endl;
 }
 
 void _function_with_return_define() {
@@ -510,7 +510,7 @@ void _function_with_return_define() {
         }
     }
     fprintf(f_out, "<有返回值函数定义>\n");
-//    cout << "<有返回值函数定义>" << endl;
+    cout << "<有返回值函数定义>" << endl;
 }
 
 void _head_statement() {
@@ -524,7 +524,7 @@ void _head_statement() {
         }
     }
     fprintf(f_out, "<声明头部>\n");
-//    cout << "<声明头部>" << endl;
+    cout << "<声明头部>" << endl;
 }
 
 void _table_parameter() {
@@ -548,7 +548,7 @@ void _table_parameter() {
         }
     }
     fprintf(f_out, "<参数表>\n");
-//    cout << "<参数表>" << endl;
+    cout << "<参数表>" << endl;
 }
 
 void _statement_combination() {
@@ -561,7 +561,7 @@ void _statement_combination() {
     }
     _list_statement();  // 语句列
     fprintf(f_out, "<复合语句>\n");
-//    cout << "<复合语句>" << endl;
+    cout << "<复合语句>" << endl;
 }
 
 void _function_no_return_define() {
@@ -588,7 +588,7 @@ void _function_no_return_define() {
         }
     }
     fprintf(f_out, "<无返回值函数定义>\n");
-//    cout << "<无返回值函数定义>" << endl;
+    cout << "<无返回值函数定义>" << endl;
 }
 
 void _main() {
@@ -613,7 +613,7 @@ void _main() {
         }
     }
     fprintf(f_out, "<主函数>\n");
-//    cout << "<主函数>" << endl;
+    cout << "<主函数>" << endl;
 }
 
 void _list_statement() {
@@ -624,7 +624,7 @@ void _list_statement() {
         _statement(); // 语句
     }
     fprintf(f_out, "<语句列>\n");
-//    cout << "<语句列>" << endl;
+    cout << "<语句列>" << endl;
 }
 
 void _if() {
@@ -645,7 +645,7 @@ void _if() {
         }
     }
     fprintf(f_out, "<条件语句>\n");
-//    cout << "<条件语句>" << endl;
+    cout << "<条件语句>" << endl;
 }
 
 void _condition() {
@@ -659,7 +659,7 @@ void _condition() {
         _expression(); // 表达式
     }
     fprintf(f_out, "<条件>\n");
-//    cout << "<条件>" << endl;
+    cout << "<条件>" << endl;
 }
 
 void _expression() {
@@ -673,7 +673,7 @@ void _expression() {
         _term(); // 项
     }
     fprintf(f_out, "<表达式>\n");
-//    cout << "<表达式>" << endl;
+    cout << "<表达式>" << endl;
 }
 
 void _term() {
@@ -684,7 +684,7 @@ void _term() {
         _factor();  // 因子
     }
     fprintf(f_out, "<项>\n");
-//    cout << "<项>" << endl;
+    cout << "<项>" << endl;
 }
 
 void _loop() {
@@ -738,9 +738,9 @@ void _loop() {
                 }
             }
         }
-        fprintf(f_out, "<循环语句>\n");
-//        cout << "<循环语句>" << endl;
     }
+    fprintf(f_out, "<循环语句>\n");
+    cout << "<循环语句>" << endl;
 }
 
 void _string() {
@@ -749,14 +749,14 @@ void _string() {
         getsym(yes);
     }
     fprintf(f_out, "<字符串>\n");
-//    cout << "<字符串>" << endl;
+    cout << "<字符串>" << endl;
 }
 
 void _step() {
     // ＜步长＞::= ＜无符号整数＞
     _unsigned_int(); // 无符号整数
     fprintf(f_out, "<步长>\n");
-//    cout << "<步长>" << endl;
+    cout << "<步长>" << endl;
 }
 
 void _unsigned_int() {
@@ -765,7 +765,7 @@ void _unsigned_int() {
         getsym(yes);
     }
     fprintf(f_out, "<无符号整数>\n");
-//    cout << "<无符号整数>" << endl;
+    cout << "<无符号整数>" << endl;
 }
 
 void _int() {
@@ -774,7 +774,7 @@ void _int() {
     }
     _unsigned_int(); // 无符号整数
     fprintf(f_out, "<整数>\n");
-//    cout << "<整数>" << endl;
+    cout << "<整数>" << endl;
 }
 
 void _char() {
@@ -798,7 +798,7 @@ void _scanf() {
         }
     }
     fprintf(f_out, "<读语句>\n");
-//    cout << "<读语句>" << endl;
+    cout << "<读语句>" << endl;
 }
 
 void _printf() {
@@ -825,7 +825,7 @@ void _printf() {
         }
     }
     fprintf(f_out, "<写语句>\n");
-//    cout << "<写语句>" << endl;
+    cout << "<写语句>" << endl;
 }
 
 void _return() {
@@ -841,7 +841,7 @@ void _return() {
         }
     }
     fprintf(f_out, "<返回语句>\n");
-//    cout << "<返回语句>" << endl;
+    cout << "<返回语句>" << endl;
 }
 
 void _function_with_return_call() {
@@ -857,7 +857,7 @@ void _function_with_return_call() {
         }
     }
     fprintf(f_out, "<有返回值函数调用语句>\n");
-//    cout << "<有返回值函数调用语句>" << endl;
+    cout << "<有返回值函数调用语句>" << endl;
 }
 
 void _function_no_return_call() {
@@ -873,7 +873,7 @@ void _function_no_return_call() {
         }
     }
     fprintf(f_out, "<无返回值函数调用语句>\n");
-//    cout << "<无返回值函数调用语句>" << endl;
+    cout << "<无返回值函数调用语句>" << endl;
 }
 
 void _table_parameter_value() {
@@ -890,7 +890,7 @@ void _table_parameter_value() {
             _expression();  // 表达式
         }
         fprintf(f_out, "<值参数表>\n");
-//        cout << "<值参数表>" << endl;
+        cout << "<值参数表>" << endl;
     }
 }
 
@@ -976,7 +976,7 @@ void _statement() {
         }
     }
     fprintf(f_out, "<语句>\n");
-//    cout << "<语句>" << endl;
+    cout << "<语句>" << endl;
 }
 
 void _default() {
@@ -989,7 +989,7 @@ void _default() {
         }
     }
     fprintf(f_out, "<缺省>\n");
-//    cout << "<缺省>" << endl;
+    cout << "<缺省>" << endl;
 }
 
 void _switch() {
@@ -1015,7 +1015,7 @@ void _switch() {
         }
     }
     fprintf(f_out, "<情况语句>\n");
-//    cout << "<情况语句>" << endl;
+    cout << "<情况语句>" << endl;
 }
 
 void _case() {
@@ -1029,7 +1029,7 @@ void _case() {
         }
     }
     fprintf(f_out, "<情况子语句>\n");
-//    cout << "<情况子语句>" << endl;
+    cout << "<情况子语句>" << endl;
 }
 
 void _table_cases() {
@@ -1038,20 +1038,22 @@ void _table_cases() {
         _case();
     }
     fprintf(f_out, "<情况表>\n");
-//    cout << "<情况表>" << endl;
+    cout << "<情况表>" << endl;
 }
 
 void _const() {
     // ＜常量＞   ::=  ＜整数＞
     //             |  ＜字符＞
-    if (symbol == INTCON) { // 整数
+    
+    
+    if (symbol == INTCON||symbol == PLUS || symbol == MINU) { // 整数
         _int(); // 整数
     }
     else if (symbol == CHARCON) { // 字符
         _char();    // 字符
     }
     fprintf(f_out, "<常量>\n");
-//    cout << "<常量>" << endl;
+    cout << "<常量>" << endl;
 }
 
 void _var_define() {
@@ -1070,19 +1072,23 @@ void _var_define() {
     //                      {''{'＜常量＞{,＜常量＞}'}'{, '{'＜常量＞{,＜常量＞}'}'}'}'
 
     if (symbol == INTTK || symbol == CHARTK) { // 类型标识符
-        pre_read_Symbol(2);
+        int i = 1;
+        while (symbol_pre != COMMA && symbol_pre != SEMICN && symbol_pre != ASSIGN) {
+            pre_read_Symbol(i++) ;
+        }
         if (symbol_pre == SEMICN || symbol_pre == COMMA) { // ; ,
             _var_define_no_initialization();    // 变量定义无初始化
         }
         else {
-            pre_read_Symbol(1);
-            if (symbol_pre == IDENFR) {    // 标识符
-                _var_define_with_initialization();  // 变量定义及初始化
-            }
+            //pre_read_Symbol(1);
+//            if (symbol_pre == IDENFR) {    // 标识符
+//
+//            }
+            _var_define_with_initialization();  // 变量定义及初始化
         }
     }
     fprintf(f_out, "<变量定义>\n");
-//    cout << "<变量定义>" << endl;
+    cout << "<变量定义>" << endl;
 }
 
 void _assign() {
@@ -1119,7 +1125,7 @@ void _assign() {
         }
     }
     fprintf(f_out, "<赋值语句>\n");
-//    cout << "<赋值语句>" << endl;
+    cout << "<赋值语句>" << endl;
 }
 
 void _factor() {
@@ -1167,7 +1173,7 @@ void _factor() {
         _char();    // 字符
     }
     fprintf(f_out, "<因子>\n");
-//    cout << "<因子>" << endl;
+    cout << "<因子>" << endl;
 }
 
 void _var_define_no_initialization() {
@@ -1200,7 +1206,7 @@ void _var_define_no_initialization() {
         }   while (symbol == COMMA);    // ;
     }
     fprintf(f_out, "<变量定义无初始化>\n");
-//    cout << "<变量定义无初始化>" << endl;
+    cout << "<变量定义无初始化>" << endl;
 }
 
 void _var_define_with_initialization() {
@@ -1211,6 +1217,7 @@ void _var_define_with_initialization() {
     if (symbol == INTTK || symbol == CHARTK) {  // 类型标识符
         getsym(yes);
         if (symbol == IDENFR) { // 标识符
+            getsym(yes);
             if (symbol == ASSIGN) { // =
                 getsym(yes);
                 _const();   // 常量
@@ -1222,13 +1229,20 @@ void _var_define_with_initialization() {
                     getsym(yes);
                     if (symbol == ASSIGN) { // =
                         getsym(yes);
-                        if (symbol == LBRACE) { // {
-                            do {
+//                        if (symbol == LBRACE) { // {
+//                            do {
+//                                getsym(yes);
+//                                _const();    // 常量
+//                            }   while (symbol == COMMA);    // ,
+//                            if (symbol == RBRACE) { // }
+//                                getsym(yes);
+//                            }
+//                        }
+                        while (symbol != SEMICN) {
+                            if (LBRACE ==  symbol || RBRACE == symbol || COMMA == symbol) {
                                 getsym(yes);
-                                _const();    // 常量
-                            }   while (symbol == COMMA);    // ,
-                            if (symbol == RBRACE) { // }
-                                getsym(yes);
+                            } else {
+                                _const();
                             }
                         }
                     }
@@ -1239,6 +1253,7 @@ void _var_define_with_initialization() {
                             getsym(yes);
                             if (symbol == ASSIGN) { // =
                                 getsym(yes);
+                                /*
                                 if (symbol == LBRACE) { // {
                                     do {
                                         do {
@@ -1252,6 +1267,14 @@ void _var_define_with_initialization() {
                                     if (symbol == RBRACE) { // }
                                         getsym(yes);
                                     }
+                                }*/
+                                
+                                while (symbol != SEMICN) {
+                                    if (LBRACE ==  symbol || RBRACE == symbol || COMMA == symbol) {
+                                        getsym(yes);
+                                    } else {
+                                        _const();
+                                    }
                                 }
                             }
                         }
@@ -1264,7 +1287,7 @@ void _var_define_with_initialization() {
         }
     }
     fprintf(f_out, "<变量定义及初始化>\n");
-//    cout << "<变量定义及初始化>" << endl;
+    cout << "<变量定义及初始化>" << endl;
 }
 
 // main
