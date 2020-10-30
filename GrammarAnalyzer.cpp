@@ -1,4 +1,4 @@
-//
+﻿//
 // Created by Conno on 2020/9/29.
 //
 
@@ -1045,8 +1045,8 @@ void _table_cases() {
 void _const() {
     // ＜常量＞   ::=  ＜整数＞
     //             |  ＜字符＞
-    
-    
+
+
     if (symbol == INTCON||symbol == PLUS || symbol == MINU) { // 整数
         _int(); // 整数
     }
@@ -1269,7 +1269,7 @@ void _var_define_with_initialization() {
                                         getsym(yes);
                                     }
                                 }*/
-                                
+
                                 while (symbol != SEMICN) {
                                     if (LBRACE ==  symbol || RBRACE == symbol || COMMA == symbol) {
                                         getsym(yes);
