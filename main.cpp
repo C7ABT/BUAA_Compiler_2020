@@ -8,6 +8,7 @@
 #include "map"
 #include <stdio.h>
 #include "fstream"
+#include "vector"
 
 #define yes true
 #define no false
@@ -26,7 +27,7 @@ enum SymbolType {
     LBRACK, RBRACK,   LBRACE,   RBRACE,
     FOUL // ERROR symbol
 };
-void error() {
+void error(char errtype) {
 
 }
 map<string, SymbolType> reservedWords = {
@@ -83,11 +84,12 @@ char buffer[88888810]; // Everything
 SymbolType symbol;
 int index_buffer; // index of buffer
 int line = 1;
+int line_prev = 0;  // for ';', the line of last symbol
 FILE *f_in, *f_out;
 
 void getBuffer() {
     f_in = fopen("testfile.txt", "rb");
-    f_out = fopen("output.txt", "wb");
+    f_out = fopen("error.txt", "wb");
     fread(buffer,1, 8888888, f_in);
 }
 
@@ -146,8 +148,8 @@ bool isSpace() {
     return (c == ' ');
 }   // " "
 bool isTab() {
-    return (c == '\t');
-}   // \t
+    return (c == '\t' || c == '\r');
+}   // \t \r
 bool isInvisibleSymbol() {
     return (c > 0 && c <= 32);
 }   // Lee Sin
@@ -158,8 +160,8 @@ bool isLetter() {
     return isalpha(c);
 }
 bool isNextline() {
-    return (c == '\n' || c == '\r');
-}   // \n, \r
+    return (c == '\n');
+}   // \n
 bool isDigit() {
     return (isdigit(c));
 }   // 0-9
@@ -226,96 +228,132 @@ void Reserver_Token() {
     }
 }
 
-void getsym(bool output) {
-    if (symbol != FOUL && output) {
-        fprintf(f_out, "%s %s\n", SymbolType_String[symbol].c_str(), token.c_str());
-        printf("%s %s\n", SymbolType_String[symbol].c_str(), token.c_str());
-
-    }
-    clearToken();
-    clearSymbol();
-    getChar();
-    while (isInvisibleSymbol()) {
+void getsym(bool checkError = true) {
+    do {
+        line_prev = line;
+        clearToken();
+        clearSymbol();
         getChar();
-    }
-    if (isEOF()) {
-        return;
-    }
-    if (isLetter() || isUnderscore()) {
-        while (isLetter() || isUnderscore() || isDigit()) {
-            combo();
-        }
-        retract();
-        Reserver_Token();
-    } else if (isDigit()) {
-        while (isDigit()) {
-            combo();
-        }
-        retract();
-        symbol = INTCON;
-    } else if (isSingleQuote()) {
-        getChar();
-        if (!(isPlus() || isMinus() || isStar() || isDiv() || isLetter() || isUnderscore() || isDigit())) {
-            error();
-        }
-        combo();
-        if (!isSingleQuote()) {
-            error();
-        }
-        symbol = CHARCON;
-    } else if (isDoubleQuote()) {
-        getChar();
-        while (!isDoubleQuote()) {
-            if (isNextline()) {
-                error();
-                break;
-            }
-            catToken();
+        while (isSpace() || isNextline() || isTab()) {
             getChar();
         }
-        symbol = STRCON;
-    } else if (isLess()) {
-        combo();
-        if (isEqual()) {
-            catToken();
-            symbol = LEQ;
-        } else {
-            symbol = LSS;
+        if (isEOF()) {
+            return;
+        }
+        if (isLetter() || isUnderscore()) {
+            while (isLetter() || isUnderscore() || isDigit()) {
+                combo();
+            }
             retract();
-        }
-    } else if (isGreater()) {
-        combo();
-        if (isEqual()) {
-            catToken();
-            symbol = GEQ;
-        } else {
-            symbol = GRE;
+            Reserver_Token();
+        } else if (isDigit()) {
+            while (isDigit()) {
+                combo();
+            }
             retract();
-        }
-    } else if (isEqual()) {
-        combo();
-        if (isEqual()) {
+            if (token.length() >= 2 && token[0] == '0') {   // 002
+                if (checkError) {
+                    error('a');
+                }
+            }
+            symbol = INTCON;
+        } else if (isSingleQuote()) {
+            getChar();
             catToken();
-            symbol = EQL;
-        } else {
-            symbol = ASSIGN;
+            if (!(isPlus() || isMinus() || isStar() || isDiv() || isLetter() || isUnderscore() || isDigit())) {
+                if (checkError) {
+                    error('a');
+                }
+            }
+            getChar();
+            if (!isSingleQuote()) {
+                if (checkError) {
+                    error('a');
+                }
+                retract();
+            }
+            symbol = CHARCON;
+        } else if (isDoubleQuote()) {
+            bool haveError = false;
+            getChar();
+            while (!isDoubleQuote()) {
+                if (!isSpace() && !isExclamation() || !(c >= 35 && c <= 126)) {
+                    haveError = true;
+                }
+                catToken();
+                getChar();
+            }
+            if (haveError && checkError) {
+                error('a');
+            }
+            symbol = STRCON;
+        } else if (isLess()) {
+            combo();
+            if (isEqual()) {
+                catToken();
+                symbol = LEQ;
+            } else {
+                symbol = LSS;
+                retract();
+            }
+        } else if (isGreater()) {
+            combo();
+            if (isEqual()) {
+                catToken();
+                symbol = GEQ;
+            } else {
+                symbol = GRE;
+                retract();
+            }
+        } else if (isEqual()) {
+            combo();
+            if (isEqual()) {
+                catToken();
+                symbol = EQL;
+            } else {
+                symbol = ASSIGN;
+                retract();
+            }
+        } else if (isExclamation()) {
+            getChar();
+            if (isEqual()) {
+                catToken();
+                symbol = NEQ;
+            } else {
+                retract();
+                error('a');
+            }
+        }   else if (isDiv()) {
+            getChar();
+            if (isStar()) {
+                do {
+                    do {
+                        getChar();
+                    }   while (!isStar());
+                    do {
+                        getChar();
+                        if (isDiv()) {
+                            return;
+                        }
+                    }   while (isStar());
+                }   while (!isStar());
+            }
             retract();
-        }
-    } else if (isExclamation()) {
-        combo();
-        if (isEqual()) {
+            symbol = DIV;
             catToken();
-        } else {
-            error();
-        }
-        symbol = NEQ;
-    } else if (isPlus() || isMinus() || isStar() || isDiv() || isSemicolon() || isComma() || isColon() || \
+        }   else if (isPlus() || isMinus() || isStar() || isSemicolon() || isComma() || isColon() || \
         isLParent() || isRParent() || isLBrack() || isRBrack() || isLBrace() || isRBrace()) {
-        catToken();
-        symbol = reservedSymbol[c];
-    } else if (!isEOF()) {
-        error();
-    }
+            catToken();
+            symbol = reservedSymbol[c];
+        }   else {
+            if (checkError) {
+                error('a');
+            }
+            continue;
+        }
+        break;
+    }   while (true);
+    return;
 }
 
 // 词法分析
@@ -329,7 +367,7 @@ void _var_define(); // 变量定义
 void _var_statement(); // 变量说明
 void _var_define_no_initialization(); // 变量定义无初始化
 void _var_define_with_initialization(); // 变量定义及初始化
-void scanf(); // 读语句
+void _scanf(); // 读语句
 void _printf(); // 写语句
 void _term(); // 项
 void _factor(); // 因子
@@ -371,12 +409,14 @@ void pre_read_Symbol(int n){
     SymbolType symbol_origin = symbol;
     string token_origin = token;
     int index_buffer_origin = index_buffer;
+    int line_origin = line;
     while (n--) {
         getsym(no);
     }
     symbol_pre = symbol;    // 预读得到的symbol
     symbol = symbol_origin; // 还原symbol
     token = token_origin;   // 还原token
+    line = line_origin;     // 还原line
     index_buffer = index_buffer_origin; // 还原指针
 } // 预读
 
