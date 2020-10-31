@@ -9,6 +9,10 @@
 #include <stdio.h>
 #include "fstream"
 #include "vector"
+#include "cstdio"
+#include "cstring"
+#include "stdlib.h"
+#include "cstdlib"
 
 #define yes true
 #define no false
@@ -27,9 +31,7 @@ enum SymbolType {
     LBRACK, RBRACK,   LBRACE,   RBRACE,
     FOUL // ERROR symbol
 };
-void error(char errtype) {
 
-}
 map<string, SymbolType> reservedWords = {
         {"const", CONSTTK},
         {"int",   INTTK},
@@ -82,16 +84,59 @@ string token;
 char c;     // The letter read now
 char buffer[88888810]; // Everything
 SymbolType symbol;
+SymbolType symbol_later;  // 预读到的symbol
 int index_buffer; // index of buffer
 int line = 1;
 int line_prev = 0;  // for ';', the line of last symbol
-FILE *f_in, *f_out;
+bool ErrorEnable = false;   // 输出错误处理
+//string FuncName_current;    // 当前语法分析函数名
+//string FuncType_current;    // 当前语法分析函数类型
+//bool Func_Return_current;   // 当前函数是否含有return
+struct Func_current {
+    string name;
+    string type;
+    bool return_has;
+} funcCurrent;
+int scan_time = 1;  // 第几遍
+bool isConst;
+
+FILE *f_in, *f_error, *f_out;
+// 参数表类型
+typedef vector<SymbolType> ParameterTable;
+
+// 函数表，第一遍
+typedef struct{SymbolType type; ParameterTable parametertable;} FuncMapTerm;
+typedef map<string, FuncMapTerm> FuncMap;
+FuncMap funcMap;
+
+// 符号表，第二遍
+typedef struct{bool isConst; SymbolType type; bool isArray;} VarMapTerm;
+typedef map<string, map<string, VarMapTerm>> VarMap;
+VarMap varMap;
+
+// 错误表
+typedef struct{int line; char errortype;} ErrNode;
+ErrNode errlist[10086];
+int errcnt = 0; // 错误数量
+
+void error(char errtype) {
+    if (ErrorEnable) {
+        errlist[errcnt].line = (errtype == 'k') ? line_prev : line;
+        errlist[errcnt].errortype = errtype;
+        errcnt += 1;
+    }
+}
+
+bool err_cmp(ErrNode x, ErrNode y) {
+    return x.line < y.line;
+}
 
 void getBuffer() {
     f_in = fopen("testfile.txt", "rb");
-    f_out = fopen("error.txt", "wb");
+    f_error = fopen("error.txt", "wb");
+    f_out = fopen("output.txt", "wb");
     fread(buffer,1, 8888888, f_in);
-}
+}   // assign f_in, f_error, f_out, put testfile.txt into buffer[]
 
 bool isPlus() {
     return (c == '+');
@@ -206,7 +251,7 @@ void retract() {
     if (isNextline()) {
         --line;
     }
-}   // Move the fin pointer 1 step back
+}   // Move the f_in pointer 1 step back
 bool isReserved_Token() {
     string token_temp(token);
     int token_temp_len = token_temp.size();
@@ -226,7 +271,7 @@ void Reserver_Token() {
     }   else {
         symbol = IDENFR;
     }
-}
+}   // which symbol does the token mean
 
 void getsym(bool checkError = true) {
     do {
@@ -251,11 +296,11 @@ void getsym(bool checkError = true) {
                 combo();
             }
             retract();
-            if (token.length() >= 2 && token[0] == '0') {   // 002
-                if (checkError) {
-                    error('a');
-                }
-            }
+//            if (token.length() >= 2 && token[0] == '0') {   // 002
+//                if (checkError) {
+//                    error('a');
+//                }
+//            }
             symbol = INTCON;
         } else if (isSingleQuote()) {
             getChar();
@@ -369,17 +414,17 @@ void _var_define_no_initialization(); // 变量定义无初始化
 void _var_define_with_initialization(); // 变量定义及初始化
 void _scanf(); // 读语句
 void _printf(); // 写语句
-void _term(); // 项
-void _factor(); // 因子
-void _expression(); // 表达式
+SymbolType _term(); // 项
+SymbolType _factor(); // 因子
+SymbolType _expression(); // 表达式
 void _statement(); // 语句
 void _default(); // 缺省
 void _return(); // 返回语句
-void _unsigned_int(); // 无符号整数
+bool _unsigned_int(bool outError); // 无符号整数
 void _step(); // 步长
 void _main(); // 主函数
-void _head_statement(); // 声明头部
-void _int(); // 整数
+void _head_statement(SymbolType &type, string &name); // 声明头部
+bool _int(bool outError); // 整数
 void _assign(); // 赋值语句
 void _switch(); // 情况语句
 void _case(); // 情况子语句
@@ -387,10 +432,10 @@ void _table_cases(); // 情况表
 void _function_no_return_define(); // 无返回值函数定义
 void _function_with_return_define(); // 有返回值函数定义
 void _function_no_return_call(); // 无返回值函数调用语句
-void _function_with_return_call(); // 有返回值函数调用语句
+SymbolType _function_with_return_call(); // 有返回值函数调用语句
 void _loop(); // 循环语句
-void _table_parameter(); // 参数表
-void _table_parameter_value(); // 值参数表
+bool _table_parameter(ParameterTable &ans); // 参数表
+void _table_parameter_value(ParameterTable &ans); // 值参数表
 void _condition(); // 条件
 void _if(); // 条件语句
 void _list_statement(); // 语句列
@@ -398,11 +443,11 @@ void _statement_combination(); // 复合语句
 void _char(); // 字符
 
 // 老子是分割线 //
-SymbolType symbol_pre;
-string array_function_with_return[1000]; // 有返回值函数名
-string array_function_no_return[1000];    // 无返回值函数名
-int index_array_function_with_return;
-int index_array_function_no_return;
+
+//string array_function_with_return[1000]; // 有返回值函数名
+//string array_function_no_return[1000];    // 无返回值函数名
+//int index_array_function_with_return;
+//int index_array_function_no_return;
 
 void pre_read_Symbol(int n){
     // 预读
@@ -413,7 +458,7 @@ void pre_read_Symbol(int n){
     while (n--) {
         getsym(no);
     }
-    symbol_pre = symbol;    // 预读得到的symbol
+    symbol_later = symbol;    // 预读得到的symbol
     symbol = symbol_origin; // 还原symbol
     token = token_origin;   // 还原token
     line = line_origin;     // 还原line
@@ -422,20 +467,40 @@ void pre_read_Symbol(int n){
 
 // 老子也是分割线 //
 
+char parametertable_cmp(ParameterTable x, ParameterTable y) {
+    int n;
+    n = x.size();
+    if (n != y.size()) {
+        return 'd';
+    }
+    for (int i = 0; i < n; ++i) {
+        if (x[i] != y[i]) {
+            return 'e';
+        }
+    }
+    return '0';
+}   // 函数参数个数不匹配'd'，函数参数类型不匹配'e'
 void program() {
     /* ＜程序＞    ::= ［＜常量说明＞］［＜变量说明＞］{＜有返回值函数定义＞
      *              | ＜无返回值函数定义＞}＜主函数＞
      */
+    funcCurrent.name = "0";
+    if (scan_time != 1) {
+        ErrorEnable = true;
+    }
+    else {
+        ErrorEnable = false;
+    }
     if (symbol == CONSTTK) {
         _const_statement(); // 常量说明
     }
     pre_read_Symbol(2);
-    if (symbol_pre != LPARENT) {
+    if (symbol_later != LPARENT) {
         _var_statement();   // 变量说明
     }
     while (yes) {
         pre_read_Symbol(1);
-        if (symbol_pre == MAINTK) {
+        if (symbol_later == MAINTK) {
             break;
         }
         if (symbol == VOIDTK) {
@@ -444,6 +509,9 @@ void program() {
             _function_with_return_define();
         }
     }
+    if (scan_time == 1) {
+        return;
+    }
     _main();
     fprintf(f_out, "<程序>\n");
     cout << "<程序>" << endl;
@@ -451,17 +519,21 @@ void program() {
 
 void _const_statement() {
     // ＜常量说明＞ ::=  const＜常量定义＞;{ const＜常量定义＞;}
-    if (symbol == CONSTTK) {
-        while (symbol == CONSTTK) {
-            getsym(yes);
+    do {
+        if (symbol == CONSTTK) {
+            getsym();
             _const_define(); // 常量定义
             if (symbol == SEMICN) { // ;
                 getsym(yes);
+            } else {
+                error('k');
             }
+        }   else {
+            error('0');
         }
-    }
+    }   while (symbol == CONSTTK);
     fprintf(f_out, "<常量说明>\n");
-//    cout << "<常量说明>" << endl;
+    cout << "<常量说明>" << endl;
 }
 
 ////////////////////
@@ -472,11 +544,14 @@ void _var_statement() {
         if (symbol == SEMICN) { // ;
             getsym(yes);
         }
+        else {
+            error('k');
+        }
         if (symbol != INTTK && symbol != CHARTK) { // int || char
             break;
         }
         pre_read_Symbol(2);
-        if (symbol_pre == LPARENT) { // (
+        if (symbol_later == LPARENT) { // (
             break;
         }
     }   while (yes);
@@ -488,46 +563,87 @@ void _var_statement() {
 void _const_define() {
     // ＜常量定义＞   ::=   int＜标识符＞＝＜整数＞{,＜标识符＞＝＜整数＞}
     //                  | char＜标识符＞＝＜字符＞{,＜标识符＞＝＜字符＞}
+    string VarName;
     if (symbol == INTTK) { // int
-        getsym(yes);
-        if (symbol == IDENFR) { // 标识符
-            getsym(yes);
-            if (symbol == ASSIGN) { // =
-                getsym(yes);
-                _int(); // 整数
-                while (symbol == COMMA) { // ,
-                    getsym(yes);
-                    if (symbol == IDENFR) { // 标识符
-                        getsym(yes);
+        do {
+            getsym();
+            if (symbol == IDENFR) { // 标识符
+                VarName = token;
+                getsym();
+                if (symbol == ASSIGN) { // =
+                    getsym();
+                }   else {
+                    error('0');
+                }
+                SymbolType type = _expression();
+                if (symbol != COMMA && symbol != SEMICN) {
+                    while (symbol != COMMA && symbol != SEMICN) {
+                        getsym();
                     }
-                    if (symbol == ASSIGN) { // =
-                        getsym(yes);
-                        _int(); // 整数
+                    error('o');
+                }
+                else if (type != INTTK || !isConst) {
+                    error('o');
+                }
+                if (scan_time == 2) {
+                    VarMapTerm varMapTerm;
+                    varMapTerm.isConst = true;
+                    varMapTerm.type = INTTK;
+                    varMapTerm.isArray = false;
+                    if (varMap[funcCurrent.name].count(VarName) > 0) {
+                        error('b');
+                    }
+                    else {
+                        varMap[funcCurrent.name][VarName] = varMapTerm;
                     }
                 }
             }
-        }
+            else {
+                error('0');
+            }
+        }   while (symbol == COMMA);
     }
-
     else if (symbol == CHARTK) { // char
-        getsym(yes);
-        if (symbol == IDENFR) { // 标识符
-            getsym(yes);
-            if (symbol == ASSIGN) { // =
-                getsym(yes);
-                _char(); // 字符
-                while (symbol == COMMA) { // ,
-                    getsym(yes);
-                    if (symbol == IDENFR) { // 标识符
-                        getsym(yes);
+        do {
+            getsym();
+            if (symbol == IDENFR) { // 标识符
+                VarName = token;
+                getsym();
+                if (symbol == ASSIGN) { // =
+                    getsym();
+                }   else {
+                    error('0');
+                }
+                SymbolType type = _expression();
+                if (symbol != COMMA && symbol != SEMICN) {
+                    while (symbol != COMMA && symbol != SEMICN) {
+                        getsym();
                     }
-                    if (symbol == ASSIGN) { // =
-                        getsym(yes);
-                        _char(); // 字符
+                    error('o');
+                }
+                else if (type != CHARTK || !isConst) {
+                    error('o');
+                }
+                if (scan_time == 2) {
+                    VarMapTerm varMapTerm;
+                    varMapTerm.isConst = true;
+                    varMapTerm.type = CHARTK;
+                    varMapTerm.isArray = false;
+                    if (varMap[funcCurrent.name].count(VarName) > 0) {
+                        error('b');
+                    }
+                    else {
+                        varMap[funcCurrent.name][VarName] = varMapTerm;
                     }
                 }
             }
-        }
+            else {
+                error('0');
+            }
+        }   while (symbol == COMMA);
+    }
+    else {
+        error('0');
     }
     fprintf(f_out, "<常量定义>\n");
     cout << "<常量定义>" << endl;
@@ -535,33 +651,72 @@ void _const_define() {
 
 void _function_with_return_define() {
     // ＜有返回值函数定义＞  ::=  ＜声明头部＞'('＜参数表＞')' '{'＜复合语句＞'}'
-    _head_statement();  // 声明头部
+    SymbolType funcType;
+    string funcName;
+    _head_statement(funcType, funcName);    // 声明头部
+    funcCurrent.name = funcName;
+    funcCurrent.type = funcType;
+    funcCurrent.return_has = false;
     if (symbol == LPARENT) { // (
-        getsym(yes);
-        _table_parameter(); // 参数表
-        if (symbol == RPARENT) { // )
-            getsym(yes);
-            if (symbol == LBRACE) { // {
-                getsym(yes);
-                _statement_combination(); // 复合语句
-                if (symbol == RBRACE) { // }
-                    getsym(yes);
-                }
-            }
+        getsym();
+    }   else {
+        error('0');
+    }
+    ParameterTable parameterTable;
+    _table_parameter(parameterTable);
+    if (scan_time == 1) {
+        FuncMapTerm funcMapTerm;
+        funcMapTerm.type = funcType;
+        funcMapTerm.parametertable = parameterTable;
+        if (funcMap.count(funcCurrent.name) > 0) {
+            bool errorEnable_temp;
+            errorEnable_temp = ErrorEnable;
+            ErrorEnable = true;
+            error('b');
+            ErrorEnable = errorEnable_temp;
+        }
+        else {
+            funcMap[funcCurrent.name] = funcMapTerm;
+        }
+    }
+
+    if (symbol == RPARENT) {    // )
+        getsym();
+    }   else {
+        error('l');
+        if (symbol != LBRACE) { // {
+            getsym();
+        }   else {
+            error('0');
+        }
+        _statement_combination();
+        if (funcCurrent.return_has == false) {
+            error('h');
+        }
+        if (symbol == RBRACE) { // }
+            getsym();
+        }   else {
+            error('0');
         }
     }
     fprintf(f_out, "<有返回值函数定义>\n");
     cout << "<有返回值函数定义>" << endl;
 }
 
-void _head_statement() {
+void _head_statement(SymbolType &type, string &name) {
     // ＜声明头部＞   ::=  int＜标识符＞
     //                |  char＜标识符＞
+    type = VOIDTK;
+    name = "1";
     if (symbol == CHARTK || symbol == INTTK) { // int || char
-        getsym(yes);
-        array_function_with_return[index_array_function_with_return++] = token;
+        type = symbol;
+        getsym();
         if (symbol == IDENFR) { // 标识符
-            getsym(yes);
+            name = token;
+            getsym();
+        }
+        else {
+            error('0');
         }
     }
     fprintf(f_out, "<声明头部>\n");
@@ -787,7 +942,10 @@ void _loop() {
 void _string() {
     // ＜字符串＞   ::=  "｛十进制编码为32,33,35-126的ASCII字符｝"
     if (symbol == STRCON) { // 字符串
-        getsym(yes);
+        getsym();
+    }
+    else {
+        error('0');
     }
     fprintf(f_out, "<字符串>\n");
     cout << "<字符串>" << endl;
@@ -795,27 +953,37 @@ void _string() {
 
 void _step() {
     // ＜步长＞::= ＜无符号整数＞
+
     _unsigned_int(); // 无符号整数
     fprintf(f_out, "<步长>\n");
     cout << "<步长>" << endl;
 }
 
-void _unsigned_int() {
+bool _unsigned_int(bool outError = true) {
     // ＜无符号整数＞  ::= ＜数字＞｛＜数字＞｝
+    bool haserror = false;
     if (symbol == INTCON) {
         getsym(yes);
     }
+    else {
+        haserror = true;
+        if (outError) {
+            error('0');
+        }
+    }
     fprintf(f_out, "<无符号整数>\n");
     cout << "<无符号整数>" << endl;
+    return haserror;
 }
 
-void _int() {
+bool _int(bool outError = true) {
     if (symbol == PLUS || symbol == MINU) {
         getsym(yes);
     }
-    _unsigned_int(); // 无符号整数
+    bool haserror = _unsigned_int(outError); // 无符号整数
     fprintf(f_out, "<整数>\n");
     cout << "<整数>" << endl;
+    return haserror;
 }
 
 void _char() {
@@ -965,7 +1133,7 @@ void _statement() {
     }
     else if (symbol == IDENFR) {    // 赋值语句 有无返回值函数调用语句
         pre_read_Symbol(1);
-        if (symbol_pre == LPARENT) { // (
+        if (symbol_later == LPARENT) { // (
             // 有无返回值函数调用语句
             for (int i = 0; i < index_array_function_with_return; ++i) {
                 if (array_function_with_return[i] == token) {
@@ -1114,15 +1282,15 @@ void _var_define() {
 
     if (symbol == INTTK || symbol == CHARTK) { // 类型标识符
         int i = 1;
-        while (symbol_pre != COMMA && symbol_pre != SEMICN && symbol_pre != ASSIGN) {
+        while (symbol_later != COMMA && symbol_later != SEMICN && symbol_later != ASSIGN) {
             pre_read_Symbol(i++) ;
         }
-        if (symbol_pre == SEMICN || symbol_pre == COMMA) { // ; ,
+        if (symbol_later == SEMICN || symbol_later == COMMA) { // ; ,
             _var_define_no_initialization();    // 变量定义无初始化
         }
         else {
             //pre_read_Symbol(1);
-//            if (symbol_pre == IDENFR) {    // 标识符
+//            if (symbol_later == IDENFR) {    // 标识符
 //
 //            }
             _var_define_with_initialization();  // 变量定义及初始化
@@ -1179,7 +1347,7 @@ void _factor() {
     //              ｜＜有返回值函数调用语句＞
     if (symbol == IDENFR) { // 标识符 有返回值函数调用语句
         pre_read_Symbol(1);
-        if (symbol_pre == LPARENT) {    // (
+        if (symbol_later == LPARENT) {    // (
             _function_with_return_call();
         }
         else {
