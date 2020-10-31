@@ -728,28 +728,51 @@ void _head_statement(SymbolType &type, string &name) {
     cout << "<声明头部>" << endl;
 }
 
-void _table_parameter() {
+bool _table_parameter(ParameterTable &ans) {
     // ＜参数表＞    ::=  ＜类型标识符＞＜标识符＞{,＜类型标识符＞＜标识符＞}
     //               |  ＜空＞
+    ParameterTable ret;
+    SymbolType type;
+    string varName;
+    bool error_return = true;
     if (symbol == INTTK || symbol == CHARTK) { // 类型标识符
-        getsym(yes);
-        if (symbol == IDENFR) { // 标识符
-            getsym(yes);
-        }
-        if (symbol == COMMA) { // ,
-            while (symbol == COMMA) { // ,
-                getsym(yes);
-                if (symbol == INTTK || symbol == CHARTK) { // 类型标识符
-                    getsym(yes);
-                    if (symbol == IDENFR) { // 标识符
-                        getsym(yes);
+        do {
+            if (symbol == INTTK || symbol == CHARTK) {
+                type = symbol;
+                getsym();
+                if (symbol == IDENFR) { // 标识符
+                    varName = token;
+                    getsym();
+                    if (scan_time == 1) {
+                        ret.push_back(type);
+                    }   else {
+                        VarMapTerm varMapTerm;
+                        varMapTerm.isArray = false;
+                        varMapTerm.isConst = false;
+                        varMapTerm.type = type;
+                        varMap[funcCurrent.name][varName] = varMapTerm;
                     }
+                }   else {
+                    error('0');
+                    error_return = false;
                 }
+            }   else {
+                error('0');
+                error_return = false;
             }
-        }
+            if (symbol == COMMA) {
+                getsym();
+            }   else {
+                break;
+            }
+        }   while (true);
+    }
+    if (scan_time == 1) {
+        ans = ret;
     }
     fprintf(f_out, "<参数表>\n");
     cout << "<参数表>" << endl;
+    return error_return;
 }
 
 void _statement_combination() {
@@ -828,24 +851,41 @@ void _function_no_return_define() {
 
 void _main() {
     // ＜主函数＞    ::= void main‘(’‘)’ ‘{’＜复合语句＞‘}’
+    funcCurrent.type = VOIDTK;
+    funcCurrent.name = "main";
     if (symbol == VOIDTK) { // void
-        getsym(yes);
-        if (symbol == MAINTK) { // main
-            getsym(yes);
-            if (symbol == LPARENT) { // (
-                getsym(yes);
-                if (symbol == RPARENT) { // )
-                    getsym(yes);
-                    if (symbol == LBRACE) { // {
-                        getsym(yes);
-                        _statement_combination(); // 复合语句
-                        if (symbol == RBRACE) { // }
-                            getsym(yes);
-                        }
-                    }
-                }
-            }
+        getsym();
+    }   else {
+        error('0');
+    }
+    if (symbol == MAINTK) { // main
+        getsym();
+    }   else {
+        error('0');
+    }
+    if (symbol == LPARENT) { // (
+        getsym();
+    }   else {
+        error('0');
+    }
+    if (symbol == RPARENT) { // )
+        getsym();
+    }   else {
+        error('l');
+        if (symbol != LBRACE) {
+            getsym();
         }
+    }
+    if (symbol == LBRACE) { // {
+        getsym();
+    }   else {
+        error('0');
+    }
+    _statement_combination(); // 复合语句
+    if (symbol == RBRACE) { // }
+        getsym();
+    }   else {
+        error('0');
     }
     fprintf(f_out, "<主函数>\n");
     cout << "<主函数>" << endl;
@@ -895,18 +935,37 @@ void _condition() {
     cout << "<条件>" << endl;
 }
 
-void _expression() {
+SymbolType _expression() {
     //  ＜表达式＞    ::= ［＋｜－］＜项＞{＜加法运算符＞＜项＞}
+    SymbolType r = CHARTK;
+    SymbolType s;
+    isConst = true;
     if (symbol == PLUS || symbol == MINU) { // 加法运算符
-        getsym(yes);
+        getsym();
+        r = INTTK;
+        if (symbol != INTCON) {
+            isConst = false;
+        }
     }
-    _term(); // 项
+    if (symbol != INTCON && symbol != CHARCON) {
+        isConst = false;
+    }
+    s = _term(); // 项
     while (symbol == PLUS || symbol == MINU) { // 加法运算符
-        getsym(yes);
+        getsym();
         _term(); // 项
+        r = INTTK;
+        isConst = false;
+    }
+    if (s != CHARTK) {
+        r = INTTK;
+    }
+    if (s == FOUL) {
+        r = s;
     }
     fprintf(f_out, "<表达式>\n");
     cout << "<表达式>" << endl;
+    return r;
 }
 
 void _term() {
@@ -1553,15 +1612,6 @@ void _var_define_with_initialization() {
                     getsym(yes);
                     if (symbol == ASSIGN) { // =
                         getsym(yes);
-//                        if (symbol == LBRACE) { // {
-//                            do {
-//                                getsym(yes);
-//                                _const();    // 常量
-//                            }   while (symbol == COMMA);    // ,
-//                            if (symbol == RBRACE) { // }
-//                                getsym(yes);
-//                            }
-//                        }
                         while (symbol != SEMICN) {
                             if (LBRACE ==  symbol || RBRACE == symbol || COMMA == symbol) {
                                 getsym(yes);
@@ -1577,22 +1627,6 @@ void _var_define_with_initialization() {
                             getsym(yes);
                             if (symbol == ASSIGN) { // =
                                 getsym(yes);
-                                /*
-                                if (symbol == LBRACE) { // {
-                                    do {
-                                        do {
-                                            getsym(yes);
-                                            _const();   // 常量
-                                        }   while (symbol == COMMA);    // ,
-                                        if (symbol == RBRACE) { // }
-                                            getsym(yes);
-                                        }
-                                    }   while (symbol == COMMA);    // ,
-                                    if (symbol == RBRACE) { // }
-                                        getsym(yes);
-                                    }
-                                }*/
-                                
                                 while (symbol != SEMICN) {
                                     if (LBRACE ==  symbol || RBRACE == symbol || COMMA == symbol) {
                                         getsym(yes);
