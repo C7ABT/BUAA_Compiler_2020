@@ -94,7 +94,7 @@ bool ErrorEnable = false;   // 输出错误处理
 //bool Func_Return_current;   // 当前函数是否含有return
 struct Func_current {
     string name;
-    string type;
+    SymbolType type;
     bool return_has;
 } funcCurrent;
 int scan_time = 1;  // 第几遍
@@ -689,15 +689,20 @@ void _function_with_return_define() {
         }   else {
             error('0');
         }
-        _statement_combination();
-        if (funcCurrent.return_has == false) {
-            error('h');
-        }
-        if (symbol == RBRACE) { // }
-            getsym();
-        }   else {
-            error('0');
-        }
+    }
+    if (symbol == LBRACE) {
+        getsym();
+    }   else {
+        error('0');
+    }
+    _statement_combination();
+    if (funcCurrent.return_has == false) {
+        error('h');
+    }
+    if (symbol == RBRACE) { // }
+        getsym();
+    }   else {
+        error('0');
     }
     fprintf(f_out, "<有返回值函数定义>\n");
     cout << "<有返回值函数定义>" << endl;
@@ -762,26 +767,60 @@ void _statement_combination() {
 
 void _function_no_return_define() {
     // ＜无返回值函数定义＞  ::= void＜标识符＞'('＜参数表＞')''{'＜复合语句＞'}'
+    funcCurrent.return_has = false;
+    funcCurrent.type = VOIDTK;
+    string funcName;
     if (symbol == VOIDTK) { // void
-        getsym(yes);
+        getsym();
         if (symbol == IDENFR) { // 标识符
-            array_function_no_return[index_array_function_no_return++] = token;
-            getsym(yes);
+            funcName = token;
+            funcCurrent.name = funcName;
+            getsym();
             if (symbol == LPARENT) { // (
-                getsym(yes);
-                _table_parameter(); // 参数表
-                if (symbol == RPARENT) { // )
-                    getsym(yes);
-                    if (symbol == LBRACE) { // {
-                        getsym(yes);
-                        _statement_combination(); // 复合语句
-                        if (symbol == RBRACE) { // }
-                            getsym(yes);
-                        }
-                    }
+                getsym();
+            }   else {
+                error('0');
+            }
+            ParameterTable parameterTable;
+            _table_parameter(parameterTable);
+            if (scan_time == 1) {
+                FuncMapTerm funcMapTerm;
+                funcMapTerm.type = VOIDTK;
+                funcMapTerm.parametertable = parameterTable;
+                if (funcMap.count(funcCurrent.name) > 0) {
+                    bool errorEnable_temp;
+                    errorEnable_temp = ErrorEnable;
+                    ErrorEnable = true;
+                    error('b');
+                    ErrorEnable = errorEnable_temp;
+                }   else {
+                    funcMap[funcCurrent.name] = funcMapTerm;
                 }
             }
+            if (symbol == RPARENT) {    // )
+                getsym();
+            }   else {
+                error('l');
+                if (symbol != LBRACE) { // {
+                    getsym();
+                }
+            }
+            if (symbol == LBRACE) {
+                getsym();
+            }   else {
+                error('0');
+            }
+            _statement_combination();   // 复合语句
+            if (symbol == RBRACE) {
+                getsym();
+            }   else {
+                error('0');
+            }
+        }   else {
+            error('0');
         }
+    }   else {
+        error('0');
     }
     fprintf(f_out, "<无返回值函数定义>\n");
     cout << "<无返回值函数定义>" << endl;
@@ -814,9 +853,7 @@ void _main() {
 
 void _list_statement() {
     // ＜语句列＞   ::= ｛＜语句＞｝
-    while (symbol == IFTK || symbol == WHILETK || symbol == FORTK || symbol == LBRACE
-           || symbol == IDENFR || symbol == SCANFTK || symbol == PRINTFTK || symbol == SEMICN
-           || symbol == RETURNTK || symbol == SWITCHTK ) { // if while for ( 标识符 scanf printf ; return switch
+    while (symbol != RBRACE ) { // if while for ( 标识符 scanf printf ; return switch
         _statement(); // 语句
     }
     fprintf(f_out, "<语句列>\n");
@@ -953,8 +990,7 @@ void _string() {
 
 void _step() {
     // ＜步长＞::= ＜无符号整数＞
-
-    _unsigned_int(); // 无符号整数
+    _unsigned_int(yes); // 无符号整数
     fprintf(f_out, "<步长>\n");
     cout << "<步长>" << endl;
 }
@@ -995,16 +1031,29 @@ void _char() {
 void _scanf() {
     // ＜读语句＞    ::=  scanf '('＜标识符＞')'
     if (symbol == SCANFTK) { // scanf
-        getsym(yes);
+        getsym();
         if (symbol == LPARENT) { // (
-            getsym(yes);
-            if (symbol == IDENFR) { // 标识符
+            do {
+                getsym();
+                if (symbol == IDENFR) { // 标识符
+                    getsym(yes);
+                }   else {
+                    error('0');
+                }
+            }   while (symbol == COMMA);
+            if (symbol == RPARENT) { // )
                 getsym(yes);
+            }   else {
+                error('l');
+                if (symbol != SEMICN) {
+                    getsym();
+                }
             }
-            if (symbol == RPARENT) { // }
-                getsym(yes);
-            }
+        }   else {
+            error('0');
         }
+    }   else {
+        error('0');
     }
     fprintf(f_out, "<读语句>\n");
     cout << "<读语句>" << endl;
@@ -1015,13 +1064,13 @@ void _printf() {
     //              |  printf '('＜字符串＞ ')'
     //              | printf '('＜表达式＞')'
     if (symbol == PRINTFTK) { // printf
-        getsym(yes);
+        getsym();
         if (symbol == LPARENT) { // (
-            getsym(yes);
+            getsym();
             if (symbol == STRCON) { // 字符串
                 _string();  // 字符串
                 if (symbol == COMMA) { // ,
-                    getsym(yes);
+                    getsym();
                     _expression();  // 表达式
                 }
             }
@@ -1030,8 +1079,17 @@ void _printf() {
             }
             if (symbol == RPARENT) { // )
                 getsym(yes);
+            }   else {
+                error('l');
+                if (symbol != SEMICN) {
+                    getsym();
+                }
             }
+        }   else {
+            error('0');
         }
+    }   else {
+        error('0');
     }
     fprintf(f_out, "<写语句>\n");
     cout << "<写语句>" << endl;
@@ -1039,68 +1097,129 @@ void _printf() {
 
 void _return() {
     // ＜返回语句＞   ::=  return['('＜表达式＞')']
+    SymbolType type = FOUL;
     if (symbol == RETURNTK) { // return
-        getsym(yes);
+        getsym();
         if (symbol == LPARENT) { // (
-            getsym(yes);
-            _expression();  // 表达式
+            getsym();
+            type = _expression();  // 表达式
             if (symbol == RPARENT) { // )
-                getsym(yes);
+                getsym();
+            }   else {
+                error('l');
+                if (symbol != SEMICN) {
+                    getsym();
+                }
             }
+        }   else {
+            type = VOIDTK;
+        }
+    }   else {
+        error('0');
+    }
+    if (type != funcCurrent.type) {
+        if (funcCurrent.type == VOIDTK) {
+            error('g');
+        }   else {
+            error('h');
         }
     }
+    funcCurrent.return_has = true;
     fprintf(f_out, "<返回语句>\n");
     cout << "<返回语句>" << endl;
 }
 
-void _function_with_return_call() {
+SymbolType _function_with_return_call() {
     // ＜有返回值函数调用语句＞ ::= ＜标识符＞'('＜值参数表＞')'
+    SymbolType symbol_return = FOUL;
+    string funcName;
+    ParameterTable parameterTable;
+    char cmpret;
     if (symbol == IDENFR) { // 标识符
-        getsym(yes);
+        funcName = token;
+        getsym();
         if (symbol == LPARENT) { // (
-            getsym(yes);
-            _table_parameter_value(); // 值参数表
-            if (symbol == RPARENT) { // )
-                getsym(yes);
+            getsym();
+        }   else {
+            error('0');
+        }
+        _table_parameter_value(parameterTable); // 值参数表
+        if (symbol == RPARENT) { // )
+            getsym();
+        }   else {
+            error('l');
+        }
+        if (funcMap.count(funcName) == 0) {
+            error('c');
+            symbol_return = FOUL;
+        }   else {
+            symbol_return = funcMap[funcName].type;
+            cmpret = parametertable_cmp(funcMap[funcName].parametertable, parameterTable);
+            if (cmpret != '0') {
+                error(cmpret);
             }
         }
+    }   else {
+        error('0');
+        symbol_return = FOUL;
     }
+
     fprintf(f_out, "<有返回值函数调用语句>\n");
     cout << "<有返回值函数调用语句>" << endl;
+    return symbol_return;
 }
 
 void _function_no_return_call() {
     // ＜无返回值函数调用语句＞ ::= ＜标识符＞'('＜值参数表＞')'
+    string funcName;
+    ParameterTable parameterTable;
+    char cmpret;
     if (symbol == IDENFR) { // 标识符
-        getsym(yes);
+        funcName = token;
+        getsym();
         if (symbol == LPARENT) { // (
-            getsym(yes);
-            _table_parameter_value(); // 值参数表
-            if (symbol == RPARENT) { // )
-                getsym(yes);
+            getsym();
+        }   else {
+            error('0');
+        }
+        _table_parameter_value(parameterTable); // 值参数表
+        if (symbol == RPARENT) { // )
+            getsym();
+        }   else {
+            error('l');
+        }
+        if (funcMap.count(funcName) == 0) {
+            error('c');
+        }   else {
+            cmpret = parametertable_cmp(funcMap[funcName].parametertable, parameterTable);
+            if (cmpret != '0') {
+                error(cmpret);
             }
         }
+    }   else {
+        error('0');
     }
     fprintf(f_out, "<无返回值函数调用语句>\n");
     cout << "<无返回值函数调用语句>" << endl;
 }
 
-void _table_parameter_value() {
+void _table_parameter_value(ParameterTable &ans) {
     // ＜值参数表＞   ::= ＜表达式＞{,＜表达式＞}
     //              ｜   ＜空＞
-    if (symbol == RPARENT) { // 空
-        fprintf(f_out, "<值参数表>\n");
-//        cout << "<值参数表>" << endl;
-    }
-    else {
-        _expression();  // 表达式
-        while (symbol == COMMA) { // ,
-            getsym(yes);
-            _expression();  // 表达式
+    ParameterTable ret;
+    SymbolType type;
+    if (symbol != RPARENT) { // 非空
+        type = _expression();   //  表达式
+        ret.push_back(type);
+        while (symbol == COMMA) {
+            getsym();
+            type = _expression();
+            ret.push_back(type);
         }
-        fprintf(f_out, "<值参数表>\n");
-        cout << "<值参数表>" << endl;
     }
+    ans = ret;
+    fprintf(f_out, "<值参数表>\n");
+    cout << "<值参数表>" << endl;
 }
 
 void _statement() {
@@ -1289,10 +1408,6 @@ void _var_define() {
             _var_define_no_initialization();    // 变量定义无初始化
         }
         else {
-            //pre_read_Symbol(1);
-//            if (symbol_later == IDENFR) {    // 标识符
-//
-//            }
             _var_define_with_initialization();  // 变量定义及初始化
         }
     }
