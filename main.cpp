@@ -452,8 +452,22 @@ int _function_with_return_define(); // 有返回值函数定义
 int _function_no_return_define(); // 无返回值函数定义
 int _statement_combination(int num); // 复合语句
 int _main(); // 主函数
+int program(); // 程序
 
-void program(); // 程序
+int program() {
+//    ＜程序＞    ::= ［＜常量说明＞］［＜变量说明＞］{＜有返回值函数定义＞|＜无返回值函数定义＞}＜主函数＞
+    _const_statement(1);
+    _var_statement(1);
+    while (_main() == 0) {
+        if (_function_with_return_call() == 0) {
+            _function_no_return_call();
+        }
+    }
+    if (nextsym == cnt_word + 1) {
+        return 1;
+    }
+    return 0;
+} // 程序
 void _string(); // 字符串
 int _const() {
 //    ＜常量＞   ::=  ＜整数＞|＜字符＞
@@ -1845,3 +1859,34 @@ int _char() {
     }
     return 0;
 } // 字符
+
+void output() {
+    for (int i = 1; i <= err_cnt; ++i) {
+        fprintf(f_error, "%d %c\n", error_list[i].line, error_list[i].type);
+    }
+}
+
+void init_file() {
+    f_in = fopen("testfile.txt", "r");
+    f_out = fopen("output.txt", "w");
+    f_error = fopen("error.txt", "w");
+}
+
+int main() {
+    init_file();
+    while (fgets(single_line, 1002, f_in) != NULL) {
+        line += 1;
+        getsym();
+    }
+    for (int i = 1; i < 10080; ++i) {
+        parameterTable[i].parameter = 0;
+        symbolList[i].type = 1;
+        symbolList[i].isConst = true;
+    }
+    program();
+    output();
+    fclose(f_error);
+    fclose(f_in);
+    fclose(f_out);
+    return 0;
+}
