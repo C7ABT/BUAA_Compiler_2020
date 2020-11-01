@@ -329,7 +329,7 @@ void _var_define(); // 变量定义
 void _var_statement(); // 变量说明
 void _var_define_no_initialization(); // 变量定义无初始化
 void _var_define_with_initialization(); // 变量定义及初始化
-void scanf(); // 读语句
+void _scanf(); // 读语句
 void _printf(); // 写语句
 void _term(); // 项
 void _factor(); // 因子
