@@ -271,7 +271,7 @@ void Reserver_Token() {
     }   else {
         symbol = IDENFR;
     }
-}   // which symbol does the token mean
+}   // which zsymbol does the token mean
 
 void getsym(bool checkError = true) {
     do {
