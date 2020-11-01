@@ -1303,35 +1303,41 @@ void _statement() {
         _loop();    // 循环语句
     }
     else if (symbol == LBRACE) { // {语句列}
-        getsym(yes);
+        getsym();
         _list_statement();  // 语句列
         if (symbol == RBRACE) { // }
-            getsym(yes);
+            getsym();
+        }   else {
+            error('0');
         }
     }
     else if (symbol == IDENFR) {    // 赋值语句 有无返回值函数调用语句
+        string name = token;
         pre_read_Symbol(1);
-        if (symbol_later == LPARENT) { // (
-            // 有无返回值函数调用语句
-            for (int i = 0; i < index_array_function_with_return; ++i) {
-                if (array_function_with_return[i] == token) {
-                    _function_with_return_call(); // 有返回值函数调用语句
-                    break;
-                }
-            }
-            for (int i = 0; i < index_array_function_no_return; ++i) {
-                if (array_function_no_return[i] == token) {
-                    _function_no_return_call(); // 无返回值函数调用语句
-                    break;
-                }
-            }
+        if (symbol_later != LPARENT) {
+            // 赋值语句
+            _assign();
             if (symbol == SEMICN) { // ;
-                getsym(yes);
+                getsym();
+            }   else {
+                error('k');
             }
         }
         else {
-            // 赋值语句
-            _assign();
+            // 有无返回值函数调用语句
+            if (scan_time == 1) {
+                _function_no_return_call();
+            }   else {
+                if (funcMap.count(name) > 0) {
+                    if (funcMap[name].type == VOIDTK) {
+                        _function_no_return_call();
+                    }   else {
+                        _function_with_return_call();
+                    }
+                }   else {
+                    _function_no_return_call();
+                }
+            }
             if (symbol == SEMICN) { // ;
                 getsym(yes);
             }
@@ -1511,7 +1517,7 @@ void _assign() {
     cout << "<赋值语句>" << endl;
 }
 
-void _factor() {
+SymbolType _factor() {
     // ＜因子＞    ::= ＜标识符＞
     //              ｜＜标识符＞'['＜表达式＞']'
     //              | ＜标识符＞'['＜表达式＞']''['＜表达式＞']'
@@ -1519,44 +1525,91 @@ void _factor() {
     //              ｜＜整数＞
     //              | ＜字符＞
     //              ｜＜有返回值函数调用语句＞
+    SymbolType r = CHARTK;
     if (symbol == IDENFR) { // 标识符 有返回值函数调用语句
         pre_read_Symbol(1);
         if (symbol_later == LPARENT) {    // (
             _function_with_return_call();
         }
         else {
-            getsym(yes);
+            string varName = token;
+            bool isArray = false;
+            getsym();
             if (symbol == LBRACK) { // [
-                getsym(yes);
-                _expression();  // 表达式
+                SymbolType type;
+                isArray = true;
+                getsym();
+                type = _expression();  // 表达式
+                if (type != INTTK) {
+                    error('i');
+                }
                 if (symbol == RBRACK) { // ]
-                    getsym(yes);
+                    getsym();
                     if (symbol == LBRACK) { // [
-                        getsym(yes);
+                        getsym();
                         _expression();  // 表达式
                         if (symbol == RBRACK) { // ]
-                            getsym(yes);
+                            getsym();
+                        }   else {
+                            error('l');
+                            r = FOUL;
                         }
+                    }
+                }   else {
+                    error('l');
+                    r = FOUL;
+                }
+            }
+            if (scan_time == 2) {
+                string useFuncName = funcCurrent.name;
+                if (varMap[funcCurrent.name].count(varName) == 0){
+                    useFuncName = "0";
+                }
+                if (varMap[useFuncName].count(varName) == 0) {
+                    error('c');
+                    r = FOUL;
+                }   else {
+                    SymbolType type = varMap[useFuncName][varName].type;
+                    if (varMap[useFuncName][varName].isArray != isArray) {
+                        error('0');
+                    }
+                    if (type == CHARTK) {
+                        r = CHARTK;
+                    }   else if (type == INTTK) {
+                        r = INTTK;
+                    }   else {
+                        r = FOUL;
+                        error('0');
                     }
                 }
             }
         }
     }
     else if (symbol == LPARENT) {   // (
-        getsym(yes);
+        r = INTTK;
+        getsym();
         _expression();  // 表达式
         if (symbol == RPARENT) {    // )
-            getsym(yes);
+            getsym();
+        }   else {
+            error('l');
+            r = FOUL;
         }
     }
     else if (symbol == PLUS || symbol == MINU || symbol == INTCON) {
         _int(); // 整数
+        r = INTTK;
     }
     else if (symbol == CHARCON) {
-        _char();    // 字符
+        getsym();    // 字符
+        r = CHARTK;
+    }   else {
+        error('0');
+        r = FOUL;
     }
     fprintf(f_out, "<因子>\n");
     cout << "<因子>" << endl;
+    return r;
 }
 
 void _var_define_no_initialization() {
