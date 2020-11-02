@@ -74,7 +74,7 @@ map<char, string> reservedSymbol = {
         {'}', "RBRACE"}
 };
 
-int cnt_word;
+int cnt_word = 0;
 int line = 0;   // 行数
 FILE *f_in, *f_out, *f_error;
 string token;   // 单词
@@ -87,8 +87,6 @@ struct Word {
     string val; // 内容
     string type; // 种类
     int line;   // 行数
-//    int grammar_analysis[MAX];   // 语法分析
-//    int cnt_grammar_analysis;    // 语法分析个数
 };
 Word word[10086];
 
@@ -376,11 +374,6 @@ void getsym() {
     }
 }
 
-//void wipe(int begin, int end) {
-//    for (int i = begin; i <= end; ++i) {
-//        word[i].cnt_grammar_analysis = 0;
-//    }
-//}   // 语法分析回退
 int search() {
     for (int i = 1; i < top; ++i) {
         if (symbolList[top].val == symbolList[i].val && symbolList[top].depth == symbolList[i].depth) {
@@ -444,7 +437,7 @@ int _var_statement(int num); // 变量说明
 int _head_statement(); // 声明头部
 int _step(); // 步长
 int _table_parameter(); // 参数表
-int _factor(); // 因子    !!!!!!!!!!!!!!!!!!!!!!!!!
+int _factor(); // 因子
 int _statement(int num); // 语句
 int _term(); // 项
 int _expression(); // 表达式
@@ -474,8 +467,8 @@ int program() {
     _const_statement(1);
     _var_statement(1);
     while (_main() == 0) {
-        if (_function_with_return_call() == 0) {
-            _function_no_return_call();
+        if (_function_with_return_define() == 0) {
+            _function_no_return_define();
         }
     }
     if (nextsym == cnt_word + 1) {
@@ -548,7 +541,7 @@ int _const_define(int num) {
             nextsym += 1;
             if (isType("ASSIGN")) {
                 nextsym += 1;
-                if (_int() == 1) {
+                if (_char() == 1) {
                     if (word[nextsym++].type != "COMMA") { // ,
                         nextsym -= 1;
                         return 1;
@@ -785,7 +778,35 @@ int _var_define_with_initialization(int num) {
                                 error('0', index_single_line);
                             }
                         }
+                    }   else if (isType("ASSIGN")) {
+                        nextsym += 1;
+                        if (isType("LBRACE")) {
+                            nextsym += 1;
+                            while (type_const = _const()) {
+                                if (type_const != type_temp) {
+                                    error('o', word[nextsym - 1].line);
+                                }
+                                count_1 -= 1;
+                                if (isType("COMMA")) {
+                                    nextsym += 1;
+                                }   else if (isType("RBRACE")) {
+                                    if (count_1) {
+                                        error('n', word[nextsym].line);
+                                    }
+                                    nextsym += 1;
+                                    return 1;
+                                }   else {
+                                    error('0', index_single_line);
+                                }
+                            }
+                        }   else {
+                            error('0', index_single_line);
+                        }
+                    }   else {
+                        error('0', index_single_line);
                     }
+                }   else {
+                    error('0', index_single_line);
                 }
             }   else if (isType("ASSIGN")) {
                 nextsym += 1;
@@ -965,7 +986,7 @@ int _factor() {
         }   else {
             return type_temp;
         }
-    }   else if (isType("LPARENT")) {
+    }   else if (isType("LPARENT")) {   // (
         nextsym += 1;
         if (_expression()) {
             if (isType("RPARENT")) {
@@ -1109,7 +1130,6 @@ int _unsigned_int() {
 int _step() {
 //    ＜步长＞::= ＜无符号整数＞
     if (_unsigned_int() == 1) {
-//        word[nextsym - 1].grammar_analysis[++word[nextsym - 1].cnt_grammar_analysis] = 25;
         return 1;
     }
     return 0;
@@ -1329,7 +1349,7 @@ int _case(int num, int type_expression) {
             error('o', word[nextsym - 1].line);
         }
         if (type_const) {
-            if (isType("COLON")) {
+            if (isType("COLON")) {  // :
                 nextsym += 1;
                 if (_statement(num) == 1) {
                     return 1;
@@ -1726,7 +1746,7 @@ int _table_parameter_value(int num) {
         if ((parameterTable[num].parameter >= count)
             && ((parameterTable[num].type[count] == 1 && type_expression == 2)
             || (parameterTable[num].type[count] == 2 && type_expression == 1))) {
-            flag_error_e = false;
+            flag_error_e = true;
         }
         while (isType("COMMA")) {
             nextsym += 1;
@@ -1734,8 +1754,8 @@ int _table_parameter_value(int num) {
             count += 1;
             if ((parameterTable[num].parameter >= count)
                 && ((parameterTable[num].type[count] == 1 && type_expression == 2)
-                    || (parameterTable[num].type[count] == 2 && type_expression == 1))) {
-                flag_error_e = false;
+                || (parameterTable[num].type[count] == 2 && type_expression == 1))) {
+                flag_error_e = true;
             }
             if (type_expression == 0) {
                 error('0', index_single_line);
@@ -1750,10 +1770,9 @@ int _table_parameter_value(int num) {
     }   else {
         if (count != parameterTable[num].parameter) {
             error('d', word[nextsym - 1].line);
-            return 1;
         }
+        return 1;
     }
-    return 0;
 }// 值参数表
 int _condition() {
 //    ＜条件＞    ::=  ＜表达式＞＜关系运算符＞＜表达式＞
@@ -1774,8 +1793,8 @@ int _condition() {
             if (type_expression) {
                 if (flag_error_f) {
                     error('f', word[nextsym - 1].line);
-                    return 1;
                 }
+                return 1;
             }   else {
                 error('0', index_single_line);
             }
@@ -1861,9 +1880,9 @@ void output() {
 }
 
 void init_file() {
-    f_in = fopen("../testfile.txt", "r");
-    f_out = fopen("../output.txt", "w");
-    f_error = fopen("../error.txt", "w");
+    f_in = fopen("testfile.txt", "r");
+    f_out = fopen("output.txt", "w");
+    f_error = fopen("error.txt", "w");
 }
 
 int main() {
@@ -1875,7 +1894,7 @@ int main() {
     for (int i = 1; i < 10080; ++i) {
         parameterTable[i].parameter = 0;
         symbolList[i].type = 1;
-        symbolList[i].isConst = true;
+        symbolList[i].isConst = false;
     }
     program();
     output();
