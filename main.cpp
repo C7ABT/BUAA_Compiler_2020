@@ -1115,6 +1115,12 @@ int _return(int num) {
                 in_func_with_return = 0;
                 return 1;
             }
+        }   else {
+            if (num) {
+                error('h', word[nextsym - 1].line);
+            }
+            in_func_with_return = 0;
+            return 1;
         }
     }
     return 0;
