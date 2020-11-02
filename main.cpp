@@ -54,6 +54,26 @@ map<string, string> reservedWords = {
         {"printf", "PRINTFTK"},
         {"return", "RETURNTK"}
 };
+
+map<char, string> reservedSymbol = {
+        {'+', "PLUS"},
+        {'-', "MINU"},
+        {'*', "MULT"},
+        {'/', "DIV"},
+        {'<', "LSS"},
+        {'>', "GRE"},
+        {':', "COLON"},
+        {'=', "ASSIGN"},
+        {';', "SEMICN"},
+        {',', "COMMA"},
+        {'(', "LPARENT"},
+        {')', "RPARENT"},
+        {'[', "LBRACK"},
+        {']', "RBRACK"},
+        {'{', "LBRACE"},
+        {'}', "RBRACE"}
+};
+
 int cnt_word;
 int line = 0;   // 行数
 FILE *f_in, *f_out, *f_error;
@@ -183,19 +203,24 @@ bool isReserved_Token(string x) {
     string x_temp(x);
     int token_temp_len = x.size();
     for(int i = 0; i < token_temp_len; ++i){
-        x.at(i) = tolower(x.at(i));
+        x_temp.at(i) = tolower(x_temp.at(i));
     }
-    return (reservedWords.find(x) != reservedWords.end());
+    return (reservedWords.find(x_temp) != reservedWords.end());
 }   // Whether token is legal
 void Reserver_Token(int num) {
     if (isReserved_Token(word[num].val)) {
-        word[num].type = reservedWords[word[num].val];
+        string x_temp(word[num].val);
+        int token_temp_len = word[num].val.size();
+        for(int i = 0; i < token_temp_len; ++i){
+            x_temp.at(i) = tolower(x_temp.at(i));
+        }
+        word[num].type = reservedWords[x_temp];
     }   else {
         word[num].type = "IDENFR";
     }
 }   // which symbol does the token mean
 int Reserver_ch(char ch) {
-    for (int i = 0; i < 30; ++i) {
+    for (int i = 0; i < 17; ++i) {
         if (ch == op[i]) {
             return i;
         }
@@ -207,17 +232,13 @@ int Reserver_ch(char ch) {
 }
 void error(char c, int line) {
     error_list[++err_cnt].type = c;
-    error_list->line = line;
+    error_list[err_cnt].line = line;
 }
-void catToken(char ch) {
+char ch;
+void catToken() {
     token += ch;
 }   // Add ch to token
-void retract(char ch, int pos) {
-    ch = single_line[--pos];
-}
-void getChar(char ch, int pos) {
-    ch = single_line[++pos];
-}
+
 int index_single_line = -1;
 void clearToken() {
     token.clear();
@@ -226,56 +247,64 @@ void addword() {
     word[++cnt_word].val = token;
     word[cnt_word].line = line;
 }
+
+void getChar() {
+    ch = single_line[++index_single_line];
+}
+void retract() {
+    ch = single_line[--index_single_line];
+}
 void getsym() {
     clearToken();
     index_single_line = -1;
     int len_single_line = strlen(single_line);
-    char ch = '\0';
-    while (index_single_line + 1 < len_single_line) {
-        getChar(ch, index_single_line);
+    ch = '\0';
+    while ((index_single_line + 1) < len_single_line) {
+        clearToken();
+        getChar();
         if (isLetter(ch)) {
             while (isDigit(ch) || isLetter(ch)) {
-                catToken(ch);
-                getChar(ch, index_single_line);
+                catToken();
+                getChar();
             }
-            retract(ch, index_single_line);
+            retract();
             addword();
             Reserver_Token(cnt_word);
         }
         else if (isDigit(ch)) {
             while (isDigit(ch)) {
-                catToken(ch);
-                getChar(ch, index_single_line);
+                catToken();
+                getChar();
             }
-            retract(ch, index_single_line);
+            retract();
             addword();
             word[cnt_word].type = "INTCON";
         }
         else if (isSingleQuote(ch)) {
-            getChar(ch, index_single_line);
+            getChar();
             if (!(isLetter(ch) || isDigit(ch)
                 || isDiv(ch)) || isStar(ch)
                 || isPlus(ch) || isMinus(ch)) {
                 error('a', line);   // 非法字符
             }
-            catToken(ch);
+            catToken();
             addword();
             word[cnt_word].type = "CHARCON";
             if (!isSingleQuote(ch)) {
-                getChar(ch, index_single_line);
+                getChar();
             }
         }
         else if (isDoubleQuote(ch)) {
-            getChar(ch, index_single_line);
+            getChar();
             if (isDoubleQuote(ch)) {
                 error('a', line);   // 空字符串
             }
             while (!isDoubleQuote(ch)) {
-                catToken(ch);
+                catToken();
                 if (!isSpace(ch) && !isExclamation(ch) && !(ch >= 35 && ch <= 126)) {
                     error('a', line);   // 字符串非法字符
                 }
-                getChar(ch, line);
+                getChar();
             }
             addword();
             word[cnt_word].type = "STRCON";
@@ -287,75 +316,61 @@ void getsym() {
                 error('a', line);
             }
             else if (isLess(ch)) {  // < <=
-                getChar(ch, index_single_line);
+                getChar();
                 if (isEqual(ch)) {
                     token = "<=";
                     addword();
-//                    word[++cnt_word].val = "<=";
-//                    word[cnt_word].line = line;
                     word[cnt_word].type = "LEQ";
                 }
                 else {
                     token = "<";
                     addword();
-//                    word[++cnt_word].val = "<";
-//                    word[cnt_word].line = line;
                     word[cnt_word].type = "LSS";
-                    retract(ch, index_single_line);
+                    retract();
                 }
             }
             else if (isGreater(ch)) {   // > >=
-                getChar(ch, index_single_line);
+                getChar();
                 if (isEqual(ch)) {
                     token = ">=";
                     addword();
-//                    word[++cnt_word].val = ">=";
-//                    word[cnt_word].line = line;
                     word[cnt_word].type = "GEQ";
                 }
                 else {
                     token = ">";
                     addword();
-//                    word[++cnt_word].val = ">";
-//                    word[cnt_word].line = line;
                     word[cnt_word].type = "GRE";
-                    retract(ch, index_single_line);
+                    retract();
                 }
             }
             else if (isEqual(ch)) { // = ==
-                getChar(ch, index_single_line);
+                getChar();
                 if (isEqual(ch)) {
                     token = "==";
                     addword();
-//                    word[++cnt_word].val = "==";
-//                    word[cnt_word].line = line;
                     word[cnt_word].type = "EQL";
                 }
                 else {
                     token = "=";
                     addword();
-//                    word[++cnt_word].val = "=";
-//                    word[cnt_word].line = line;
                     word[cnt_word].type = "ASSIGN";
-                    retract(ch, index_single_line);
+                    retract();
                 }
             }
             else if (isExclamation(ch)) {
-                getChar(ch, index_single_line);
+                getChar();
                 if (!isExclamation(ch)) {
                     error('a', line);
                 }
                 token = "!=";
                 addword();
-//                word[++cnt_word].val = "!=";
-//                word[cnt_word].line = line;
                 word[cnt_word].type = "NEQ";
             }
             else {
                 clearToken();
-                catToken(ch);
+                catToken();
                 addword();
-                word[cnt_word].type = type[19 + flag];
+                word[cnt_word].type = reservedSymbol[ch];
             }
         }
     }
@@ -397,7 +412,7 @@ string tolower_string(string x) {
 }
 int find_const(int num) {
     string temp = tolower_string(word[num].val);
-    for (int i = 1; i < top; ++i) {
+    for (int i = 1; i <= top; ++i) {
         if (temp == symbolList[i].val && symbolList[i].isConst == true) {
             return 1;
         }
@@ -473,13 +488,10 @@ int _const() {
 //    ＜常量＞   ::=  ＜整数＞|＜字符＞
     int start = nextsym;
     if (_int() == 1) {
-//        word[nextsym - 1].grammar_analysis[++word[nextsym - 1].cnt_grammar_analysis] = 7;
         return 1;
     }   else if (_char() == 1) {
-//        word[nextsym - 1].grammar_analysis[++word[nextsym - 1].cnt_grammar_analysis] = 7;
         return 2;
     }
-//    wipe(start, nextsym);
     nextsym = start;
     return 0;
 } // 常量
@@ -489,9 +501,9 @@ int _const_define(int num) {
     int start = nextsym;
     int top_origin = top;
     int err_cnt_origin = err_cnt;
-    if (word[nextsym].type == "INTTK") {
+    if (isType("INTTK")) {
         nextsym += 1;
-        while (word[nextsym].type == "IDENFR") {
+        while (isType("IDENFR")) {
             top += 1;
             symbolList[top].val = tolower_string(word[nextsym].val);
             symbolList[top].depth = num;
@@ -504,12 +516,11 @@ int _const_define(int num) {
                 top -= 1;
             }
             nextsym += 1;
-            if (word[nextsym].type == "ASSIGN") {
+            if (isType("ASSIGN")) {
                 nextsym += 1;
                 if (_int() == 1) {
-                    if (word[nextsym++].type == "COMMA") { // ,
+                    if (word[nextsym++].type != "COMMA") { // ,
                         nextsym -= 1;
-//                        word[nextsym - 1].grammar_analysis[++word[nextsym - 1].cnt_grammar_analysis] = 3;
                         return 1;
                     }
                 }   else {
@@ -519,9 +530,9 @@ int _const_define(int num) {
                 error('0', index_single_line);
             }
         }
-    }   else if (word[nextsym].type == "CHARTK") {
+    }   else if (isType("CHARTK")) {
         nextsym += 1;
-        while (word[nextsym].type == "IDENFR") {
+        while (isType("IDENFR")) {
             top += 1;
             symbolList[top].val = tolower_string(word[nextsym].val);
             symbolList[top].depth = num;
@@ -535,12 +546,11 @@ int _const_define(int num) {
                 top -= 1;
             }
             nextsym += 1;
-            if (word[nextsym].type == "ASSIGN") {
+            if (isType("ASSIGN")) {
                 nextsym += 1;
                 if (_int() == 1) {
-                    if (word[nextsym++].type == "COMMA") { // ,
+                    if (word[nextsym++].type != "COMMA") { // ,
                         nextsym -= 1;
-//                        word[nextsym - 1].grammar_analysis[++word[nextsym - 1].cnt_grammar_analysis] = 3;
                         return 1;
                     }
                 }   else {
@@ -551,7 +561,6 @@ int _const_define(int num) {
             }
         }
     }
-//    wipe(start, nextsym);
     nextsym = start;
     top = top_origin;
     err_cnt = err_cnt_origin;
@@ -562,22 +571,20 @@ int _const_statement(int num) {
     int start = nextsym;
     int top_origin = top;
     int err_cnt_origin = err_cnt;
-    if (word[nextsym].type == "CONSTTK") {
+    if (isType("CONSTTK")) {
         nextsym += 1;
         while (_const_define(num) == 1) {
-            if (word[nextsym].type == "SEMICN") {
+            if (isType("SEMICN")) {
                 nextsym += 1;
             }   else {
                 error('k', word[nextsym - 1].line);
             }
             if (word[nextsym].type != "CONSTTK") {
-//                word[nextsym - 1].grammar_analysis[++word[nextsym - 1].cnt_grammar_analysis] = 2;
                 return 1;
             }
             nextsym += 1;
         }
     }
-//    wipe(start, nextsym);
     nextsym = start;
     top = top_origin;
     err_cnt = err_cnt_origin;
@@ -587,13 +594,10 @@ int _var_define(int num) {
 //    ＜变量定义＞ ::= ＜变量定义无初始化＞|＜变量定义及初始化＞
     int start = nextsym;
     if (_var_define_with_initialization(num) == 1) {
-//        word[nextsym - 1].grammar_analysis[++word[nextsym - 1].cnt_grammar_analysis] = 9;
         return 1;
     }   else if (_var_define_no_initialization(num) == 1) {
-//        word[nextsym - 1].grammar_analysis[++word[nextsym - 1].cnt_grammar_analysis] = 9;
         return 1;
     }
-//    wipe(start, nextsym);
     nextsym = start;
     return 0;
 } // 变量定义
@@ -615,12 +619,10 @@ int _var_statement(int num) {
         top_origin = top;
         err_cnt_origin = err_cnt;
     }
-//    wipe(start, nextsym);
     nextsym = start;
     top = top_origin;
     err_cnt = err_cnt_origin;
     if (nextsym != start_temp) {
-//        word[nextsym - 1].grammar_analysis[++word[nextsym - 1].cnt_grammar_analysis] = 8;
         return 1;
     }
     return 0;
@@ -634,10 +636,10 @@ int _var_define_no_initialization(int num) {
     int top_origin = top;
     int err_cnt_origin = err_cnt;
     int type_temp = 0;
-    if (word[nextsym].type == "INTTK" || word[nextsym].type == "CHARTK") {
-        type_temp = (word[nextsym].type == "INTTK") ? 1 : 2;
+    if (isType("INTTK") || isType("CHARTK")) {
+        type_temp = (isType("INTTK")) ? 1 : 2;
         nextsym += 1;
-        while (word[nextsym].type == "IDENFR") {
+        while (isType("IDENFR")) {
             top += 1;
             symbolList[top].val = tolower_string(word[nextsym].val);
             symbolList[top].depth = num;
@@ -649,49 +651,45 @@ int _var_define_no_initialization(int num) {
                 top -= 1;
             }
             nextsym += 1;
-            if (word[nextsym].type == "LBRACK") {   // [
+            if (isType("LBRACK")) {   // [
                 nextsym += 1;
                 if (_unsigned_int() == 1) {
-                    if (word[nextsym].type == "RBRACK") {   // ]
+                    if (isType("RBRACK")) {   // ]
                         nextsym += 1;
                     }   else {
                         error('m', word[nextsym - 1].line);
                     }
-                    if (word[nextsym].type == "LBRACK") {   // [
+                    if (isType("LBRACK")) {   // [
                         nextsym += 1;
                         if (_unsigned_int() == 1) {
-                            if (word[nextsym].type == "RBRACK") {   // ]
+                            if (isType("RBRACK")) {   // ]
                                 nextsym += 1;
                             } else {
                                 error('m', word[nextsym - 1].line);
                             }
-                            if (word[nextsym].type == "COMMA") {
+                            if (isType("COMMA")) {
                                 nextsym += 1;
                             }   else {
-//                                word[nextsym - 1].grammar_analysis[++word[nextsym - 1].cnt_grammar_analysis] = 10;
                                 return 1;
                             }
                         }   else {
                             error('0', index_single_line);
                         }
-                    }   else if (word[nextsym].type == "COMMA") {
+                    }   else if (isType("COMMA")) {
                         nextsym += 1;
                     }   else {
-//                        word[nextsym - 1].grammar_analysis[++word[nextsym - 1].cnt_grammar_analysis] = 10;
                         return 1;
                     }
                 }   else {
                     error('0', index_single_line);
                 }
-            }   else if (word[nextsym].type == "COMMA") {
+            }   else if (isType("COMMA")) {
                 nextsym += 1;
             }   else {
-//                word[nextsym - 1].grammar_analysis[++word[nextsym - 1].cnt_grammar_analysis] = 10;
                 return 1;
             }
         }
     }
-//    wipe(start, nextsym);
     nextsym = start;
     err_cnt = err_cnt_origin;
     top = top_origin;
@@ -708,8 +706,9 @@ int _var_define_with_initialization(int num) {
     int type_temp = 0;
     int count_1 = 0;    // 一维数组
     int count_2 = 0;    // 二维数组
+    int count_2_temp = 0;
     int type_const; // 常量类型
-    if (word[nextsym].type == "INTTK" || word[nextsym].type == "CHARTK") {
+    if (isType("INTTK") || isType("CHARTK")) {
         type_temp = (isType("INTTK")) ? 1 : 2;
         nextsym += 1;
         if (isType("IDENFR")) {
@@ -748,12 +747,13 @@ int _var_define_with_initialization(int num) {
                                     nextsym += 1;
                                     while (isType("LBRACE")) { // {
                                         count_1 -= 1;
+                                        count_2_temp = count_2;
                                         nextsym += 1;
                                         while (type_const = _const()) {
                                             if (type_const != type_temp) {
                                                 error('o', word[nextsym - 1].line);
                                             }
-                                            count_2 -= 1;
+                                            count_2_temp -= 1;
                                             if (isType("COMMA")) {
                                                 nextsym += 1;
                                             }   else {
@@ -761,7 +761,7 @@ int _var_define_with_initialization(int num) {
                                             }
                                         }
                                         if (isType("RBRACE")) { // }
-                                            if (count_2) {
+                                            if (count_2_temp) {
                                                 error('n', word[nextsym].line);
                                             }
                                             nextsym += 1;
@@ -770,10 +770,9 @@ int _var_define_with_initialization(int num) {
                                             }   else if (isType("RBRACE")) {
                                                 if (count_1) {
                                                     error('n', word[nextsym].line);
-                                                    nextsym += 1;
-//                                                    word[nextsym - 1].grammar_analysis[++word[nextsym - 1].cnt_grammar_analysis] = 11;
-                                                    return 1;
                                                 }
+                                                nextsym += 1;
+                                                return 1;
                                             }   else {
                                                 error('0', index_single_line);
                                             }
@@ -795,7 +794,6 @@ int _var_define_with_initialization(int num) {
                     error('o', word[nextsym - 1].line);
                 }
                 if (type_const) {
-//                    word[nextsym - 1].grammar_analysis[++word[nextsym - 1].cnt_grammar_analysis] = 11;
                     return 1;
                 }   else {
                     error('0', index_single_line);
@@ -807,7 +805,6 @@ int _var_define_with_initialization(int num) {
             error('0', index_single_line);
         }
     }
-//    wipe(start, nextsym);
     nextsym = start;
     err_cnt = err_cnt_origin;
     top = top_origin;
@@ -1103,8 +1100,7 @@ int _return(int num) {
 } // 返回语句
 int _unsigned_int() {
 //    ＜无符号整数＞  ::= ＜数字＞｛＜数字＞｝
-    if (word[nextsym].type == "INTCON") {
-//        word[nextsym].grammar_analysis[++word[nextsym].cnt_grammar_analysis] = 4;
+    if (isType("INTCON")) {
         nextsym += 1;
         return 1;
     }
@@ -1172,7 +1168,7 @@ int _head_statement() {
             symbolList[top].val = tolower_string(word[nextsym].val);
             symbolList[top].depth = 1;
             symbolList[top].line = word[nextsym].line;
-            symbolList[top].function == ++cnt_function;
+            symbolList[top].function = ++cnt_function;
             symbolList[top].type = type_temp;
             if (search() == 1) {
                 error('b', word[nextsym].line);
@@ -1181,7 +1177,6 @@ int _head_statement() {
                 cnt_function -= 1;
             }
             func_with_return[nextsym] = 1;
-//            word[nextsym].grammar_analysis[++word[nextsym].cnt_grammar_analysis] = 6;
             nextsym += 1;
             return 1;
         }   else {
@@ -1190,7 +1185,6 @@ int _head_statement() {
     }   else {
         error('0', index_single_line);
     }
-//    wipe(start, nextsym);
     nextsym = start;
     err_cnt = err_cnt_origin;
     top = top_origin;
@@ -1199,14 +1193,12 @@ int _head_statement() {
 int _int() {
 //    ＜整数＞        ::= ［＋｜－］＜无符号整数＞
     int start = nextsym;
-    if (word[nextsym].type == "MINU" || word[nextsym].type == "PLUS") {
+    if (isType("MINU") || isType("PLUS")) {
         nextsym += 1;
     }
     if (_unsigned_int() != 0) {
-//        word[nextsym - 1].grammar_analysis[++word[nextsym - 1].cnt_grammar_analysis] = 5;
         return 1;
     }
-//    wipe(start, nextsym);
     nextsym = start;
     return 0;
 } // 整数
@@ -1692,32 +1684,34 @@ int _table_parameter() {
     int start = nextsym;
     int type_idenfr = 0;
     if (isType("INTTK") || isType("CHARTK")) {
-        type_idenfr = isType("INTTK") ? 1 : 2;
-        parameterTable[cnt_function].type[++parameterTable[cnt_function].parameter] = type_idenfr;
-        nextsym += 1;
-        if (isType("IDENFR")) {
-            top += 1;
-            symbolList[top].val = tolower_string(word[nextsym].val);
-            symbolList[top].depth = 2;
-            symbolList[top].line = word[nextsym].line;
-            symbolList[top].type = type_idenfr;
-            if (search() == 1) {
-                error('b', word[nextsym].line);
-                symbolList[top].type = 1;
-                top -= 1;
-            }
+        while (isType("INTTK") || isType("CHARTK")) {
+            type_idenfr = isType("INTTK") ? 1 : 2;
+            parameterTable[cnt_function].type[++parameterTable[cnt_function].parameter] = type_idenfr;
             nextsym += 1;
-            if (isType("COMMA")) {
+            if (isType("IDENFR")) {
+                top += 1;
+                symbolList[top].val = tolower_string(word[nextsym].val);
+                symbolList[top].depth = 2;
+                symbolList[top].line = word[nextsym].line;
+                symbolList[top].type = type_idenfr;
+                if (search() == 1) {
+                    error('b', word[nextsym].line);
+                    symbolList[top].type = 1;
+                    top -= 1;
+                }
                 nextsym += 1;
+                if (isType("COMMA")) {
+                    nextsym += 1;
+                }   else {
+                    return 1;
+                }
             }   else {
-//                word[nextsym - 1].grammar_analysis[++word[nextsym - 1].cnt_grammar_analysis] = 15;
-                return 1;
+                error('0', index_single_line);
             }
-        }   else {
-            error('0', index_single_line);
         }
+    }   else {
+        return 1;
     }
-//    wipe(start, nextsym);
     nextsym = start;
     return 0;
 } // 参数表
@@ -1853,7 +1847,7 @@ int _char() {
 //                  ｜'＜乘法运算符＞'
 //                  ｜'＜字母＞'
 //                  ｜'＜数字＞'
-    if (word[nextsym].type == "CHARCON") {
+    if (isType("CHARCON")) {
         nextsym += 1;
         return 1;
     }
@@ -1867,9 +1861,9 @@ void output() {
 }
 
 void init_file() {
-    f_in = fopen("testfile.txt", "r");
-    f_out = fopen("output.txt", "w");
-    f_error = fopen("error.txt", "w");
+    f_in = fopen("../testfile.txt", "r");
+    f_out = fopen("../output.txt", "w");
+    f_error = fopen("../error.txt", "w");
 }
 
 int main() {
@@ -1885,6 +1879,7 @@ int main() {
     }
     program();
     output();
+
     fclose(f_error);
     fclose(f_in);
     fclose(f_out);
