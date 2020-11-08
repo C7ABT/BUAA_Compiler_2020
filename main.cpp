@@ -223,7 +223,7 @@ int Reserver_ch(char ch) {
             return i;
         }
     }
-    if (isNextline(ch) || isSpace(ch) || ch == '\r') {
+    if (isNextline(ch) || isSpace(ch) || ch == '\r' || isTab(ch)) {
         return -7;
     }
     return -1;
@@ -281,9 +281,10 @@ void getsym() {
         else if (isSingleQuote(ch)) {
             getChar();
             if (!(isLetter(ch) || isDigit(ch)
-                || isDiv(ch)) || isStar(ch)
-                || isPlus(ch) || isMinus(ch)) {
+                || isDiv(ch) || isStar(ch)
+                || isPlus(ch) || isMinus(ch))) {
                 error('a', line);   // 非法字符
+                cout << "type287" << endl;
             }
             catToken();
             addword();
@@ -296,11 +297,13 @@ void getsym() {
             getChar();
             if (isDoubleQuote(ch)) {
                 error('a', line);   // 空字符串
+                cout << "type300" << endl;
             }
             while (!isDoubleQuote(ch)) {
                 catToken();
                 if (!isSpace(ch) && !isExclamation(ch) && !(ch >= 35 && ch <= 126)) {
                     error('a', line);   // 字符串非法字符
+                    cout << "type306" << endl;
                 }
                 getChar();
             }
@@ -309,11 +312,11 @@ void getsym() {
         }
         else {
             int flag = Reserver_ch(ch);
-            if (flag == -7);    // \n \r " "
-            else if (flag == -1) {   // 非法字符
+            if (flag == -1) {   // 非法字符
                 error('a', line);
-            }
-            else if (isLess(ch)) {  // < <=
+                cout << "type317" << endl;
+            }   else if (flag == -7);    // \n \r " "
+                else if (isLess(ch)) {  // < <=
                 getChar();
                 if (isEqual(ch)) {
                     token = "<=";
@@ -357,8 +360,9 @@ void getsym() {
             }
             else if (isExclamation(ch)) {
                 getChar();
-                if (!isExclamation(ch)) {
+                if (!isEqual(ch)) {
                     error('a', line);
+                    cout << "type365" << endl;
                 }
                 token = "!=";
                 addword();
@@ -1881,7 +1885,15 @@ int _char() {
 
 void output() {
     for (int i = 1; i <= err_cnt; ++i) {
-        fprintf(f_error, "%d %c\n", error_list[i].line, error_list[i].type);
+        if (error_list[i].type != '0') {
+            fprintf(f_error, "%d %c\n", error_list[i].line, error_list[i].type);
+        }
+    }
+}
+
+void output_debug() {
+    for (int i = 1; i <= err_cnt; ++i) {
+        printf("%d %c\n", error_list[i].line, error_list[i].type);
     }
 }
 
@@ -1891,8 +1903,15 @@ void init_file() {
     f_error = fopen("error.txt", "w");
 }
 
+void init_file_debug() {
+    f_in = fopen("../testfile.txt", "r");
+    f_out = fopen("../output.txt", "w");
+    f_error = fopen("../error.txt", "w");
+}
+
 int main() {
-    init_file();
+    init_file_debug();
+//    init_file();
     while (fgets(single_line, 1002, f_in) != NULL) {
         line += 1;
         getsym();
@@ -1903,7 +1922,9 @@ int main() {
         symbolList[i].isConst = false;
     }
     program();
-    output();
+
+    output_debug();
+//    output();
 
     fclose(f_error);
     fclose(f_in);
