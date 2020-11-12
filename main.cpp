@@ -8,1926 +8,1299 @@
 #include "map"
 #include <stdio.h>
 #include "fstream"
-#include "vector"
-#include "cstdio"
-#include "cstring"
-#include "stdlib.h"
-#include "cstdlib"
-#include "string.h"
+
+#define yes true
+#define no false
 using namespace std;
-#define MAX 50
 
-string type[MAX] = {
-        "IDENFR", "INTCON", "CHARCON", "STRCON",
-        "CONSTTK", "INTTK", "CHARTK", "VOIDTK", "MAINTK",
-        "IFTK", "ELSETK", "SWITCHTK", "CASETK", "DEFAULTTK",
-        "WHILETK", "FORTK", "SCANFTK", "PRINTFTK", "RETURNTK",
-        "PLUS", "MINU", "MULT", "DIV",
-        "LSS", "LEQ", "GRE", "GEQ", "EQL", "NEQ",
-        "COLON", "ASSIGN",
-        "SEMICN", "COMMA",
-        "LPARENT", "RPARENT", "LBRACK", "RBRACK", "LBRACE", "RBRACE"
+
+//  语法分析
+enum SymbolType {
+    IDENFR, INTCON,   CHARCON,  STRCON,     CONSTTK,
+    INTTK,  CHARTK,   VOIDTK,   MAINTK,     IFTK,
+    ELSETK, SWITCHTK, CASETK,   DEFAULTTK,  WHILETK,
+    FORTK,  SCANFTK,  PRINTFTK, RETURNTK,   PLUS,
+    MINU,   MULT,     DIV,      LSS,        LEQ,
+    GRE,    GEQ,      EQL,      NEQ,        COLON,
+    ASSIGN, SEMICN,   COMMA,    LPARENT,    RPARENT,
+    LBRACK, RBRACK,   LBRACE,   RBRACE,
+    FOUL // ERROR symbol
+};
+void error() {
+
+}
+map<string, SymbolType> reservedWords = {
+        {"const", CONSTTK},
+        {"int",   INTTK},
+        {"char",  CHARTK},
+        {"void",  VOIDTK},
+        {"main",  MAINTK},
+        {"if", IFTK},
+        {"else", ELSETK},
+        {"switch", SWITCHTK},
+        {"case", CASETK},
+        {"default", DEFAULTTK},
+        {"while", WHILETK},
+        {"for", FORTK},
+        {"scanf", SCANFTK},
+        {"printf", PRINTFTK},
+        {"return", RETURNTK}
+};
+map<char, SymbolType> reservedSymbol = {
+        {'+', PLUS},
+        {'-', MINU},
+        {'*', MULT},
+        {'/', DIV},
+        {'<', LSS},
+        {'>', GRE},
+        {':', COLON},
+        {'=', ASSIGN},
+        {';', SEMICN},
+        {',', COMMA},
+        {'(', LPARENT},
+        {')', RPARENT},
+        {'[', LBRACK},
+        {']', RBRACK},
+        {'{', LBRACE},
+        {'}', RBRACE}
 };
 
-
-char op[MAX] = {
-        '+', '-', '*', '/',
-        '<', '>', '=', '!',
-        ':', ';', ',',
-        '(', ')', '[', ']', '{', '}'
+const string SymbolType_String[] = {
+        "IDENFR", "INTCON",   "CHARCON",  "STRCON",     "CONSTTK",
+        "INTTK",  "CHARTK",   "VOIDTK",   "MAINTK",     "IFTK",
+        "ELSETK", "SWITCHTK", "CASETK",   "DEFAULTTK",  "WHILETK",
+        "FORTK",  "SCANFTK",  "PRINTFTK", "RETURNTK",   "PLUS",
+        "MINU",   "MULT",     "DIV",      "LSS",        "LEQ",
+        "GRE",    "GEQ",      "EQL",      "NEQ",        "COLON",
+        "ASSIGN", "SEMICN",   "COMMA",    "LPARENT",    "RPARENT",
+        "LBRACK", "RBRACK",   "LBRACE",   "RBRACE",
+        "FOUL" // ERROR symbol
 };
 
-map<string, string> reservedWords = {
-        {"const", "CONSTTK"},
-        {"int",   "INTTK"},
-        {"char",  "CHARTK"},
-        {"void",  "VOIDTK"},
-        {"main",  "MAINTK"},
-        {"if", "IFTK"},
-        {"else", "ELSETK"},
-        {"switch", "SWITCHTK"},
-        {"case", "CASETK"},
-        {"default", "DEFAULTTK"},
-        {"while", "WHILETK"},
-        {"for", "FORTK"},
-        {"scanf", "SCANFTK"},
-        {"printf", "PRINTFTK"},
-        {"return", "RETURNTK"}
-};
+string token;
+char c;     // The letter read now
+char buffer[88888810]; // Everything
+SymbolType symbol;
+int index_buffer; // index of buffer
+int line = 1;
+FILE *f_in, *f_out;
 
-map<char, string> reservedSymbol = {
-        {'+', "PLUS"},
-        {'-', "MINU"},
-        {'*', "MULT"},
-        {'/', "DIV"},
-        {'<', "LSS"},
-        {'>', "GRE"},
-        {':', "COLON"},
-        {'=', "ASSIGN"},
-        {';', "SEMICN"},
-        {',', "COMMA"},
-        {'(', "LPARENT"},
-        {')', "RPARENT"},
-        {'[', "LBRACK"},
-        {']', "RBRACK"},
-        {'{', "LBRACE"},
-        {'}', "RBRACE"}
-};
+void getBuffer() {
+    f_in = fopen("testfile.txt", "rb");
+    f_out = fopen("output.txt", "wb");
+    fread(buffer,1, 8888888, f_in);
+}
 
-int cnt_word = 0;
-int line = 0;   // 行数
-FILE *f_in, *f_out, *f_error;
-string token;   // 单词
-char single_line[1024]; // 存储单行读入文件数据
-int nextsym = 1;    // 语法分析当前单词
-int func_with_return[10086];    // 有返回值函数
-int func_without_return[10086]; // 无返回值函数
-int in_func_with_return = 0;    // 在有返回值函数内
-struct Word {
-    string val; // 内容
-    string type; // 种类
-    int line;   // 行数
-};
-Word word[10086];
-
-struct Symbol_List {
-    string val; // 内容
-    int depth; // 层数
-    int line;   // 行数
-    int function; // 函数索引
-    int type;   // 类型
-    bool isConst; // 常量
-};
-Symbol_List symbolList[10086];
-int top = 0;
-
-struct Error_list {
-    char type;
-    int line;
-};
-Error_list error_list[1024];
-int err_cnt = 0;
-
-int cnt_function = 0;
-struct Parameter_Table {
-    int parameter;  // 参数
-    int type[100];  // 类型
-};
-Parameter_Table parameterTable[10086];
-
-bool isPlus(char c) {
+bool isPlus() {
     return (c == '+');
 }   // +
-bool isMinus(char c) {
+bool isMinus() {
     return (c == '-');
 }   // -
-bool isStar(char c) {
+bool isStar() {
     return (c == '*');
 }   // *
-bool isDiv(char c) {
+bool isDiv() {
     return (c == '/');
 }      // /
-bool isColon(char c) {
+bool isColon() {
     return (c == ':');
 }   // :
-bool isComma(char c) {
+bool isComma() {
     return (c == ',');
 }   // ,
-bool isSemicolon(char c) {
+bool isSemicolon() {
     return (c == ';');
 }   // ;
-bool isEqual(char c) {
+bool isEqual() {
     return (c == '=');
 }   // =
-bool isLParent(char c) {
+bool isLParent() {
     return (c == '(');
 }   // (
-bool isRParent(char c) {
+bool isRParent() {
     return (c == ')');
 }   // )
-bool isLBrack(char c) {
+bool isLBrack() {
     return (c == '[');
 }   // [
-bool isRBrack(char c) {
+bool isRBrack() {
     return (c == ']');
 }   // ]
-bool isLBrace(char c) {
+bool isLBrace() {
     return (c == '{');
 }   // {
-bool isRBrace(char c) {
+bool isRBrace() {
     return (c == '}');
 }   // }
-bool isLess(char c) {
+bool isLess() {
     return (c == '<');
 }   // <
-bool isGreater(char c) {
+bool isGreater() {
     return (c == '>');
 }   // >
-bool isExclamation(char c) {
+bool isExclamation() {
     return (c == '!');
 }   // !
-bool isSpace(char c) {
+bool isSpace() {
     return (c == ' ');
 }   // " "
-bool isTab(char c) {
-    return (c == '\t' || c == '\r');
-}   // \t \r
-bool isInvisibleSymbol(char c) {
+bool isTab() {
+    return (c == '\t');
+}   // \t
+bool isInvisibleSymbol() {
     return (c > 0 && c <= 32);
 }   // Lee Sin
-bool isEOF(char c) {
+bool isEOF() {
     return (c == EOF);
 }   // EOF
-bool isNextline(char c) {
-    return (c == '\n');
-}   // \n
-bool isDigit(char c) {
+bool isLetter() {
+    return isalpha(c);
+}
+bool isNextline() {
+    return (c == '\n' || c == '\r');
+}   // \n, \r
+bool isDigit() {
     return (isdigit(c));
 }   // 0-9
-bool isUnderscore(char c) {
+bool isUnderscore() {
     return (c == '_');
 }   // _
-bool isSingleQuote(char c) {
+bool isSingleQuote() {
     return (c == '\'');
 }   // \'
-bool isDoubleQuote(char c) {
+bool isDoubleQuote() {
     return (c == '\"');
 }   // \"
-bool isLetter(char c) {
-    return (isalpha(c) || isUnderscore(c));
-}
+bool isDividedLine() {
+    return (c == '\\');
+}   // \\
 
-bool isReserved_Token(string x) {
-    string x_temp(x);
-    int token_temp_len = x.size();
-    for(int i = 0; i < token_temp_len; ++i){
-        x_temp.at(i) = tolower(x_temp.at(i));
-    }
-    return (reservedWords.find(x_temp) != reservedWords.end());
-}   // Whether token is legal
-void Reserver_Token(int num) {
-    if (isReserved_Token(word[num].val)) {
-        string x_temp(word[num].val);
-        int token_temp_len = word[num].val.size();
-        for(int i = 0; i < token_temp_len; ++i){
-            x_temp.at(i) = tolower(x_temp.at(i));
-        }
-        word[num].type = reservedWords[x_temp];
-    }   else {
-        word[num].type = "IDENFR";
-    }
-}   // which symbol does the token mean
-int Reserver_ch(char ch) {
-    for (int i = 0; i < 17; ++i) {
-        if (ch == op[i]) {
-            return i;
-        }
-    }
-    if (isNextline(ch) || isSpace(ch) || ch == '\r' || isTab(ch)) {
-        return -7;
-    }
-    return -1;
-}
-void error(char c, int line) {
-    error_list[++err_cnt].type = c;
-    error_list[err_cnt].line = line;
-}
-char ch;
-void catToken() {
-    token += ch;
-}   // Add ch to token
-
-int index_single_line = -1;
 void clearToken() {
     token.clear();
 }
-void addword() {
-    word[++cnt_word].val = token;
-    word[cnt_word].line = line;
+
+void catToken() {
+    token += c;
+}   // Add c to token
+void clearSymbol() {
+    symbol = FOUL;
 }
+
 
 void getChar() {
-    ch = single_line[++index_single_line];
+    c = buffer[index_buffer++];
+    if (isNextline()) {
+        ++line;
+    }
+}
+
+void combo() {
+    catToken();
+    getChar();
 }
 void retract() {
-    ch = single_line[--index_single_line];
+    c = buffer[--index_buffer];
+    if (isNextline()) {
+        --line;
+    }
+}   // Move the fin pointer 1 step back
+bool isReserved_Token() {
+    string token_temp(token);
+    int token_temp_len = token_temp.size();
+    for(int i = 0; i < token_temp_len; ++i){
+        token_temp.at(i) = tolower(token_temp.at(i));
+    }
+    return (reservedWords.find(token_temp) != reservedWords.end());
+}   // Whether token is legal
+void Reserver_Token() {
+    if (isReserved_Token()) {
+        string token_temp(token);
+        int token_temp_len = token_temp.size();
+        for(int i = 0; i < token_temp_len; ++i){
+            token_temp.at(i) = tolower(token_temp.at(i));
+        }
+        symbol = reservedWords[token_temp];
+    }   else {
+        symbol = IDENFR;
+    }
 }
-void getsym() {
+
+void getsym(bool output) {
+    if (symbol != FOUL && output) {
+        fprintf(f_out, "%s %s\n", SymbolType_String[symbol].c_str(), token.c_str());
+        printf("%s %s\n", SymbolType_String[symbol].c_str(), token.c_str());
+
+    }
     clearToken();
-    index_single_line = -1;
-    int len_single_line = strlen(single_line);
-    ch = '\0';
-    while ((index_single_line + 1) < len_single_line) {
-        clearToken();
+    clearSymbol();
+    getChar();
+    while (isInvisibleSymbol()) {
         getChar();
-        if (isLetter(ch)) {
-            while (isDigit(ch) || isLetter(ch)) {
-                catToken();
-                getChar();
-            }
-            retract();
-            addword();
-            Reserver_Token(cnt_word);
+    }
+    if (isEOF()) {
+        return;
+    }
+    if (isLetter() || isUnderscore()) {
+        while (isLetter() || isUnderscore() || isDigit()) {
+            combo();
         }
-        else if (isDigit(ch)) {
-            while (isDigit(ch)) {
-                catToken();
-                getChar();
-            }
-            retract();
-            addword();
-            word[cnt_word].type = "INTCON";
+        retract();
+        Reserver_Token();
+    } else if (isDigit()) {
+        while (isDigit()) {
+            combo();
         }
-        else if (isSingleQuote(ch)) {
-            getChar();
-            if (!(isLetter(ch) || isDigit(ch)
-                || isDiv(ch) || isStar(ch)
-                || isPlus(ch) || isMinus(ch))) {
-                error('a', line);   // 非法字符
-                cout << "type287" << endl;
+        retract();
+        symbol = INTCON;
+    } else if (isSingleQuote()) {
+        getChar();
+        if (!(isPlus() || isMinus() || isStar() || isDiv() || isLetter() || isUnderscore() || isDigit())) {
+            error();
+        }
+        combo();
+        if (!isSingleQuote()) {
+            error();
+        }
+        symbol = CHARCON;
+    } else if (isDoubleQuote()) {
+        getChar();
+        while (!isDoubleQuote()) {
+            if (isNextline()) {
+                error();
+                break;
             }
             catToken();
-            addword();
-            word[cnt_word].type = "CHARCON";
-            if (!isSingleQuote(ch)) {
-                getChar();
-            }
-        }
-        else if (isDoubleQuote(ch)) {
             getChar();
-            if (isDoubleQuote(ch)) {
-                error('a', line);   // 空字符串
-                cout << "type300" << endl;
-            }
-            while (!isDoubleQuote(ch)) {
-                catToken();
-                if (!isSpace(ch) && !isExclamation(ch) && !(ch >= 35 && ch <= 126)) {
-                    error('a', line);   // 字符串非法字符
-                    cout << "type306" << endl;
-                }
-                getChar();
-            }
-            addword();
-            word[cnt_word].type = "STRCON";
         }
-        else {
-            int flag = Reserver_ch(ch);
-            if (flag == -1) {   // 非法字符
-                error('a', line);
-                cout << "type317" << endl;
-            }   else if (flag == -7);    // \n \r " "
-                else if (isLess(ch)) {  // < <=
-                getChar();
-                if (isEqual(ch)) {
-                    token = "<=";
-                    addword();
-                    word[cnt_word].type = "LEQ";
-                }
-                else {
-                    token = "<";
-                    addword();
-                    word[cnt_word].type = "LSS";
-                    retract();
+        symbol = STRCON;
+    } else if (isLess()) {
+        combo();
+        if (isEqual()) {
+            catToken();
+            symbol = LEQ;
+        } else {
+            symbol = LSS;
+            retract();
+        }
+    } else if (isGreater()) {
+        combo();
+        if (isEqual()) {
+            catToken();
+            symbol = GEQ;
+        } else {
+            symbol = GRE;
+            retract();
+        }
+    } else if (isEqual()) {
+        combo();
+        if (isEqual()) {
+            catToken();
+            symbol = EQL;
+        } else {
+            symbol = ASSIGN;
+            retract();
+        }
+    } else if (isExclamation()) {
+        combo();
+        if (isEqual()) {
+            catToken();
+        } else {
+            error();
+        }
+        symbol = NEQ;
+    } else if (isPlus() || isMinus() || isStar() || isDiv() || isSemicolon() || isComma() || isColon() || \
+        isLParent() || isRParent() || isLBrack() || isRBrack() || isLBrace() || isRBrace()) {
+        catToken();
+        symbol = reservedSymbol[c];
+    } else if (!isEOF()) {
+        error();
+    }
+}
+
+// 词法分析
+
+void program(); // 程序
+void _string(); // 字符串
+void _const(); // 常量
+void _const_define(); // 常量定义
+void _const_statement(); // 常量说明
+void _var_define(); // 变量定义
+void _var_statement(); // 变量说明
+void _var_define_no_initialization(); // 变量定义无初始化
+void _var_define_with_initialization(); // 变量定义及初始化
+void _scanf(); // 读语句
+void _printf(); // 写语句
+void _term(); // 项
+void _factor(); // 因子
+void _expression(); // 表达式
+void _statement(); // 语句
+void _default(); // 缺省
+void _return(); // 返回语句
+void _unsigned_int(); // 无符号整数
+void _step(); // 步长
+void _main(); // 主函数
+void _head_statement(); // 声明头部
+void _int(); // 整数
+void _assign(); // 赋值语句
+void _switch(); // 情况语句
+void _case(); // 情况子语句
+void _table_cases(); // 情况表
+void _function_no_return_define(); // 无返回值函数定义
+void _function_with_return_define(); // 有返回值函数定义
+void _function_no_return_call(); // 无返回值函数调用语句
+void _function_with_return_call(); // 有返回值函数调用语句
+void _loop(); // 循环语句
+void _table_parameter(); // 参数表
+void _table_parameter_value(); // 值参数表
+void _condition(); // 条件
+void _if(); // 条件语句
+void _list_statement(); // 语句列
+void _statement_combination(); // 复合语句
+void _char(); // 字符
+
+// 老子是分割线 //
+SymbolType symbol_pre;
+string array_function_with_return[1000]; // 有返回值函数名
+string array_function_no_return[1000];    // 无返回值函数名
+int index_array_function_with_return;
+int index_array_function_no_return;
+
+void pre_read_Symbol(int n){
+    // 预读
+    SymbolType symbol_origin = symbol;
+    string token_origin = token;
+    int index_buffer_origin = index_buffer;
+    while (n--) {
+        getsym(no);
+    }
+    symbol_pre = symbol;    // 预读得到的symbol
+    symbol = symbol_origin; // 还原symbol
+    token = token_origin;   // 还原token
+    index_buffer = index_buffer_origin; // 还原指针
+} // 预读
+
+// 老子也是分割线 //
+
+void program() {
+    /* ＜程序＞    ::= ［＜常量说明＞］［＜变量说明＞］{＜有返回值函数定义＞
+     *              | ＜无返回值函数定义＞}＜主函数＞
+     */
+    if (symbol == CONSTTK) {
+        _const_statement(); // 常量说明
+    }
+    pre_read_Symbol(2);
+    if (symbol_pre != LPARENT) {
+        _var_statement();   // 变量说明
+    }
+    while (yes) {
+        pre_read_Symbol(1);
+        if (symbol_pre == MAINTK) {
+            break;
+        }
+        if (symbol == VOIDTK) {
+            _function_no_return_define();
+        } else {
+            _function_with_return_define();
+        }
+    }
+    _main();
+    fprintf(f_out, "<程序>\n");
+    cout << "<程序>" << endl;
+}
+
+void _const_statement() {
+    // ＜常量说明＞ ::=  const＜常量定义＞;{ const＜常量定义＞;}
+    if (symbol == CONSTTK) {
+        while (symbol == CONSTTK) {
+            getsym(yes);
+            _const_define(); // 常量定义
+            if (symbol == SEMICN) { // ;
+                getsym(yes);
+            }
+        }
+    }
+    fprintf(f_out, "<常量说明>\n");
+//    cout << "<常量说明>" << endl;
+}
+
+////////////////////
+void _var_statement() {
+    // ＜变量说明＞  ::= ＜变量定义＞;{＜变量定义＞;}
+    do {
+        _var_define();  // 变量定义
+        if (symbol == SEMICN) { // ;
+            getsym(yes);
+        }
+        if (symbol != INTTK && symbol != CHARTK) { // int || char
+            break;
+        }
+        pre_read_Symbol(2);
+        if (symbol_pre == LPARENT) { // (
+            break;
+        }
+    }   while (yes);
+    fprintf(f_out, "<变量说明>\n");
+    cout << "<变量说明>" << endl;
+}
+////////////////////
+
+void _const_define() {
+    // ＜常量定义＞   ::=   int＜标识符＞＝＜整数＞{,＜标识符＞＝＜整数＞}
+    //                  | char＜标识符＞＝＜字符＞{,＜标识符＞＝＜字符＞}
+    if (symbol == INTTK) { // int
+        getsym(yes);
+        if (symbol == IDENFR) { // 标识符
+            getsym(yes);
+            if (symbol == ASSIGN) { // =
+                getsym(yes);
+                _int(); // 整数
+                while (symbol == COMMA) { // ,
+                    getsym(yes);
+                    if (symbol == IDENFR) { // 标识符
+                        getsym(yes);
+                    }
+                    if (symbol == ASSIGN) { // =
+                        getsym(yes);
+                        _int(); // 整数
+                    }
                 }
             }
-            else if (isGreater(ch)) {   // > >=
-                getChar();
-                if (isEqual(ch)) {
-                    token = ">=";
-                    addword();
-                    word[cnt_word].type = "GEQ";
-                }
-                else {
-                    token = ">";
-                    addword();
-                    word[cnt_word].type = "GRE";
-                    retract();
-                }
-            }
-            else if (isEqual(ch)) { // = ==
-                getChar();
-                if (isEqual(ch)) {
-                    token = "==";
-                    addword();
-                    word[cnt_word].type = "EQL";
-                }
-                else {
-                    token = "=";
-                    addword();
-                    word[cnt_word].type = "ASSIGN";
-                    retract();
+        }
+    }
+
+    else if (symbol == CHARTK) { // char
+        getsym(yes);
+        if (symbol == IDENFR) { // 标识符
+            getsym(yes);
+            if (symbol == ASSIGN) { // =
+                getsym(yes);
+                _char(); // 字符
+                while (symbol == COMMA) { // ,
+                    getsym(yes);
+                    if (symbol == IDENFR) { // 标识符
+                        getsym(yes);
+                    }
+                    if (symbol == ASSIGN) { // =
+                        getsym(yes);
+                        _char(); // 字符
+                    }
                 }
             }
-            else if (isExclamation(ch)) {
-                getChar();
-                if (!isEqual(ch)) {
-                    error('a', line);
-                    cout << "type365" << endl;
+        }
+    }
+    fprintf(f_out, "<常量定义>\n");
+    cout << "<常量定义>" << endl;
+}
+
+void _function_with_return_define() {
+    // ＜有返回值函数定义＞  ::=  ＜声明头部＞'('＜参数表＞')' '{'＜复合语句＞'}'
+    _head_statement();  // 声明头部
+    if (symbol == LPARENT) { // (
+        getsym(yes);
+        _table_parameter(); // 参数表
+        if (symbol == RPARENT) { // )
+            getsym(yes);
+            if (symbol == LBRACE) { // {
+                getsym(yes);
+                _statement_combination(); // 复合语句
+                if (symbol == RBRACE) { // }
+                    getsym(yes);
                 }
-                token = "!=";
-                addword();
-                word[cnt_word].type = "NEQ";
+            }
+        }
+    }
+    fprintf(f_out, "<有返回值函数定义>\n");
+    cout << "<有返回值函数定义>" << endl;
+}
+
+void _head_statement() {
+    // ＜声明头部＞   ::=  int＜标识符＞
+    //                |  char＜标识符＞
+    if (symbol == CHARTK || symbol == INTTK) { // int || char
+        getsym(yes);
+        array_function_with_return[index_array_function_with_return++] = token;
+        if (symbol == IDENFR) { // 标识符
+            getsym(yes);
+        }
+    }
+    fprintf(f_out, "<声明头部>\n");
+    cout << "<声明头部>" << endl;
+}
+
+void _table_parameter() {
+    // ＜参数表＞    ::=  ＜类型标识符＞＜标识符＞{,＜类型标识符＞＜标识符＞}
+    //               |  ＜空＞
+    if (symbol == INTTK || symbol == CHARTK) { // 类型标识符
+        getsym(yes);
+        if (symbol == IDENFR) { // 标识符
+            getsym(yes);
+        }
+        if (symbol == COMMA) { // ,
+            while (symbol == COMMA) { // ,
+                getsym(yes);
+                if (symbol == INTTK || symbol == CHARTK) { // 类型标识符
+                    getsym(yes);
+                    if (symbol == IDENFR) { // 标识符
+                        getsym(yes);
+                    }
+                }
+            }
+        }
+    }
+    fprintf(f_out, "<参数表>\n");
+    cout << "<参数表>" << endl;
+}
+
+void _statement_combination() {
+    // ＜复合语句＞   ::=  ［＜常量说明＞］［＜变量说明＞］＜语句列＞
+    if (symbol == CONSTTK) { // 常量说明
+        _const_statement();
+    }
+    if (symbol == INTTK || symbol == CHARTK) { // 变量说明
+        _var_statement();
+    }
+    _list_statement();  // 语句列
+    fprintf(f_out, "<复合语句>\n");
+    cout << "<复合语句>" << endl;
+}
+
+void _function_no_return_define() {
+    // ＜无返回值函数定义＞  ::= void＜标识符＞'('＜参数表＞')''{'＜复合语句＞'}'
+    if (symbol == VOIDTK) { // void
+        getsym(yes);
+        if (symbol == IDENFR) { // 标识符
+            array_function_no_return[index_array_function_no_return++] = token;
+            getsym(yes);
+            if (symbol == LPARENT) { // (
+                getsym(yes);
+                _table_parameter(); // 参数表
+                if (symbol == RPARENT) { // )
+                    getsym(yes);
+                    if (symbol == LBRACE) { // {
+                        getsym(yes);
+                        _statement_combination(); // 复合语句
+                        if (symbol == RBRACE) { // }
+                            getsym(yes);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    fprintf(f_out, "<无返回值函数定义>\n");
+    cout << "<无返回值函数定义>" << endl;
+}
+
+void _main() {
+    // ＜主函数＞    ::= void main‘(’‘)’ ‘{’＜复合语句＞‘}’
+    if (symbol == VOIDTK) { // void
+        getsym(yes);
+        if (symbol == MAINTK) { // main
+            getsym(yes);
+            if (symbol == LPARENT) { // (
+                getsym(yes);
+                if (symbol == RPARENT) { // )
+                    getsym(yes);
+                    if (symbol == LBRACE) { // {
+                        getsym(yes);
+                        _statement_combination(); // 复合语句
+                        if (symbol == RBRACE) { // }
+                            getsym(yes);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    fprintf(f_out, "<主函数>\n");
+    cout << "<主函数>" << endl;
+}
+
+void _list_statement() {
+    // ＜语句列＞   ::= ｛＜语句＞｝
+    while (symbol == IFTK || symbol == WHILETK || symbol == FORTK || symbol == LBRACE
+           || symbol == IDENFR || symbol == SCANFTK || symbol == PRINTFTK || symbol == SEMICN
+           || symbol == RETURNTK || symbol == SWITCHTK ) { // if while for ( 标识符 scanf printf ; return switch
+        _statement(); // 语句
+    }
+    fprintf(f_out, "<语句列>\n");
+    cout << "<语句列>" << endl;
+}
+
+void _if() {
+    // ＜条件语句＞  ::= if '('＜条件＞')'＜语句＞［else＜语句＞］
+    if (symbol == IFTK) { // if
+        getsym(yes);
+        if (symbol == LPARENT) { // (
+            getsym(yes);
+            _condition(); // 条件
+            if (symbol == RPARENT) { // )
+                getsym(yes);
+                _statement(); // 语句
+                if (symbol == ELSETK) { // else
+                    getsym(yes);
+                    _statement(); // 语句
+                }
+            }
+        }
+    }
+    fprintf(f_out, "<条件语句>\n");
+    cout << "<条件语句>" << endl;
+}
+
+void _condition() {
+    // ＜条件＞    ::=  ＜表达式＞＜关系运算符＞＜表达式＞
+    _expression(); // 表达式
+    if (symbol == LSS || symbol == LEQ
+        || symbol == GRE || symbol == GEQ
+        || symbol == NEQ || symbol == EQL) {
+        // < <= > >= != ==
+        getsym(yes);
+        _expression(); // 表达式
+    }
+    fprintf(f_out, "<条件>\n");
+    cout << "<条件>" << endl;
+}
+
+void _expression() {
+    //  ＜表达式＞    ::= ［＋｜－］＜项＞{＜加法运算符＞＜项＞}
+    if (symbol == PLUS || symbol == MINU) { // 加法运算符
+        getsym(yes);
+    }
+    _term(); // 项
+    while (symbol == PLUS || symbol == MINU) { // 加法运算符
+        getsym(yes);
+        _term(); // 项
+    }
+    fprintf(f_out, "<表达式>\n");
+    cout << "<表达式>" << endl;
+}
+
+void _term() {
+    // ＜项＞     ::= ＜因子＞{＜乘法运算符＞＜因子＞}
+    _factor(); // 因子
+    while (symbol == MULT || symbol == DIV) { // 乘法运算符
+        getsym(yes);
+        _factor();  // 因子
+    }
+    fprintf(f_out, "<项>\n");
+    cout << "<项>" << endl;
+}
+
+void _loop() {
+    // ＜循环语句＞   ::=  while '('＜条件＞')'＜语句＞
+    // | for'('＜标识符＞＝＜表达式＞;＜条件＞;＜标识符＞＝＜标识符＞(+|-)＜步长＞')'＜语句＞
+    if (symbol == WHILETK) { // while
+        getsym(yes);
+        if (symbol == LPARENT) { // (
+            getsym(yes);
+            _condition();   // 条件
+            if (symbol == RPARENT) { // )
+                getsym(yes);
+                _statement();   // 语句
+            }
+        }
+    }
+
+    else if (symbol == FORTK) { // for
+        getsym(yes);
+        if (symbol == LPARENT) { // (
+            getsym(yes);
+            if (symbol == IDENFR) { // 标识符
+                getsym(yes);
+                if (symbol == ASSIGN) { // =
+                    getsym(yes);
+                    _expression(); // 表达式
+                    if (symbol == SEMICN) { // ;
+                        getsym(yes);
+                        _condition(); // 条件
+                        if (symbol == SEMICN) { // ;
+                            getsym(yes);
+                            if (symbol == IDENFR) { // 标识符
+                                getsym(yes);
+                                if (symbol == ASSIGN) { // =
+                                    getsym(yes);
+                                    if (symbol == IDENFR) { // 标识符
+                                        getsym(yes);
+                                        if (symbol == PLUS || symbol == MINU) { // + || -
+                                            getsym(yes);
+                                            _step();    // 步长
+                                            if (symbol == RPARENT) { // )
+                                                getsym(yes);
+                                                _statement(); // 语句
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    fprintf(f_out, "<循环语句>\n");
+    cout << "<循环语句>" << endl;
+}
+
+void _string() {
+    // ＜字符串＞   ::=  "｛十进制编码为32,33,35-126的ASCII字符｝"
+    if (symbol == STRCON) { // 字符串
+        getsym(yes);
+    }
+    fprintf(f_out, "<字符串>\n");
+    cout << "<字符串>" << endl;
+}
+
+void _step() {
+    // ＜步长＞::= ＜无符号整数＞
+    _unsigned_int(); // 无符号整数
+    fprintf(f_out, "<步长>\n");
+    cout << "<步长>" << endl;
+}
+
+void _unsigned_int() {
+    // ＜无符号整数＞  ::= ＜数字＞｛＜数字＞｝
+    if (symbol == INTCON) {
+        getsym(yes);
+    }
+    fprintf(f_out, "<无符号整数>\n");
+    cout << "<无符号整数>" << endl;
+}
+
+void _int() {
+    if (symbol == PLUS || symbol == MINU) {
+        getsym(yes);
+    }
+    _unsigned_int(); // 无符号整数
+    fprintf(f_out, "<整数>\n");
+    cout << "<整数>" << endl;
+}
+
+void _char() {
+    if (symbol == CHARCON) { // 字符
+        getsym(yes);
+    }
+}
+
+void _scanf() {
+    // ＜读语句＞    ::=  scanf '('＜标识符＞')'
+    if (symbol == SCANFTK) { // scanf
+        getsym(yes);
+        if (symbol == LPARENT) { // (
+            getsym(yes);
+            if (symbol == IDENFR) { // 标识符
+                getsym(yes);
+            }
+            if (symbol == RPARENT) { // }
+                getsym(yes);
+            }
+        }
+    }
+    fprintf(f_out, "<读语句>\n");
+    cout << "<读语句>" << endl;
+}
+
+void _printf() {
+    // ＜写语句＞    ::= printf '(' ＜字符串＞,＜表达式＞ ')'
+    //              |  printf '('＜字符串＞ ')'
+    //              | printf '('＜表达式＞')'
+    if (symbol == PRINTFTK) { // printf
+        getsym(yes);
+        if (symbol == LPARENT) { // (
+            getsym(yes);
+            if (symbol == STRCON) { // 字符串
+                _string();  // 字符串
+                if (symbol == COMMA) { // ,
+                    getsym(yes);
+                    _expression();  // 表达式
+                }
             }
             else {
-                clearToken();
-                catToken();
-                addword();
-                word[cnt_word].type = reservedSymbol[ch];
+                _expression(); // 表达式
+            }
+            if (symbol == RPARENT) { // )
+                getsym(yes);
             }
         }
+    }
+    fprintf(f_out, "<写语句>\n");
+    cout << "<写语句>" << endl;
+}
+
+void _return() {
+    // ＜返回语句＞   ::=  return['('＜表达式＞')']
+    if (symbol == RETURNTK) { // return
+        getsym(yes);
+        if (symbol == LPARENT) { // (
+            getsym(yes);
+            _expression();  // 表达式
+            if (symbol == RPARENT) { // )
+                getsym(yes);
+            }
+        }
+    }
+    fprintf(f_out, "<返回语句>\n");
+    cout << "<返回语句>" << endl;
+}
+
+void _function_with_return_call() {
+    // ＜有返回值函数调用语句＞ ::= ＜标识符＞'('＜值参数表＞')'
+    if (symbol == IDENFR) { // 标识符
+        getsym(yes);
+        if (symbol == LPARENT) { // (
+            getsym(yes);
+            _table_parameter_value(); // 值参数表
+            if (symbol == RPARENT) { // )
+                getsym(yes);
+            }
+        }
+    }
+    fprintf(f_out, "<有返回值函数调用语句>\n");
+    cout << "<有返回值函数调用语句>" << endl;
+}
+
+void _function_no_return_call() {
+    // ＜无返回值函数调用语句＞ ::= ＜标识符＞'('＜值参数表＞')'
+    if (symbol == IDENFR) { // 标识符
+        getsym(yes);
+        if (symbol == LPARENT) { // (
+            getsym(yes);
+            _table_parameter_value(); // 值参数表
+            if (symbol == RPARENT) { // )
+                getsym(yes);
+            }
+        }
+    }
+    fprintf(f_out, "<无返回值函数调用语句>\n");
+    cout << "<无返回值函数调用语句>" << endl;
+}
+
+void _table_parameter_value() {
+    // ＜值参数表＞   ::= ＜表达式＞{,＜表达式＞}
+    //              ｜   ＜空＞
+    if (symbol == RPARENT) { // 空
+        fprintf(f_out, "<值参数表>\n");
+//        cout << "<值参数表>" << endl;
+    }
+    else {
+        _expression();  // 表达式
+        while (symbol == COMMA) { // ,
+            getsym(yes);
+            _expression();  // 表达式
+        }
+        fprintf(f_out, "<值参数表>\n");
+        cout << "<值参数表>" << endl;
     }
 }
 
-int search() {
-    for (int i = 1; i < top; ++i) {
-        if (symbolList[top].val == symbolList[i].val && symbolList[top].depth == symbolList[i].depth) {
-            return 1;
+void _statement() {
+    // ＜语句＞    ::= ＜循环语句＞
+    //              ｜＜条件语句＞
+    //              | ＜有返回值函数调用语句＞;
+    //              | ＜无返回值函数调用语句＞;
+    //              ｜＜赋值语句＞;
+    //              ｜＜读语句＞;
+    //              ｜＜写语句＞;
+    //              ｜＜情况语句＞
+    //              ｜＜空＞;
+    //              |＜返回语句＞;
+    //              | '{'＜语句列＞'}'
+    if (symbol == SWITCHTK) {   // 情况语句
+        _switch();  // 情况语句
+    }
+    else if (symbol == IFTK) {   // 条件语句
+        _if();  // 条件语句
+    }
+    else if (symbol == WHILETK || symbol == FORTK) {    // 循环语句
+        _loop();    // 循环语句
+    }
+    else if (symbol == LBRACE) { // {语句列}
+        getsym(yes);
+        _list_statement();  // 语句列
+        if (symbol == RBRACE) { // }
+            getsym(yes);
         }
     }
-    return 0;
-}   // 搜索相同符号
-int idenfr_not_defined(int num) {
-    string temp(word[num].val);
-    int temp_len = temp.size();
-    for(int i = 0; i < temp_len; ++i){
-        temp.at(i) = tolower(temp.at(i));
-    }
-    for (int i = 1; i <= top; ++i) {
-        if (symbolList[i].val == temp) {
-            return 0;
+    else if (symbol == IDENFR) {    // 赋值语句 有无返回值函数调用语句
+        pre_read_Symbol(1);
+        if (symbol_pre == LPARENT) { // (
+            // 有无返回值函数调用语句
+            for (int i = 0; i < index_array_function_with_return; ++i) {
+                if (array_function_with_return[i] == token) {
+                    _function_with_return_call(); // 有返回值函数调用语句
+                    break;
+                }
+            }
+            for (int i = 0; i < index_array_function_no_return; ++i) {
+                if (array_function_no_return[i] == token) {
+                    _function_no_return_call(); // 无返回值函数调用语句
+                    break;
+                }
+            }
+            if (symbol == SEMICN) { // ;
+                getsym(yes);
+            }
+        }
+        else {
+            // 赋值语句
+            _assign();
+            if (symbol == SEMICN) { // ;
+                getsym(yes);
+            }
         }
     }
-    return 1;
-}   // 判定标识符是否被定义过
-string tolower_string(string x) {
-    string temp(x);
-    int temp_len = temp.size();
-    for(int i = 0; i < temp_len; ++i){
-        temp.at(i) = tolower(temp.at(i));
+    else if (symbol == SEMICN) { // ;
+        // 空
+        getsym(yes);
     }
-    return temp;
+    else if (symbol == PRINTFTK) {
+        // 写语句
+        _printf();
+        if (symbol == SEMICN) { // ;
+            getsym(yes);
+        }
+    }
+    else if (symbol == SCANFTK) {
+        // 读语句
+        _scanf();
+        if (symbol == SEMICN) { // ;
+            getsym(yes);
+        }
+    }
+    else if (symbol == RETURNTK) {
+        // 返回语句
+        _return();
+        if (symbol == SEMICN) {
+            getsym(yes);
+        }
+    }
+    fprintf(f_out, "<语句>\n");
+    cout << "<语句>" << endl;
 }
-int find_const(int num) {
-    string temp = tolower_string(word[num].val);
-    for (int i = 1; i <= top; ++i) {
-        if (temp == symbolList[i].val && symbolList[i].isConst == true) {
-            return 1;
-        }
-    }
-    return 0;
-}   // 判断是否为常量
-int s2i(int num) {
-    int ans = 0;
-    int len = (word[num].val).size();
-    for (int i = 0; i < len; ++i) {
-        ans = ans * 10 + (word[num].val[i] - '0');
-    }
-    return ans;
-}   // 字符串->整数
-bool isType(string s) {
-    return word[nextsym].type == s;
-}   // word[nextsym].type == s ? true : false
 
-int _char(); // 字符
-int _int(); // 整数
-int _unsigned_int(); // 无符号整数
-int _const_define(int num); // 常量定义
-int _const_statement(int num); // 常量说明
-int _var_define_no_initialization(int num); // 变量定义无初始化
-int _var_define_with_initialization(int num); // 变量定义及初始化
-int _const(); // 常量
-int _var_define(int num); // 变量定义
-int _var_statement(int num); // 变量说明
-int _head_statement(); // 声明头部
-int _step(); // 步长
-int _table_parameter(); // 参数表
-int _factor(); // 因子
-int _statement(int num); // 语句
-int _term(); // 项
-int _expression(); // 表达式
-int _condition(); // 条件
-int _if(int num); // 条件语句
-int _case(int num, int type_expression); // 情况子语句
-int _default(int num); // 缺省
-int _table_cases(int num, int type_expression); // 情况表
-int _loop(int num); // 循环语句
-int _switch(int num); // 情况语句
-int _table_parameter_value(int num); // 值参数表
-int _function_with_return_call(); // 有返回值函数调用语句
-int _function_no_return_call(); // 无返回值函数调用语句
-int _assign(); // 赋值语句
-int _scanf(); // 读语句
-int _printf(); // 写语句
-int _return(int num); // 返回语句
-int _list_statement(int num); // 语句列
-int _function_with_return_define(); // 有返回值函数定义
-int _function_no_return_define(); // 无返回值函数定义
-int _statement_combination(int num); // 复合语句
-int _main(); // 主函数
-int program(); // 程序
+void _default() {
+    // ＜缺省＞   ::=  default :＜语句＞
+    if (symbol == DEFAULTTK) { // default
+        getsym(yes);
+        if (symbol == COLON) { // :
+            getsym(yes);
+            _statement();   // 语句
+        }
+    }
+    fprintf(f_out, "<缺省>\n");
+    cout << "<缺省>" << endl;
+}
 
-int program() {
-//    ＜程序＞    ::= ［＜常量说明＞］［＜变量说明＞］{＜有返回值函数定义＞|＜无返回值函数定义＞}＜主函数＞
-    _const_statement(1);
-    _var_statement(1);
-    while (_main() == 0) {
-        if (_function_with_return_define() == 0) {
-            _function_no_return_define();
-        }
-    }
-    if (nextsym == cnt_word + 1) {
-        return 1;
-    }
-    return 0;
-} // 程序
-void _string(); // 字符串
-int _const() {
-//    ＜常量＞   ::=  ＜整数＞|＜字符＞
-    int start = nextsym;
-    if (_int() == 1) {
-        return 1;
-    }   else if (_char() == 1) {
-        return 2;
-    }
-    nextsym = start;
-    return 0;
-} // 常量
-int _const_define(int num) {
-//    ＜常量定义＞   ::=   int＜标识符＞＝＜整数＞{,＜标识符＞＝＜整数＞}
-//                     | char＜标识符＞＝＜字符＞{,＜标识符＞＝＜字符＞}
-    int start = nextsym;
-    int top_origin = top;
-    int err_cnt_origin = err_cnt;
-    if (isType("INTTK")) {
-        nextsym += 1;
-        while (isType("IDENFR")) {
-            top += 1;
-            symbolList[top].val = tolower_string(word[nextsym].val);
-            symbolList[top].depth = num;
-            symbolList[top].line = word[nextsym].line;
-            symbolList[top].type = 1;
-            symbolList[top].isConst = true;
-            if (search() == 1) {
-                error('b', word[nextsym].line);
-                symbolList[top].isConst = false;
-                top -= 1;
-            }
-            nextsym += 1;
-            if (isType("ASSIGN")) {
-                nextsym += 1;
-                if (_int() == 1) {
-                    if (word[nextsym++].type != "COMMA") { // ,
-                        nextsym -= 1;
-                        return 1;
+void _switch() {
+    // ＜情况语句＞  ::=  switch ‘(’＜表达式＞‘)’ ‘{’＜情况表＞＜缺省＞‘}’
+    if (symbol == SWITCHTK) { // switch
+        getsym(yes);
+        if (symbol == LPARENT) { // (
+            getsym(yes);
+            _expression();   // 表达式
+            if (symbol == RPARENT) { // )
+                getsym(yes);
+                {
+                    if (symbol == LBRACE) { // {
+                        getsym(yes);
+                        _table_cases();  // 情况表
+                        _default();  // 缺省
+                        if (symbol == RBRACE) {
+                            getsym(yes);
+                        }
                     }
-                }   else {
-                    error('0', index_single_line);
                 }
-            }   else {
-                error('0', index_single_line);
             }
         }
-    }   else if (isType("CHARTK")) {
-        nextsym += 1;
-        while (isType("IDENFR")) {
-            top += 1;
-            symbolList[top].val = tolower_string(word[nextsym].val);
-            symbolList[top].depth = num;
-            symbolList[top].line = word[nextsym].line;
-            symbolList[top].type = 2;
-            symbolList[top].isConst = true;
-            if (search() == 1) {
-                error('b', word[nextsym].line);
-                symbolList[top].type = 1;
-                symbolList[top].isConst = false;
-                top -= 1;
-            }
-            nextsym += 1;
-            if (isType("ASSIGN")) {
-                nextsym += 1;
-                if (_char() == 1) {
-                    if (word[nextsym++].type != "COMMA") { // ,
-                        nextsym -= 1;
-                        return 1;
-                    }
-                }   else {
-                    error('0', index_single_line);
+    }
+    fprintf(f_out, "<情况语句>\n");
+    cout << "<情况语句>" << endl;
+}
+
+void _case() {
+    // ＜情况子语句＞  ::=  case＜常量＞：＜语句＞
+    if (symbol == CASETK) {  // case
+        getsym(yes);
+        _const();    // 常量
+        if (symbol == COLON) {   // :
+            getsym(yes);
+            _statement();    // 语句
+        }
+    }
+    fprintf(f_out, "<情况子语句>\n");
+    cout << "<情况子语句>" << endl;
+}
+
+void _table_cases() {
+    // ＜情况表＞   ::=  ＜情况子语句＞{＜情况子语句＞}
+    while (symbol == CASETK) {
+        _case();
+    }
+    fprintf(f_out, "<情况表>\n");
+    cout << "<情况表>" << endl;
+}
+
+void _const() {
+    // ＜常量＞   ::=  ＜整数＞
+    //             |  ＜字符＞
+
+
+    if (symbol == INTCON||symbol == PLUS || symbol == MINU) { // 整数
+        _int(); // 整数
+    }
+    else if (symbol == CHARCON) { // 字符
+        _char();    // 字符
+    }
+    fprintf(f_out, "<常量>\n");
+    cout << "<常量>" << endl;
+}
+
+void _var_define() {
+    // ＜变量定义＞ ::= ＜变量定义无初始化＞
+    //              | ＜变量定义及初始化＞
+
+    // ＜变量定义无初始化＞  ::= ＜类型标识符＞(＜标识符＞
+    //                      | ＜标识符＞'['＜无符号整数＞']'
+    //                      | ＜标识符＞'['＜无符号整数＞']''['＜无符号整数＞']'){,(＜标识符＞
+    //                      | ＜标识符＞'['＜无符号整数＞']'
+    //                      | ＜标识符＞'['＜无符号整数＞']''['＜无符号整数＞']' )}
+
+    // ＜变量定义及初始化＞  ::= ＜类型标识符＞＜标识符＞=＜常量＞
+    //                      | ＜类型标识符＞＜标识符＞'['＜无符号整数＞']'='{'＜常量＞{,＜常量＞}'}'
+    //                      | ＜类型标识符＞＜标识符＞'['＜无符号整数＞']''['＜无符号整数＞']'='
+    //                      {''{'＜常量＞{,＜常量＞}'}'{, '{'＜常量＞{,＜常量＞}'}'}'}'
+
+    if (symbol == INTTK || symbol == CHARTK) { // 类型标识符
+        int i = 1;
+        while (symbol_pre != COMMA && symbol_pre != SEMICN && symbol_pre != ASSIGN) {
+            pre_read_Symbol(i++) ;
+        }
+        if (symbol_pre == SEMICN || symbol_pre == COMMA) { // ; ,
+            _var_define_no_initialization();    // 变量定义无初始化
+        }
+        else {
+            //pre_read_Symbol(1);
+//            if (symbol_pre == IDENFR) {    // 标识符
+//
+//            }
+            _var_define_with_initialization();  // 变量定义及初始化
+        }
+    }
+    fprintf(f_out, "<变量定义>\n");
+    cout << "<变量定义>" << endl;
+}
+
+void _assign() {
+    // ＜赋值语句＞   ::=  ＜标识符＞＝＜表达式＞
+    //                |  ＜标识符＞'['＜表达式＞']'=＜表达式＞
+    //                |  ＜标识符＞'['＜表达式＞']''['＜表达式＞']' =＜表达式＞
+    if (symbol == IDENFR) { // 标识符
+        getsym(yes);
+        if (symbol == ASSIGN) { // =
+            getsym(yes);
+            _expression();  // 表达式
+        }
+        else if (symbol == LBRACK) {    // [
+            getsym(yes);
+            _expression();  // 表达式
+            if (symbol == RBRACK) { // ]
+                getsym(yes);
+                if (symbol == ASSIGN) { // =
+                    getsym(yes);
+                    _expression(); // 表达式
                 }
-            }   else {
-                error('0', index_single_line);
-            }
-        }
-    }
-    nextsym = start;
-    top = top_origin;
-    err_cnt = err_cnt_origin;
-    return 0;
-} // 常量定义
-int _const_statement(int num) {
-//    ＜常量说明＞ ::=  const＜常量定义＞;{ const＜常量定义＞;}
-    int start = nextsym;
-    int top_origin = top;
-    int err_cnt_origin = err_cnt;
-    if (isType("CONSTTK")) {
-        nextsym += 1;
-        while (_const_define(num) == 1) {
-            if (isType("SEMICN")) {
-                nextsym += 1;
-            }   else {
-                error('k', word[nextsym - 1].line);
-            }
-            if (word[nextsym].type != "CONSTTK") {
-                return 1;
-            }
-            nextsym += 1;
-        }
-    }
-    nextsym = start;
-    top = top_origin;
-    err_cnt = err_cnt_origin;
-    return 0;
-} // 常量说明
-int _var_define(int num) {
-//    ＜变量定义＞ ::= ＜变量定义无初始化＞|＜变量定义及初始化＞
-    int start = nextsym;
-    if (_var_define_with_initialization(num) == 1) {
-        return 1;
-    }   else if (_var_define_no_initialization(num) == 1) {
-        return 1;
-    }
-    nextsym = start;
-    return 0;
-} // 变量定义
-int _var_statement(int num) {
-//    ＜变量说明＞  ::= ＜变量定义＞;{＜变量定义＞;}
-    int start = nextsym;
-    int start_temp = nextsym;
-    int top_origin = top;
-    int err_cnt_origin = err_cnt;
-    while (_var_define(num) == 1) {
-        if (isType("LPARENT")) {    // (
-            break;
-        }   else if (isType("SEMICN")) {    // ;
-            nextsym += 1;
-        }   else {
-            error('k', word[nextsym - 1].line);
-        }
-        start = nextsym;
-        top_origin = top;
-        err_cnt_origin = err_cnt;
-    }
-    nextsym = start;
-    top = top_origin;
-    err_cnt = err_cnt_origin;
-    if (nextsym != start_temp) {
-        return 1;
-    }
-    return 0;
-} // 变量说明
-int _var_define_no_initialization(int num) {
-//    ＜变量定义无初始化＞  ::= ＜类型标识符＞(＜标识符＞
-//                          |＜标识符＞'['＜无符号整数＞']'
-//                          |＜标识符＞'['＜无符号整数＞']''['＜无符号整数＞']')
-//                          {,(＜标识符＞|＜标识符＞'['＜无符号整数＞']'|＜标识符＞'['＜无符号整数＞']''['＜无符号整数＞']' )}
-    int start = nextsym;
-    int top_origin = top;
-    int err_cnt_origin = err_cnt;
-    int type_temp = 0;
-    if (isType("INTTK") || isType("CHARTK")) {
-        type_temp = (isType("INTTK")) ? 1 : 2;
-        nextsym += 1;
-        while (isType("IDENFR")) {
-            top += 1;
-            symbolList[top].val = tolower_string(word[nextsym].val);
-            symbolList[top].depth = num;
-            symbolList[top].line = word[nextsym].line;
-            symbolList[top].type = type_temp;
-            if (search() == 1) {
-                error('b', word[nextsym].line);
-                symbolList[top].type = 1;
-                top -= 1;
-            }
-            nextsym += 1;
-            if (isType("LBRACK")) {   // [
-                nextsym += 1;
-                if (_unsigned_int() == 1) {
-                    if (isType("RBRACK")) {   // ]
-                        nextsym += 1;
-                    }   else {
-                        error('m', word[nextsym - 1].line);
+                else if (symbol == LBRACK) {    // [
+                    getsym(yes);
+                    _expression();  // 表达式
+                    if (symbol == RBRACK) { // ]
+                        getsym(yes);
+                        if (symbol == ASSIGN) { // =
+                            getsym(yes);
+                            _expression();  // 表达式
+                        }
                     }
-                    if (isType("LBRACK")) {   // [
-                        nextsym += 1;
-                        if (_unsigned_int() == 1) {
-                            if (isType("RBRACK")) {   // ]
-                                nextsym += 1;
+                }
+            }
+        }
+    }
+    fprintf(f_out, "<赋值语句>\n");
+    cout << "<赋值语句>" << endl;
+}
+
+void _factor() {
+    // ＜因子＞    ::= ＜标识符＞
+    //              ｜＜标识符＞'['＜表达式＞']'
+    //              | ＜标识符＞'['＜表达式＞']''['＜表达式＞']'
+    //              |'('＜表达式＞')'
+    //              ｜＜整数＞
+    //              | ＜字符＞
+    //              ｜＜有返回值函数调用语句＞
+    if (symbol == IDENFR) { // 标识符 有返回值函数调用语句
+        pre_read_Symbol(1);
+        if (symbol_pre == LPARENT) {    // (
+            _function_with_return_call();
+        }
+        else {
+            getsym(yes);
+            if (symbol == LBRACK) { // [
+                getsym(yes);
+                _expression();  // 表达式
+                if (symbol == RBRACK) { // ]
+                    getsym(yes);
+                    if (symbol == LBRACK) { // [
+                        getsym(yes);
+                        _expression();  // 表达式
+                        if (symbol == RBRACK) { // ]
+                            getsym(yes);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    else if (symbol == LPARENT) {   // (
+        getsym(yes);
+        _expression();  // 表达式
+        if (symbol == RPARENT) {    // )
+            getsym(yes);
+        }
+    }
+    else if (symbol == PLUS || symbol == MINU || symbol == INTCON) {
+        _int(); // 整数
+    }
+    else if (symbol == CHARCON) {
+        _char();    // 字符
+    }
+    fprintf(f_out, "<因子>\n");
+    cout << "<因子>" << endl;
+}
+
+void _var_define_no_initialization() {
+    // ＜变量定义无初始化＞  ::= ＜类型标识符＞(＜标识符＞
+    //                      | ＜标识符＞'['＜无符号整数＞']'
+    //                      | ＜标识符＞'['＜无符号整数＞']''['＜无符号整数＞']')
+    //                      {,(＜标识符＞
+    //                      | ＜标识符＞'['＜无符号整数＞']'
+    //                      | ＜标识符＞'['＜无符号整数＞']''['＜无符号整数＞']' )}
+    if (symbol == INTTK || symbol == CHARTK) { // 类型标识符
+        do {
+            getsym(yes);
+            if (symbol == IDENFR) { // 标识符
+                getsym(yes);
+                if (symbol == LBRACK) { // [
+                    getsym(yes);
+                    _unsigned_int();    // 无符号整数
+                    if (symbol == RBRACK) { // ]
+                        getsym(yes);
+                        if (symbol == LBRACK) { // [
+                            getsym(yes);
+                            _unsigned_int();    // 无符号整数
+                            if (symbol == RBRACK) { // ]
+                                getsym(yes);
+                            }
+                        }
+                    }
+                }
+            }
+        }   while (symbol == COMMA);    // ;
+    }
+    fprintf(f_out, "<变量定义无初始化>\n");
+    cout << "<变量定义无初始化>" << endl;
+}
+
+void _var_define_with_initialization() {
+    // ＜变量定义及初始化＞  ::= ＜类型标识符＞＜标识符＞=＜常量＞
+    //                      | ＜类型标识符＞＜标识符＞'['＜无符号整数＞']'='{'＜常量＞{,＜常量＞}'}'
+    //                      |＜类型标识符＞＜标识符＞'['＜无符号整数＞']''['＜无符号整数＞']'=
+    //                      '{''{'＜常量＞{,＜常量＞}'}'{, '{'＜常量＞{,＜常量＞}'}'}'}'
+    if (symbol == INTTK || symbol == CHARTK) {  // 类型标识符
+        getsym(yes);
+        if (symbol == IDENFR) { // 标识符
+            getsym(yes);
+            if (symbol == ASSIGN) { // =
+                getsym(yes);
+                _const();   // 常量
+            }
+            else if (symbol == LBRACK) {    // [
+                getsym(yes);
+                _unsigned_int();    // 无符号整数
+                if (symbol == RBRACK) { // ]
+                    getsym(yes);
+                    if (symbol == ASSIGN) { // =
+                        getsym(yes);
+//                        if (symbol == LBRACE) { // {
+//                            do {
+//                                getsym(yes);
+//                                _const();    // 常量
+//                            }   while (symbol == COMMA);    // ,
+//                            if (symbol == RBRACE) { // }
+//                                getsym(yes);
+//                            }
+//                        }
+                        while (symbol != SEMICN) {
+                            if (LBRACE ==  symbol || RBRACE == symbol || COMMA == symbol) {
+                                getsym(yes);
                             } else {
-                                error('m', word[nextsym - 1].line);
+                                _const();
                             }
-                            if (isType("COMMA")) {
-                                nextsym += 1;
-                            }   else {
-                                return 1;
-                            }
-                        }   else {
-                            error('0', index_single_line);
                         }
-                    }   else if (isType("COMMA")) {
-                        nextsym += 1;
-                    }   else {
-                        return 1;
                     }
-                }   else {
-                    error('0', index_single_line);
-                }
-            }   else if (isType("COMMA")) {
-                nextsym += 1;
-            }   else {
-                return 1;
-            }
-        }
-    }
-    nextsym = start;
-    err_cnt = err_cnt_origin;
-    top = top_origin;
-    return 0;
-} // 变量定义无初始化
-int _var_define_with_initialization(int num) {
-//    ＜变量定义及初始化＞  ::= ＜类型标识符＞＜标识符＞=＜常量＞
-//                          |＜类型标识符＞＜标识符＞'['＜无符号整数＞']'='{'＜常量＞{,＜常量＞}'}'
-//                          |＜类型标识符＞＜标识符＞'['＜无符号整数＞']''['＜无符号整数＞']'='
-//                          {''{'＜常量＞{,＜常量＞}'}'{, '{'＜常量＞{,＜常量＞}'}'}'}'
-    int start = nextsym;
-    int top_origin = top;
-    int err_cnt_origin = err_cnt;
-    int type_temp = 0;
-    int count_1 = 0;    // 一维数组
-    int count_2 = 0;    // 二维数组
-    int count_2_temp = 0;
-    int type_const; // 常量类型
-    if (isType("INTTK") || isType("CHARTK")) {
-        type_temp = (isType("INTTK")) ? 1 : 2;
-        nextsym += 1;
-        if (isType("IDENFR")) {
-            top += 1;
-            symbolList[top].val = tolower_string(word[nextsym].val);
-            symbolList[top].depth = num;
-            symbolList[top].line = word[nextsym].line;
-            symbolList[top].type = type_temp;
-            if (search() == 1) {
-                error('b', word[nextsym].line);
-                symbolList[top].type = 1;
-                top -= 1;
-            }
-            nextsym += 1;
-            if (isType("LBRACK")) {   // [
-                nextsym += 1;
-                if (_unsigned_int() == 1) {
-                    count_1 = s2i(nextsym - 1);
-                    if (isType("RBRACK")) {   // ]
-                        nextsym += 1;
-                    }   else {
-                        error('m', word[nextsym - 1].line);
-                    }
-                    if (isType("LBRACK")) {   // [
-                        nextsym += 1;
-                        if (_unsigned_int() == 1) {
-                            count_2 = s2i(nextsym - 1);
-                            if (isType("RBRACK")) {   // ]
-                                nextsym += 1;
-                            }   else {
-                                error('m', word[nextsym - 1].line);
-                            }
-                            if (isType("ASSIGN")) {   // =
-                                nextsym += 1;
-                                if (isType("LBRACE")) { // {
-                                    nextsym += 1;
-                                    while (isType("LBRACE")) { // {
-                                        count_1 -= 1;
-                                        count_2_temp = count_2;
-                                        nextsym += 1;
-                                        while (type_const = _const()) {
-                                            if (type_const != type_temp) {
-                                                error('o', word[nextsym - 1].line);
-                                            }
-                                            count_2_temp -= 1;
-                                            if (isType("COMMA")) {
-                                                nextsym += 1;
-                                            }   else {
-                                                break;
-                                            }
+                    else if (symbol == LBRACK) {    // [
+                        getsym(yes);
+                        _unsigned_int();    // 无符号整数
+                        if (symbol == RBRACK) { // ]
+                            getsym(yes);
+                            if (symbol == ASSIGN) { // =
+                                getsym(yes);
+                                /*
+                                if (symbol == LBRACE) { // {
+                                    do {
+                                        do {
+                                            getsym(yes);
+                                            _const();   // 常量
+                                        }   while (symbol == COMMA);    // ,
+                                        if (symbol == RBRACE) { // }
+                                            getsym(yes);
                                         }
-                                        if (isType("RBRACE")) { // }
-                                            if (count_2_temp) {
-                                                error('n', word[nextsym].line);
-                                            }
-                                            nextsym += 1;
-                                            if (isType("COMMA")) {
-                                                nextsym += 1;
-                                            }   else if (isType("RBRACE")) {
-                                                if (count_1) {
-                                                    error('n', word[nextsym].line);
-                                                }
-                                                nextsym += 1;
-                                                return 1;
-                                            }   else {
-                                                error('0', index_single_line);
-                                            }
-                                        }
+                                    }   while (symbol == COMMA);    // ,
+                                    if (symbol == RBRACE) { // }
+                                        getsym(yes);
                                     }
-                                }   else {
-                                    error('0', index_single_line);
-                                }
-                            }   else {
-                                error('0', index_single_line);
-                            }
-                        }
-                    }   else if (isType("ASSIGN")) {
-                        nextsym += 1;
-                        if (isType("LBRACE")) {
-                            nextsym += 1;
-                            while (type_const = _const()) {
-                                if (type_const != type_temp) {
-                                    error('o', word[nextsym - 1].line);
-                                }
-                                count_1 -= 1;
-                                if (isType("COMMA")) {
-                                    nextsym += 1;
-                                }   else if (isType("RBRACE")) {
-                                    if (count_1) {
-                                        error('n', word[nextsym].line);
+                                }*/
+
+                                while (symbol != SEMICN) {
+                                    if (LBRACE ==  symbol || RBRACE == symbol || COMMA == symbol) {
+                                        getsym(yes);
+                                    } else {
+                                        _const();
                                     }
-                                    nextsym += 1;
-                                    return 1;
-                                }   else {
-                                    error('0', index_single_line);
                                 }
                             }
-                        }   else {
-                            error('0', index_single_line);
                         }
-                    }   else {
-                        error('0', index_single_line);
-                    }
-                }   else {
-                    error('0', index_single_line);
-                }
-            }   else if (isType("ASSIGN")) {
-                nextsym += 1;
-                type_const = _const();
-                if (type_const != type_temp) {
-                    error('o', word[nextsym - 1].line);
-                }
-                if (type_const) {
-                    return 1;
-                }   else {
-                    error('0', index_single_line);
-                }
-            }   else {
-                error('0', index_single_line);
-            }
-        }   else {
-            error('0', index_single_line);
-        }
-    }
-    nextsym = start;
-    err_cnt = err_cnt_origin;
-    top = top_origin;
-    return 0;
-} // 变量定义及初始化
-int _scanf() {
-//    ＜读语句＞    ::=  scanf '('＜标识符＞')'
-    int err_cnt_origin = err_cnt;
-    if (isType("SCANFTK")) {
-        nextsym += 1;
-        if (isType("LPARENT")) {    // (
-            nextsym += 1;
-            if (isType("IDENFR")) {
-                if (idenfr_not_defined(nextsym) == 1) {
-                    error('c', word[nextsym].line);
-                }   else if (find_const(nextsym) == 1) {
-                    error('j', word[nextsym].line);
-                }
-                nextsym += 1;
-                if (isType("RPARENT")) {    // )
-                    nextsym += 1;
-                    return 1;
-                }   else {
-                    error('l', word[nextsym - 1].line);
-                    return 1;
-                }
-            }   else {
-                error('0', index_single_line);
-            }
-        }   else {
-            error('0', index_single_line);
-        }
-    }
-    err_cnt = err_cnt_origin;
-    return 0;
-} // 读语句
-int _printf() {
-//    ＜写语句＞    ::= printf '(' ＜字符串＞,＜表达式＞ ')'
-//                  | printf '('＜字符串＞ ')'
-//                  | printf '('＜表达式＞')'
-    if (isType("PRINTFTK")) {
-        nextsym += 1;
-        if (isType("LPARENT")) {    // (
-            nextsym += 1;
-            if (isType("STRCON")) {
-                nextsym += 1;
-                if (isType("RPARENT")) {
-                    nextsym += 1;
-                    return 1;
-                }   else if (isType("COMMA")) { // ,
-                    nextsym += 1;
-                    if (_expression()) {
-                        if (isType("RPARENT")) {
-                            nextsym += 1;
-                            return 1;
-                        }   else {
-                            error('l', word[nextsym - 1].line);
-                            return 1;
+                        if (symbol == RBRACE) {  // }
+                            getsym(yes);
                         }
-                    }   else {
-                        error('0', index_single_line);
-                    }
-                }   else {
-                    error('l', word[nextsym - 1].line);
-                    return 1;
-                }
-            }   else if (_expression()) {
-                if (isType("RPARENT")) {
-                    nextsym += 1;
-                    return 1;
-                }   else {
-                    error('l', word[nextsym - 1].line);
-                    return 1;
-                }
-            }   else {
-                error('0', index_single_line);
-            }
-        }   else {
-            error('0', index_single_line);
-        }
-    }
-    return 0;
-} // 写语句
-int _term() {
-//    ＜项＞     ::= ＜因子＞{＜乘法运算符＞＜因子＞}
-    int type_temp = _factor();
-    if (type_temp) {
-        while (isType("MULT") || isType("DIV")) {
-            type_temp = 1;
-            nextsym += 1;
-            if (!_factor()) {
-                error('0', index_single_line);
-            }
-        }
-        return type_temp;
-    }
-    return 0;
-}// 项
-int _factor() {
-//    ＜因子＞    ::= ＜标识符＞
-//                 ｜＜标识符＞'['＜表达式＞']'
-//                  |＜标识符＞'['＜表达式＞']''['＜表达式＞']'
-//                  |'('＜表达式＞')'
-//                  ｜＜整数＞
-//                  |＜字符＞
-//                  ｜＜有返回值函数调用语句＞
-    int start = nextsym;
-    int err_cnt_origin = err_cnt;
-    int type_temp = _function_with_return_call();
-    string s;
-    if (type_temp) {
-        return type_temp;
-    }   else if (isType("IDENFR")) {
-        if (idenfr_not_defined(nextsym) == 1) {
-            error('c', word[nextsym].line);
-            type_temp = 1;
-        }
-        s = tolower_string(word[nextsym].val);
-        for (int i = top; i >= 1; --i) {
-            if (s == symbolList[i].val) {
-                type_temp = symbolList[i].type;
-                break;
-            }
-        }
-        nextsym += 1;
-        if (isType("LBRACK")) { // [
-            nextsym += 1;
-            int type_expression = _expression();
-            if (type_expression == 2) {
-                error('i', word[nextsym -1].line);
-            }
-            if (type_expression) {
-                if (isType("RBRACK")) { // ]
-                    nextsym += 1;
-                }   else {
-                    error('m', word[nextsym - 1].line);
-                }
-                if (isType("LBRACK")) {
-                    nextsym += 1;
-                    type_expression = _expression();
-                    if (type_expression == 2) {
-                        error('i', word[nextsym -1].line);
-                    }
-                    if (type_expression) {
-                        if (isType("RBRACK")) {
-                            nextsym += 1;
-                        }   else {
-                            error('m', word[nextsym - 1].line);
-                        }
-                        return type_temp;
-                    }   else {
-                        error('0', index_single_line);
-                    }
-                }   else {
-                    return type_temp;
-                }
-            }
-        }   else {
-            return type_temp;
-        }
-    }   else if (isType("LPARENT")) {   // (
-        nextsym += 1;
-        if (_expression()) {
-            if (isType("RPARENT")) {
-                nextsym += 1;
-                return 1;
-            }   else {
-                error('l', word[nextsym - 1].line);
-                return 1;
-            }
-        }   else {
-            error('0', index_single_line);
-        }
-    }   else if (_int() == 1) {
-        return 1;
-    }   else if (_char() == 1) {
-        return 2;
-    }
-    nextsym = start;
-    err_cnt = err_cnt_origin;
-    return 0;
-} // 因子
-int _expression() {
-//    ＜表达式＞    ::= ［＋｜－］＜项＞{＜加法运算符＞＜项＞}
-    int start = nextsym;
-    int type_temp = 0;
-    int term_type = 0;
-    if (isType("PLUS") || isType("MINU")) {
-        nextsym += 1;
-        type_temp = 1;
-    }
-    term_type = _term();
-    if (type_temp == 0) {
-        type_temp = term_type;
-    }
-    if (term_type) {
-        while (isType("PLUS") || isType("MINU")) {
-            nextsym += 1;
-            type_temp = 1;
-            if (_term() == 0) {
-                error('0', index_single_line);
-            }
-        }
-        return type_temp;
-    }
-    nextsym = start;
-    return 0;
-} // 表达式
-int _statement(int num) {
-//    ＜语句＞    ::= ＜循环语句＞
-//                  ｜＜条件语句＞
-//                  | ＜有返回值函数调用语句＞;
-//                  |＜无返回值函数调用语句＞;
-//                  ｜＜赋值语句＞;
-//                  ｜＜读语句＞;
-//                  ｜＜写语句＞;
-//                  ｜＜情况语句＞
-//                  ｜＜空＞;
-//                  |＜返回语句＞;
-//                  | '{'＜语句列＞'}'
-    if (_loop(num) == 1 || _if(num) == 1 || _switch(num) == 1) {
-        return 1;
-    }   else if (_function_no_return_call() || _function_with_return_call()
-                || _assign() || _scanf() || _printf() || _return(num)) {
-        if (isType("SEMICN")) {
-            nextsym += 1;
-            return 1;
-        }   else {
-            error('k', word[nextsym - 1].line);
-            return 1;
-        }
-    }   else if (isType("LBRACE")) {    // {
-        nextsym += 1;
-        if (_list_statement(num) == 1) {    // 语句列
-            if (isType("RBRACE")) {
-                nextsym += 1;
-                return 1;
-            }   else {
-                error('0', index_single_line);
-            }
-        }   else {
-            error('0', index_single_line);
-        }
-    }   else if (isType("SEMICN")) {    // 空
-        nextsym += 1;
-        return 1;
-    }
-    return 0;
-} // 语句
-int _default(int num) {
-//    ＜缺省＞   ::=  default :＜语句＞
-    if (isType("DEFAULTTK")) {
-        nextsym += 1;
-        if (isType("COLON")) {
-            nextsym += 1;
-            if (_statement(num) == 1) {
-                return 1;
-            }   else {
-                error('0', index_single_line);
-            }
-        }   else {
-            error('0', index_single_line);
-        }
-    }
-    return 0;
-} // 缺省
-int _return(int num) {
-//    ＜返回语句＞   ::=  return['('＜表达式＞')']
-    if (isType("RETURNTK")) {
-        nextsym += 1;
-        if (isType("LPARENT")) {
-            nextsym += 1;
-            int type_expression = _expression();
-            if (isType("RPARENT")) {
-                if (type_expression == 0 || type_expression != num) {
-                    if (num) {
-                        error('h', word[nextsym].line);
-                    }   else {
-                        error('g', word[nextsym].line);
                     }
                 }
-                nextsym += 1;
-                in_func_with_return = 0;
-                return 1;
-            }   else {
-                error('l', word[nextsym - 1].line);
-                in_func_with_return = 0;
-                return 1;
-            }
-        }   else {
-            if (num) {
-                error('h', word[nextsym - 1].line);
-            }
-            in_func_with_return = 0;
-            return 1;
-        }
-    }
-    return 0;
-} // 返回语句
-int _unsigned_int() {
-//    ＜无符号整数＞  ::= ＜数字＞｛＜数字＞｝
-    if (isType("INTCON")) {
-        nextsym += 1;
-        return 1;
-    }
-    return 0;
-} // 无符号整数
-int _step() {
-//    ＜步长＞::= ＜无符号整数＞
-    if (_unsigned_int() == 1) {
-        return 1;
-    }
-    return 0;
-} // 步长
-int _main() {
-//    ＜主函数＞    ::= void main‘(’‘)’ ‘{’＜复合语句＞‘}’
-    int start = nextsym;
-    if (isType("VOIDTK")) {
-        nextsym += 1;
-        if (isType("MAINTK")) {
-            nextsym += 1;
-            if (isType("LPARENT")) {
-                nextsym += 1;
-                if (isType("RPARENT")) {
-                    nextsym += 1;
-                }   else {
-                    error('l', word[nextsym - 1].line);
-                }
-                if (isType("LBRACE")) { // {
-                    nextsym += 1;
-                    if (_statement_combination(0) == 1) {   // 复合语句
-                        if (isType("RBRACE")) {
-                            nextsym += 1;
-                            return 1;
-                        }   else {
-                            error('0', index_single_line);
-                        }
-                    }   else {
-                        error('0', index_single_line);
-                    }
-                }   else {
-                    error('0', index_single_line);
-                }
-            }   else {
-                error('0', index_single_line);
-            }
-        }   else {
-            error('0', index_single_line);
-        }
-    }
-    nextsym = start;
-    return 0;
-} // 主函数
-int _head_statement() {
-//    ＜声明头部＞   ::=  int＜标识符＞
-//                     |char＜标识符＞
-    int start = nextsym;
-    int top_origin = top;
-    int err_cnt_origin = err_cnt;
-    int type_temp = 0;
-    if (isType("INTTK") || isType("CHARTK")) {
-        type_temp = isType("INTTK") ? 1 : 2;
-        nextsym += 1;
-        if (isType("IDENFR")) {
-            top += 1;
-            symbolList[top].val = tolower_string(word[nextsym].val);
-            symbolList[top].depth = 1;
-            symbolList[top].line = word[nextsym].line;
-            symbolList[top].function = ++cnt_function;
-            symbolList[top].type = type_temp;
-            if (search() == 1) {
-                error('b', word[nextsym].line);
-                symbolList[top].type = 1;
-                top -= 1;
-                cnt_function -= 1;
-            }
-            func_with_return[nextsym] = 1;
-            nextsym += 1;
-            return 1;
-        }   else {
-            error('0', index_single_line);
-        }
-    }   else {
-        error('0', index_single_line);
-    }
-    nextsym = start;
-    err_cnt = err_cnt_origin;
-    top = top_origin;
-    return 0;
-} // 声明头部
-int _int() {
-//    ＜整数＞        ::= ［＋｜－］＜无符号整数＞
-    int start = nextsym;
-    if (isType("MINU") || isType("PLUS")) {
-        nextsym += 1;
-    }
-    if (_unsigned_int() != 0) {
-        return 1;
-    }
-    nextsym = start;
-    return 0;
-} // 整数
-int _assign() {
-//    ＜赋值语句＞   ::=  ＜标识符＞＝＜表达式＞
-//                     |＜标识符＞'['＜表达式＞']'=＜表达式＞
-//                     |＜标识符＞'['＜表达式＞']''['＜表达式＞']' = ＜表达式＞
-    int start = nextsym;
-    int err_cne_origin = err_cnt;
-    if (isType("IDENFR")) {
-        if (idenfr_not_defined(nextsym) == 1) {
-            error('c', word[nextsym].line);
-        }   else if (find_const(nextsym) == 1) {
-            error('j', word[nextsym].line);
-        }
-        nextsym += 1;
-        if (isType("ASSIGN")) {
-            nextsym += 1;
-            if (_expression()) {
-                return 1;
-            }   else {
-                error('0', index_single_line);
-            }
-        }   else if (isType("LBRACK")) {    // [
-            nextsym += 1;
-            int type_expression = _expression();
-            if (type_expression == 2) {
-                error('i', word[nextsym - 1].line);
-            }
-            if (type_expression) {
-                if (isType("RBRACK")) { // ]
-                    nextsym += 1;
-                }   else {
-                    error('m', word[nextsym - 1].line);
-                }
-                if (isType("ASSIGN")) {
-                    nextsym += 1;
-                    if (_expression()) {
-                        return 1;
-                    }   else {
-                        error('0', index_single_line);
-                    }
-                }   else if (isType("LBRACK")) {    // [
-                    nextsym += 1;
-                    type_expression = _expression();
-                    if (type_expression == 2) {
-                        error('i', word[nextsym - 1].line);
-                    }
-                    if (type_expression) {
-                        if (isType("RBRACK")) {
-                            nextsym += 1;
-                        }   else {
-                            error('m', word[nextsym - 1].line);
-                        }
-                        if (isType("ASSIGN")) {
-                            nextsym += 1;
-                            if (_expression()) {
-                                return 1;
-                            }   else {
-                                error('0', index_single_line);
-                            }
-                        }   else {
-                            error('0', index_single_line);
-                        }
-                    }   else {
-                        error('0', index_single_line);
-                    }
-                }   else {
-                    error('0', index_single_line);
-                }
-            }   else {
-                error('0', index_single_line);
-            }
-        }   else {
-            error('0', index_single_line);
-        }
-    }
-    nextsym = start;
-    err_cnt = err_cne_origin;
-    return 0;
-} // 赋值语句
-int _switch(int num) {
-//    ＜情况语句＞  ::=  switch ‘(’＜表达式＞‘)’ ‘{’＜情况表＞＜缺省＞‘}’
-    int start = nextsym;
-    if (isType("SWITCHTK")) {
-        nextsym += 1;
-        if (isType("LPARENT")) {
-            nextsym += 1;
-            int type_expression = _expression();
-            if (type_expression) {
-                if (isType("RPARENT")) {
-                    nextsym += 1;
-                }   else {
-                    error('l', word[nextsym - 1].line);
-                }
-                if (isType("LBRACE")) { // {
-                    nextsym += 1;
-                    if (_table_cases(num, type_expression) == 1) {
-                        if (_default(num) != 1) {
-                            error('p', word[nextsym].line);
-                        }
-                        if (isType("RBRACE")) { // }
-                            nextsym += 1;
-                            return 1;
-                        }
-                    }   else {
-                        error('0', index_single_line);
-                    }
-                }   else {
-                    error('0', index_single_line);
-                }
-            }   else {
-                error('0', index_single_line);
-            }
-        }   else {
-            error('0', index_single_line);
-        }
-    }
-    nextsym = start;
-    return 0;
-} // 情况语句
-int _case(int num, int type_expression) {
-//    ＜情况子语句＞  ::=  case＜常量＞：＜语句＞
-    if (isType("CASETK")) {
-        nextsym += 1;
-        int type_const = _const();
-        if (type_const != type_expression) {
-            error('o', word[nextsym - 1].line);
-        }
-        if (type_const) {
-            if (isType("COLON")) {  // :
-                nextsym += 1;
-                if (_statement(num) == 1) {
-                    return 1;
-                }   else {
-                    error('0', index_single_line);
-                }
-            }   else {
-                error('0', index_single_line);
-            }
-        }   else {
-            error('0', index_single_line);
-        }
-    }
-    return 0;
-} // 情况子语句
-int _table_cases(int num, int type_expression) {
-//    ＜情况表＞   ::=  ＜情况子语句＞{＜情况子语句＞}
-    if (_case(num, type_expression) == 1) {
-        while (_case(num, type_expression) == 1) {
-
-        }
-        return 1;
-    }
-    return 0;
-} // 情况表
-int _function_no_return_define() {
-//    ＜无返回值函数定义＞  ::= void＜标识符＞'('＜参数表＞')''{'＜复合语句＞'}'
-    int start = nextsym;
-    int top_origin = top;
-    int err_cnt_origin = err_cnt;
-    int cnt_function_origin = cnt_function;
-    int temp;
-    if (isType("VOIDTK")) {
-        nextsym += 1;
-        if (isType("IDENFR")) {
-            top += 1;
-            symbolList[top].val = tolower_string(word[nextsym].val);
-            symbolList[top].depth = 1;
-            symbolList[top].line = word[nextsym].line;
-            symbolList[top].function = ++cnt_function;
-            if (search() == 1) {
-                error('b', word[nextsym].line);
-                top -= 1;
-                cnt_function -= 1;
-            }
-            temp = nextsym;
-            nextsym += 1;
-            if (isType("LPARENT")) {    // (
-                nextsym += 1;
-                if (_table_parameter() == 1) {
-                    if (isType("RPARENT")) {
-                        nextsym += 1;
-                    }   else {
-                        error('l', word[nextsym - 1].line);
-                    }
-                    if (isType("LBRACE")) { // {
-                        nextsym += 1;
-                        if (_statement_combination(0) == 1) {
-                            if (isType("RBRACE")) {
-                                nextsym += 1;
-                                func_without_return[temp] = 1;
-                                while (symbolList[top].depth == 2) {
-                                    symbolList[top].type = 1;
-                                    symbolList[top].isConst = false;
-                                    top -= 1;
-                                }
-                                return 1;
-                            }   else {
-                                error('0', index_single_line);
-                            }
-                        }   else {
-                            error('0', index_single_line);
-                        }
-                    }   else {
-                        error('0', index_single_line);
-                    }
-                }   else {
-                    error('0', index_single_line);
-                }
-            }
-        }   else {
-            error('0', index_single_line);
-        }
-    }
-    nextsym = start;
-    top = top_origin;
-    err_cnt = err_cnt_origin;
-    for (int i = cnt_function_origin + 1; i <= cnt_function; ++i) {
-        parameterTable[i].parameter = 0;
-    }
-    cnt_function = cnt_function_origin;
-    return 0;
-} // 无返回值函数定义
-int _function_with_return_define() {
-//    ＜有返回值函数定义＞  ::=  ＜声明头部＞'('＜参数表＞')' '{'＜复合语句＞'}'
-    int start = nextsym;
-    int top_origin = top;
-    int err_cnt_origin = err_cnt;
-    int cnt_function_origin = cnt_function;
-    in_func_with_return = 1;
-    if (_head_statement() == 1) {
-        int type_function = symbolList[top].type;
-        if (isType("LPARENT")) {
-            nextsym += 1;
-            if (_table_parameter() == 1) {
-                if (isType("RPARENT")) {
-                    nextsym += 1;
-                }   else {
-                    error('l', word[nextsym - 1].line);
-                }
-                if (isType("LBRACE")) { // {
-                    nextsym += 1;
-                    if (_statement_combination(type_function) == 1) {
-                        if (isType("RBRACE")) {
-                            if (in_func_with_return) {
-                                error('h', word[nextsym].line);
-                            }
-                            nextsym += 1;
-                            while (symbolList[top].depth == 2) {
-                                symbolList[top].isConst = false;
-                                symbolList[top].type = 1;
-                                top -= 1;
-                            }
-                            in_func_with_return = 0;
-                            return 1;
-                        }   else {
-                            error('0', index_single_line);
-                        }
-                    }   else {
-                        error('0', index_single_line);
-                    }
-                }   else {
-                    error('0', index_single_line);
-                }
-            }
-        }   else {
-            error('0', index_single_line);
-        }
-    }
-    nextsym = start;
-    top = top_origin;
-    err_cnt = err_cnt_origin;
-    in_func_with_return = 0;
-    for (int i = cnt_function_origin + 1; i <= cnt_function; ++i) {
-        parameterTable[i].parameter = 0;
-    }
-    cnt_function = cnt_function_origin;
-    return 0;
-} // 有返回值函数定义
-int _function_no_return_call() {
-//    ＜无返回值函数调用语句＞ ::= ＜标识符＞'('＜值参数表＞')'
-    int start = nextsym;
-    int err_cnt_origin = err_cnt;
-    bool flag = false;
-    int function_num = 0;
-    string temp;
-    if (isType("IDENFR")) {
-        if (idenfr_not_defined(nextsym) == 1) {
-            error('c', word[nextsym].line);
-            flag = true;
-        }
-        temp = tolower_string(word[nextsym].val);
-        for (int i = 1; i <= top; ++i) {
-            if ((temp == symbolList[i].val) && (symbolList[i].function != 0)) {
-                function_num = symbolList[i].function;
-                break;
-            }
-        }
-        for (int i = 1; i < nextsym; ++i) {
-            if (func_without_return[i] == 1 && word[i].val == word[nextsym].val) {
-                flag = true;
             }
         }
     }
-    if (flag) {
-        nextsym += 1;
-        if (isType("LPARENT")) {    // (
-            nextsym += 1;
-            if (_table_parameter_value(function_num) == 1) {
-                if (isType("RPARENT")) {
-                    nextsym += 1;
-                    return 1;
-                }   else {
-                    error('l', word[nextsym - 1].line);
-                    return 1;
-                }
-            }   else {
-                error('0', index_single_line);
-            }
-        }   else {
-            error('0', index_single_line);
-        }
-    }
-    nextsym = start;
-    err_cnt = err_cnt_origin;
-    return 0;
-} // 无返回值函数调用语句
-int _function_with_return_call() {
-//    ＜有返回值函数调用语句＞ ::= ＜标识符＞'('＜值参数表＞')'
-    int start = nextsym;
-    int err_cnt_origin = err_cnt;
-    bool flag = false;
-    int function_num = 0;
-    int type_temp = 1;
-    string temp;
-    if (isType("IDENFR")) {
-        if (idenfr_not_defined(nextsym) == 1) {
-            error('c', word[nextsym].line);
-            flag = true;
-        }
-        temp = tolower_string(word[nextsym].val);
-        for (int i = 1; i <= top; ++i) {
-            if ((temp == symbolList[i].val) && (symbolList[i].function != 0)) {
-                function_num = symbolList[i].function;
-                type_temp = symbolList[i].type;
-                break;
-            }
-        }
-        for (int i = 1; i < nextsym; ++i) {
-            if (func_with_return[i] == 1 && word[i].val == word[nextsym].val) {
-                flag = true;
-            }
-        }
-    }
-    if (flag) {
-        nextsym += 1;
-        if (isType("LPARENT")) {    // (
-            nextsym += 1;
-            if (_table_parameter_value(function_num) == 1) {
-                if (isType("RPARENT")) {
-                    nextsym += 1;
-                    return type_temp;
-                }   else {
-                    error('l', word[nextsym - 1].line);
-                    return type_temp;
-                }
-            }   else {
-                error('0', index_single_line);
-            }
-        }   else {
-            error('0', index_single_line);
-        }
-    }
-    nextsym = start;
-    err_cnt = err_cnt_origin;
-    return 0;
-} // 有返回值函数调用语句
-int _loop(int num) {
-//    ＜循环语句＞   ::=  while '('＜条件＞')'＜语句＞
-//                    | for'('＜标识符＞＝＜表达式＞;＜条件＞;＜标识符＞＝＜标识符＞(+|-)＜步长＞')'＜语句＞
-    if (isType("WHILETK")) {
-        nextsym += 1;
-        if (isType("LPARENT")) {    // (
-            nextsym += 1;
-            if (_condition() == 1) {
-                if (isType("RPARENT")) {
-                    nextsym += 1;
-                }   else {
-                    error('l', word[nextsym - 1].line);
-                }
-                if (_statement(num) == 1) {
-                    return 1;
-                }   else {
-                    error('0', index_single_line);
-                }
-            }   else {
-                error('0', index_single_line);
-            }
-        }   else {
-            error('0', index_single_line);
-        }
-    }   else if (isType("FORTK")) {
-        nextsym += 1;
-        if (isType("LPARENT")) {
-            nextsym += 1;
-            if (isType("IDENFR")) {
-                if (idenfr_not_defined(nextsym) == 1) {
-                    error('c', word[nextsym].line);
-                }   else if (find_const(nextsym) == 1) {
-                    error('j', word[nextsym].line);
-                }
-                nextsym += 1;
-                if (isType("ASSIGN")) {
-                    nextsym += 1;
-                    if (_expression()) {
-                        if (isType("SEMICN")) {
-                            nextsym += 1;
-                        }   else {
-                            error('k', word[nextsym - 1].line);
-                        }
-                        if (_condition() == 1) {
-                            if (isType("SEMICN")) {
-                                nextsym += 1;
-                            }   else {
-                                error('k', word[nextsym - 1].line);
-                            }
-                            if (isType("IDENFR")) {
-                                nextsym += 1;
-                                if (isType("ASSIGN")) {
-                                    nextsym += 1;
-                                    if (isType("IDENFR")) {
-                                        nextsym += 1;
-                                        if (isType("PLUS") || isType("MINU")) {
-                                            nextsym += 1;
-                                            if (_step() == 1) {
-                                                if (isType("RPARENT")) {
-                                                    nextsym += 1;
-                                                }   else {
-                                                    error('l', word[nextsym - 1].line);
-                                                }
-                                                if (_statement(num) == 1) {
-                                                    return 1;
-                                                }   else {
-                                                    error('0', index_single_line);
-                                                }
-                                            }   else {
-                                                error('0', index_single_line);
-                                            }
-                                        }   else {
-                                            error('0', index_single_line);
-                                        }
-                                    }   else {
-                                        error('0', index_single_line);
-                                    }
-                                }   else {
-                                    error('0', index_single_line);
-                                }
-                            }   else {
-                                error('0', index_single_line);
-                            }
-                        }   else {
-                            error('0', index_single_line);
-                        }
-                    }   else {
-                        error('0', index_single_line);
-                    }
-                }   else {
-                    error('0', index_single_line);
-                }
-            }   else {
-                error('0', index_single_line);
-            }
-        }
-    }   else {
-        error('0', index_single_line);
-    }
-    return 0;
-} // 循环语句
-int _table_parameter() {
-//    ＜参数表＞    ::=  ＜类型标识符＞＜标识符＞{,＜类型标识符＞＜标识符＞}
-//                   | ＜空＞
-    int start = nextsym;
-    int type_idenfr = 0;
-    if (isType("INTTK") || isType("CHARTK")) {
-        while (isType("INTTK") || isType("CHARTK")) {
-            type_idenfr = isType("INTTK") ? 1 : 2;
-            parameterTable[cnt_function].type[++parameterTable[cnt_function].parameter] = type_idenfr;
-            nextsym += 1;
-            if (isType("IDENFR")) {
-                top += 1;
-                symbolList[top].val = tolower_string(word[nextsym].val);
-                symbolList[top].depth = 2;
-                symbolList[top].line = word[nextsym].line;
-                symbolList[top].type = type_idenfr;
-                if (search() == 1) {
-                    error('b', word[nextsym].line);
-                    symbolList[top].type = 1;
-                    top -= 1;
-                }
-                nextsym += 1;
-                if (isType("COMMA")) {
-                    nextsym += 1;
-                }   else {
-                    return 1;
-                }
-            }   else {
-                error('0', index_single_line);
-            }
-        }
-    }   else {
-        return 1;
-    }
-    nextsym = start;
-    return 0;
-} // 参数表
-int _table_parameter_value(int num) {
-//    ＜值参数表＞   ::= ＜表达式＞{,＜表达式＞}
-//                   ｜＜空＞
-    int type_expression = _expression();
-    int count = 0;
-    bool flag_error_e = false;
-    if (type_expression) {
-        count += 1;
-        if ((parameterTable[num].parameter >= count)
-            && ((parameterTable[num].type[count] == 1 && type_expression == 2)
-            || (parameterTable[num].type[count] == 2 && type_expression == 1))) {
-            flag_error_e = true;
-        }
-        while (isType("COMMA")) {
-            nextsym += 1;
-            type_expression = _expression();
-            count += 1;
-            if ((parameterTable[num].parameter >= count)
-                && ((parameterTable[num].type[count] == 1 && type_expression == 2)
-                || (parameterTable[num].type[count] == 2 && type_expression == 1))) {
-                flag_error_e = true;
-            }
-            if (type_expression == 0) {
-                error('0', index_single_line);
-            }
-        }
-        if (count != parameterTable[num].parameter) {
-            error('d', word[nextsym - 1].line);
-        }   else if (flag_error_e) {
-            error('e', word[nextsym - 1].line);
-        }
-        return 1;
-    }   else {
-        if (count != parameterTable[num].parameter) {
-            error('d', word[nextsym - 1].line);
-        }
-        return 1;
-    }
-}// 值参数表
-int _condition() {
-//    ＜条件＞    ::=  ＜表达式＞＜关系运算符＞＜表达式＞
-    int type_expression = _expression();
-    bool flag_error_f = false;
-    if (type_expression == 2) {
-        flag_error_f = true;
-    }
-    if (type_expression) {
-        if (isType("LSS") || isType("LEQ")
-            || isType("GRE") || isType("GEQ")
-            || isType("EQL") || isType("NEQ")) {
-            nextsym += 1;
-            type_expression = _expression();
-            if (type_expression == 2) {
-                flag_error_f = true;
-            }
-            if (type_expression) {
-                if (flag_error_f) {
-                    error('f', word[nextsym - 1].line);
-                }
-                return 1;
-            }   else {
-                error('0', index_single_line);
-            }
-        }   else {
-            error('0', index_single_line);
-        }
-    }
-    return 0;
-} // 条件
-int _if(int num) {
-//    ＜条件语句＞  ::= if '('＜条件＞')'＜语句＞［else＜语句＞］
-    int start = nextsym;
-    if (isType("IFTK")) {
-        nextsym += 1;
-        if (isType("LPARENT")) {    // (
-            nextsym += 1;
-            if (_condition() == 1) {
-                if (isType("RPARENT")) {
-                    nextsym += 1;
-                }   else {
-                    error('l', word[nextsym - 1].line);
-                }
-                if (_statement(num) == 1) {
-                    if (isType("ELSETK")) {
-                        nextsym += 1;
-                        if (_statement(num) == 1) {
-                            return 1;
-                        }   else {
-                            error('0', index_single_line);
-                        }
-                    }   else {
-                        return 1;
-                    }
-                }   else {
-                    error('0', index_single_line);
-                }
-            }   else {
-                error('0', index_single_line);
-            }
-        }   else {
-            error('0', index_single_line);
-        }
-    }
-    nextsym = start;
-    return 0;
-} // 条件语句
-int _list_statement(int num) {
-//    ＜语句列＞   ::= ｛＜语句＞｝
-    while (_statement(num) == 1) {
-
-    }
-    return 1;
-} // 语句列
-int _statement_combination(int num) {
-//    ＜复合语句＞   ::=  ［＜常量说明＞］［＜变量说明＞］＜语句列＞
-    int start = nextsym;
-    _const_statement(2);
-    _var_statement(2);
-    if (_list_statement(num) == 1) {
-        return 1;
-    }   else {
-        error('0', index_single_line);
-    }
-    nextsym = start;
-    return 0;
-} // 复合语句
-int _char() {
-//    ＜字符＞    ::=  '＜加法运算符＞'
-//                  ｜'＜乘法运算符＞'
-//                  ｜'＜字母＞'
-//                  ｜'＜数字＞'
-    if (isType("CHARCON")) {
-        nextsym += 1;
-        return 1;
-    }
-    return 0;
-} // 字符
-
-void output() {
-    for (int i = 1; i <= err_cnt; ++i) {
-        if (error_list[i].type != '0') {
-            fprintf(f_error, "%d %c\n", error_list[i].line, error_list[i].type);
-        }
-    }
+    fprintf(f_out, "<变量定义及初始化>\n");
+    cout << "<变量定义及初始化>" << endl;
 }
 
-void output_debug() {
-    for (int i = 1; i <= err_cnt; ++i) {
-        printf("%d %c\n", error_list[i].line, error_list[i].type);
-    }
-}
-
-void init_file() {
-    f_in = fopen("testfile.txt", "r");
-    f_out = fopen("output.txt", "w");
-    f_error = fopen("error.txt", "w");
-}
-
-void init_file_debug() {
-    f_in = fopen("../testfile.txt", "r");
-    f_out = fopen("../output.txt", "w");
-    f_error = fopen("../error.txt", "w");
-}
-
+// main
 int main() {
-    init_file_debug();
-//    init_file();
-    while (fgets(single_line, 1002, f_in) != NULL) {
-        line += 1;
-        getsym();
-    }
-    for (int i = 1; i < 10080; ++i) {
-        parameterTable[i].parameter = 0;
-        symbolList[i].type = 1;
-        symbolList[i].isConst = false;
-    }
+    getBuffer();
+    getsym(no);
     program();
-
-    output_debug();
-//    output();
-
-    fclose(f_error);
-    fclose(f_in);
-    fclose(f_out);
     return 0;
 }
+
+
+
+
+
+
