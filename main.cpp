@@ -228,9 +228,6 @@ bool isSingleQuote(char c) {
 bool isDoubleQuote(char c) {
     return (c == '\"');
 }   // \"
-bool isDividedLine(char c) {
-    return (c == '\\');
-}   // \\
 
 bool isReservedWord(char buffer[], int addr, char c) {
     return tolower(buffer[row + addr]) == c;
@@ -403,28 +400,153 @@ void getsym(char buffer[]) {
        else if (isReservedWord(buffer, 0, 'c') && isReservedWord(buffer, 1, 'o')
                 && isReservedWord(buffer, 2, 'n') && isReservedWord(buffer, 3, 's')
                 && isReservedWord(buffer, 4, 't')
-                && (isSpace(buffer[row + 5]) || (!isUnderscore(buffer[row + 5]) && !isDigit(buffer[row + 5])))) {
+                && (isSpace(buffer[row + 5]) || (!isLetter(buffer[row + 5]) && !isDigit(buffer[row + 5])))) {
            analysis_2_slist(S_list, "const", "CONSTTK", 5);
        }
        else if (isReservedWord(buffer, 0, 'i') && isReservedWord(buffer, 1, 'n')
                 && isReservedWord(buffer, 2, 't')
-                && (isSpace(buffer[row + 3]) || (!isUnderscore(buffer[row + 3]) && !isDigit(buffer[row + 3])))) {
+                && (isSpace(buffer[row + 3]) || (!isLetter(buffer[row + 3]) && !isDigit(buffer[row + 3])))) {
            analysis_2_slist(S_list, "int", "INTTK", 3);
        }
        else if (isReservedWord(buffer, 0, 'c') && isReservedWord(buffer, 1, 'h')
                 && isReservedWord(buffer, 2, 'a') && isReservedWord(buffer, 3, 'r')
-                && (isSpace(buffer[row + 4]) || (!isUnderscore(buffer[row + 4]) && !isDigit(buffer[row + 4])))) {
+                && (isSpace(buffer[row + 4]) || (!isLetter(buffer[row + 4]) && !isDigit(buffer[row + 4])))) {
            analysis_2_slist(S_list, "char", "CHARTK", 4);
        }
        else if (isReservedWord(buffer, 0, 'v') && isReservedWord(buffer, 1, 'o')
                 && isReservedWord(buffer, 2, 'i') && isReservedWord(buffer, 3, 'd')
-                && (isSpace(buffer[row + 4]) || (!isUnderscore(buffer[row + 4]) && !isDigit(buffer[row + 4])))) {
+                && (isSpace(buffer[row + 4]) || (!isLetter(buffer[row + 4]) && !isDigit(buffer[row + 4])))) {
            analysis_2_slist(S_list, "void", "VOIDTK", 4);
        }
        else if (isReservedWord(buffer, 0, 'm') && isReservedWord(buffer, 1, 'a')
                 && isReservedWord(buffer, 2, 'i') && isReservedWord(buffer, 3, 'n')
-                && (isSpace(buffer[row + 4]) || (!isUnderscore(buffer[row + 4]) && !isDigit(buffer[row + 4])))) {
+                && (isSpace(buffer[row + 4]) || (!isLetter(buffer[row + 4]) && !isDigit(buffer[row + 4])))) {
            analysis_2_slist(S_list, "main", "MAINTK", 4);
+       }
+       else if (isReservedWord(buffer, 0, 'i') && isReservedWord(buffer, 1, 'f')
+                && (isSpace(buffer[row + 2]) || (!isLetter(buffer[row + 2]) && !isDigit(buffer[row + 2])))) {
+           analysis_2_slist(S_list, "if", "IFTK", 2);
+       }
+       else if (isReservedWord(buffer, 0, 'e') && isReservedWord(buffer, 1, 'l')
+                && isReservedWord(buffer, 2, 's') && isReservedWord(buffer, 3, 'e')
+                && (isSpace(buffer[row + 4]) || (!isLetter(buffer[row + 4]) && !isDigit(buffer[row + 4])))) {
+           analysis_2_slist(S_list, "else", "ELSETK", 4);
+       }
+       else if (isReservedWord(buffer, 0, 's') && isReservedWord(buffer, 1, 'w')
+                && isReservedWord(buffer, 2, 'i') && isReservedWord(buffer, 3, 't')
+                && isReservedWord(buffer, 4, 'c') && isReservedWord(buffer, 5, 'h')
+                && (isSpace(buffer[row + 6]) || (!isLetter(buffer[row + 6]) && !isDigit(buffer[row + 6])))) {
+           analysis_2_slist(S_list, "switch", "SWITCHTK", 6);
+       }
+       else if (isReservedWord(buffer, 0, 'c') && isReservedWord(buffer, 1, 'a')
+                && isReservedWord(buffer, 2, 's') && isReservedWord(buffer, 3, 'e')
+                && (isSpace(buffer[row + 4]) || (!isLetter(buffer[row + 4]) && !isDigit(buffer[row + 4])))) {
+           analysis_2_slist(S_list, "case", "CASETK", 4);
+       }
+       else if (isReservedWord(buffer, 0, 'd') && isReservedWord(buffer, 1, 'e')
+                && isReservedWord(buffer, 2, 'f') && isReservedWord(buffer, 3, 'a')
+                && isReservedWord(buffer, 4, 'u') && isReservedWord(buffer, 5, 'l')
+                && isReservedWord(buffer, 6, 't')
+                && (isSpace(buffer[row + 7]) || (!isLetter(buffer[row + 7]) && !isDigit(buffer[row + 7])))) {
+           analysis_2_slist(S_list, "default", "DEFAULTTK", 7);
+       }
+       else if (isReservedWord(buffer, 0, 'w') && isReservedWord(buffer, 1, 'h')
+                && isReservedWord(buffer, 2, 'i') && isReservedWord(buffer, 3, 'l')
+                && isReservedWord(buffer, 4, 'e')
+                && (isSpace(buffer[row + 5]) || (!isLetter(buffer[row + 5]) && !isDigit(buffer[row + 5])))) {
+           analysis_2_slist(S_list, "while", "WHILETK", 5);
+       }
+       else if (isReservedWord(buffer, 0, 'f') && isReservedWord(buffer, 1, 'o')
+                && isReservedWord(buffer, 2, 'r')
+                && (isSpace(buffer[row + 3]) || (!isLetter(buffer[row + 3]) && !isDigit(buffer[row + 3])))) {
+           analysis_2_slist(S_list, "for", "FORTK", 3);
+       }
+       else if (isReservedWord(buffer, 0, 's') && isReservedWord(buffer, 1, 'c')
+                && isReservedWord(buffer, 2, 'a') && isReservedWord(buffer, 3, 'n')
+                && isReservedWord(buffer, 4, 'f')
+                && (isSpace(buffer[row + 5]) || (!isLetter(buffer[row + 5]) && !isDigit(buffer[row + 5])))) {
+           analysis_2_slist(S_list, "scanf", "SCANFTK", 5);
+       }
+       else if (isReservedWord(buffer, 0, 'p') && isReservedWord(buffer, 1, 'r')
+                && isReservedWord(buffer, 2, 'i') && isReservedWord(buffer, 3, 'n')
+                && isReservedWord(buffer, 4, 't') && isReservedWord(buffer, 5, 'f')
+                && (isSpace(buffer[row + 6]) || (!isLetter(buffer[row + 6]) && !isDigit(buffer[row + 6])))) {
+           analysis_2_slist(S_list, "printf", "PRINTFTK", 6);
+       }
+       else if (isReservedWord(buffer, 0, 'r') && isReservedWord(buffer, 1, 'e')
+                && isReservedWord(buffer, 2, 't') && isReservedWord(buffer, 3, 'u')
+                && isReservedWord(buffer, 4, 'r') && isReservedWord(buffer, 5, 'n')
+                && (isSpace(buffer[row + 6]) || (!isLetter(buffer[row + 6]) && !isDigit(buffer[row + 6])))) {
+           analysis_2_slist(S_list, "return", "RETURNTK", 6);
+       }
+       //////////////////////// do do do do do do
+       else if (isReservedWord(buffer, 0, 'd') && isReservedWord(buffer, 1, 'o')
+                && (isSpace(buffer[row + 2]) || (!isLetter(buffer[row + 2]) && !isDigit(buffer[row + 2])))) {
+           analysis_2_slist(S_list, "do", "DOTK", 2);
+       }
+       //////////////////////// do do do do do do
+       else if (isDigit(buffer[row])) {
+           S_list.type[pos_S_list_analysis] = "INTCON";
+           S_list.name[pos_S_list_analysis] = buffer[row];
+           S_list.row[pos_S_list_analysis] = row;
+           S_list.line[pos_S_list_analysis] = line;
+           row += 1;
+           while (isDigit(buffer[row])) {
+               S_list.name[pos_S_list_analysis] += buffer[row];
+               row += 1;
+           }
+           pos_S_list_analysis += 1;
+       }
+       else if (isLetter(buffer[row])) {
+           S_list.type[pos_S_list_analysis] = "IDENFR";
+           S_list.name[pos_S_list_analysis] = buffer[row];
+           S_list.row[pos_S_list_analysis] = row;
+           S_list.line[pos_S_list_analysis] = line;
+           row += 1;
+           while (isLetter(buffer[row]) || isDigit(buffer[row])) {
+               S_list.name[pos_S_list_analysis] += buffer[row];
+               row += 1;
+           }
+           pos_S_list_analysis += 1;
+       }
+       else if (isSingleQuote(buffer[row])) {
+           row += 1;
+           if (isPlus(buffer[row]) || isMinus(buffer[row])
+                || isStar(buffer[row]) || isDiv(buffer[row])
+                || isDigit(buffer[row]) || isLetter(buffer[row])) {
+               row += 1;
+               if (isSingleQuote(buffer[row])) {
+                   S_list.type[pos_S_list_analysis] = "CHARCON";
+                   S_list.name[pos_S_list_analysis] = buffer[row - 1];
+                   S_list.row[pos_S_list_analysis] = row;
+                   S_list.line[pos_S_list_analysis] = line;
+                   row += 1;
+                   pos_S_list_analysis += 1;
+               }
+           }
+       }
+       else if (isDoubleQuote(buffer[row])) {
+           S_list.type[pos_S_list_analysis] = "STRCON";
+           row += 1;
+           S_list.row[pos_S_list_analysis] = row;
+           S_list.line[pos_S_list_analysis] = line;
+           while (!isDoubleQuote(buffer[row])) {
+               if (isSpace(buffer[row]) || isExclamation(buffer[row])
+                    || (buffer[row] >= 35 && buffer[row] <= 126)) {
+                   S_list.name[pos_S_list_analysis] += buffer[row];
+                   row += 1;
+               }
+           }
+           row += 1;
+           pos_S_list_analysis += 1;
+       }
+       else if (isNextline(buffer[row]) || buffer[row] == '\0' || isTab(buffer[row])
+                || (buffer[row] == '\r' && isNextline(buffer[row + 1]))) {
+           return;
+       }
+       else {
+           row += 1;
+           return;
        }
     }
 }
@@ -1361,17 +1483,3 @@ void _var_define_with_initialization() {
     fprintf(f_out, "<变量定义及初始化>\n");
     cout << "<变量定义及初始化>" << endl;
 }
-
-// main
-int main() {
-    getBuffer();
-    getsym(no);
-    program();
-    return 0;
-}
-
-
-
-
-
-
