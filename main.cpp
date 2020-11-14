@@ -8,356 +8,427 @@
 #include "map"
 #include <stdio.h>
 #include "fstream"
+#include "ctype.h"
 
 #define yes true
 #define no false
+#define Max 1024
+#define Maximum Max * Max
 using namespace std;
 
 
 //  语法分析
-enum SymbolType {
-    IDENFR, INTCON,   CHARCON,  STRCON,     CONSTTK,
-    INTTK,  CHARTK,   VOIDTK,   MAINTK,     IFTK,
-    ELSETK, SWITCHTK, CASETK,   DEFAULTTK,  WHILETK,
-    FORTK,  SCANFTK,  PRINTFTK, RETURNTK,   PLUS,
-    MINU,   MULT,     DIV,      LSS,        LEQ,
-    GRE,    GEQ,      EQL,      NEQ,        COLON,
-    ASSIGN, SEMICN,   COMMA,    LPARENT,    RPARENT,
-    LBRACK, RBRACK,   LBRACE,   RBRACE,
-    FOUL // ERROR symbol
-};
-void error() {
-
-}
-map<string, SymbolType> reservedWords = {
-        {"const", CONSTTK},
-        {"int",   INTTK},
-        {"char",  CHARTK},
-        {"void",  VOIDTK},
-        {"main",  MAINTK},
-        {"if", IFTK},
-        {"else", ELSETK},
-        {"switch", SWITCHTK},
-        {"case", CASETK},
-        {"default", DEFAULTTK},
-        {"while", WHILETK},
-        {"for", FORTK},
-        {"scanf", SCANFTK},
-        {"printf", PRINTFTK},
-        {"return", RETURNTK}
-};
-map<char, SymbolType> reservedSymbol = {
-        {'+', PLUS},
-        {'-', MINU},
-        {'*', MULT},
-        {'/', DIV},
-        {'<', LSS},
-        {'>', GRE},
-        {':', COLON},
-        {'=', ASSIGN},
-        {';', SEMICN},
-        {',', COMMA},
-        {'(', LPARENT},
-        {')', RPARENT},
-        {'[', LBRACK},
-        {']', RBRACK},
-        {'{', LBRACE},
-        {'}', RBRACE}
-};
-
-const string SymbolType_String[] = {
-        "IDENFR", "INTCON",   "CHARCON",  "STRCON",     "CONSTTK",
-        "INTTK",  "CHARTK",   "VOIDTK",   "MAINTK",     "IFTK",
-        "ELSETK", "SWITCHTK", "CASETK",   "DEFAULTTK",  "WHILETK",
-        "FORTK",  "SCANFTK",  "PRINTFTK", "RETURNTK",   "PLUS",
-        "MINU",   "MULT",     "DIV",      "LSS",        "LEQ",
-        "GRE",    "GEQ",      "EQL",      "NEQ",        "COLON",
-        "ASSIGN", "SEMICN",   "COMMA",    "LPARENT",    "RPARENT",
-        "LBRACK", "RBRACK",   "LBRACE",   "RBRACE",
-        "FOUL" // ERROR symbol
-};
-
-string token;
-char c;     // The letter read now
-char buffer[88888810]; // Everything
-SymbolType symbol;
-int index_buffer; // index of buffer
+int pos_M_code;
+int pos_S_list_analysis;
+int pos_S_list;
+int pos_S_print;
+int pos_S_symbol;
 int line = 1;
-FILE *f_in, *f_out;
+int row = 0;
+string key[Max] = { "const",
+                   "int", "char",
+                   "void", "main",
+                   "if", "else",
+                   "switch", "default", "case",
+                   "while", "for",
+                   "scanf", "printf",
+                   "return",
+                   "do" };
+string keykind[Max] = { "CONSTTK",
+                       "INTTK", "CHARTK",
+                       "VOIDTK", "MAINTK",
+                       "IFTK", "ELSETK",
+                       "SWITCHTK", "CASETK", "DEFAULTTK",
+                       "WHILETK", "FORTK",
+                       "SCANFTK", "PRINTFTK",
+                       "RETURNTK",
+                       "DOTK" };
+string op[Max] = { "+", "-", "*", "/",
+                  "<", "<=", ">", ">=", "==", "!=",
+                  "=",
+                  ";", ", ",
+                  "(", ")", "[", "]", "{", "}" };
+string opkind[Max] = { "PLUS", "MINU", "MULT", "DIV",
+                      "LSS", "LEQ", "GRE", "GEQ", "EQL", "NEQ",
+                      "ASSIGN",
+                      "SEMICN", "COMMA",
+                      "LPARENT", "RPARENT", "LBRACK", "RBRACK", "LBRACE", "RBRACE" };
+string constkind[Max] = { "IDENFR", "INTCON", "CHARCON", "STRCON" };
 
-void getBuffer() {
-    f_in = fopen("testfile.txt", "rb");
-    f_out = fopen("output.txt", "wb");
-    fread(buffer,1, 8888888, f_in);
+// 记录表
+struct Sym_list {
+    string name[Maximum];
+    string type[Maximum];
+    string has_return[Maximum];
+    string no_return[Maximum];
+    int line[Maximum];
+    int row[Maximum];
+}   S_list;
+
+// 输出表
+struct Sym_print {
+    string name[Maximum];
+    string type[Maximum];
+    int num[Maximum]; // 0: 词法, 1: 语法
+    int line[Maximum];
+    int row[Maximum];
+}   S_print;
+
+// 符号表
+struct Sym_symbol {
+    string name[Maximum];
+    int type[Maximum]; // 1: int, 2: char, 3: array, 4: none
+    int kind[Maximum]; // 1: const, 2: variable, 3: function_name, 4: function_parameter
+    int ref;    // 值
+    int level[Maximum]; // 层次
+    int addr[Maximum]; // 在运行栈中的位置
+}   S_symbol;
+
+// 运行栈
+struct Sym_stack {
+    string name[Maximum];
+    string CHAR[Maximum];
+    int type[Maximum]; // 1: int, 2: char, 3: array_int, 4: array_char
+}   S_stack;
+
+// PCode
+struct Mid_code {
+    int code[Maximum];
+    int op1[Maximum];
+    int op2[Maximum];
+}   M_code;
+
+void emit (int code, int op1, int op2) {
+    M_code.code[pos_M_code] = code;
+    M_code.op1[pos_M_code] = op1;
+    M_code.op2[pos_M_code] = op2;
+    pos_M_code += 1;
+}
+void emit_op1 (int op1) {
+    M_code.op1[pos_M_code] = op1;
+    pos_M_code += 1;
+}
+void emit_op2 (int code, int op2) {
+    M_code.code[pos_M_code] = code;
+    M_code.op2[pos_M_code] = op2;
+    pos_M_code += 1;
 }
 
-bool isPlus() {
+void analysis_2_slist (Sym_list & slist, string name, string type, int pos) {
+    slist.name[pos_S_list_analysis] = name;
+    slist.type[pos_S_list_analysis] = type;
+    slist.row[pos_S_list_analysis] = row;
+    slist.line[pos_S_list_analysis] = line;
+    row += pos;
+    pos_S_list_analysis += 1;
+}
+
+void slist_0_sprint (Sym_list & slist, Sym_print & sprint) {
+    sprint.name[pos_S_print] = slist.name[pos_S_list];
+    sprint.type[pos_S_print] = slist.type[pos_S_list];
+    sprint.line[pos_S_print] = slist.line[pos_S_list];
+    sprint.row[pos_S_print] = slist.row[pos_S_list];
+    sprint.num[pos_S_print] = 0;
+    pos_S_list += 1;
+    pos_S_print += 1;
+}
+
+void slist_1_sprint (Sym_list & slist, Sym_print & sprint) {
+    sprint.num[pos_S_print] = 1;
+    pos_S_print += 1;
+}
+
+int search (Sym_list & slist, Sym_symbol & symSymbol) {
+    for (int z = pos_S_symbol; z >= 0; --z) {
+        if (slist.name[pos_S_list] == symSymbol.name[z]) {
+            return z;
+        }
+    }
+    return 0;
+}
+
+bool isPlus(char c) {
     return (c == '+');
 }   // +
-bool isMinus() {
+bool isMinus(char c) {
     return (c == '-');
 }   // -
-bool isStar() {
+bool isStar(char c) {
     return (c == '*');
 }   // *
-bool isDiv() {
+bool isDiv(char c) {
     return (c == '/');
 }      // /
-bool isColon() {
+bool isColon(char c) {
     return (c == ':');
 }   // :
-bool isComma() {
+bool isComma(char c) {
     return (c == ',');
 }   // ,
-bool isSemicolon() {
+bool isSemicolon(char c) {
     return (c == ';');
 }   // ;
-bool isEqual() {
+bool isEqual(char c) {
     return (c == '=');
 }   // =
-bool isLParent() {
+bool isLParent(char c) {
     return (c == '(');
 }   // (
-bool isRParent() {
+bool isRParent(char c) {
     return (c == ')');
 }   // )
-bool isLBrack() {
+bool isLBrack(char c) {
     return (c == '[');
 }   // [
-bool isRBrack() {
+bool isRBrack(char c) {
     return (c == ']');
 }   // ]
-bool isLBrace() {
+bool isLBrace(char c) {
     return (c == '{');
 }   // {
-bool isRBrace() {
+bool isRBrace(char c) {
     return (c == '}');
 }   // }
-bool isLess() {
+bool isLess(char c) {
     return (c == '<');
 }   // <
-bool isGreater() {
+bool isGreater(char c) {
     return (c == '>');
 }   // >
-bool isExclamation() {
+bool isExclamation(char c) {
     return (c == '!');
 }   // !
-bool isSpace() {
+bool isSpace(char c) {
     return (c == ' ');
 }   // " "
-bool isTab() {
+bool isTab(char c) {
     return (c == '\t');
 }   // \t
-bool isInvisibleSymbol() {
+bool isInvisibleSymbol(char c) {
     return (c > 0 && c <= 32);
 }   // Lee Sin
-bool isEOF() {
+bool isEOF(char c) {
     return (c == EOF);
 }   // EOF
-bool isLetter() {
-    return isalpha(c);
-}
-bool isNextline() {
-    return (c == '\n' || c == '\r');
-}   // \n, \r
-bool isDigit() {
+bool isNextline(char c) {
+    return (c == '\n');
+}   // \n
+bool isDigit(char c) {
     return (isdigit(c));
 }   // 0-9
-bool isUnderscore() {
+bool isUnderscore(char c) {
     return (c == '_');
 }   // _
-bool isSingleQuote() {
+bool isLetter(char c) {
+    return isalpha(c) || isUnderscore(c);
+}   // '_' included
+bool isSingleQuote(char c) {
     return (c == '\'');
 }   // \'
-bool isDoubleQuote() {
+bool isDoubleQuote(char c) {
     return (c == '\"');
 }   // \"
-bool isDividedLine() {
+bool isDividedLine(char c) {
     return (c == '\\');
 }   // \\
 
-void clearToken() {
-    token.clear();
+bool isReservedWord(char buffer[], int addr, char c) {
+    return tolower(buffer[row + addr]) == c;
+}   // 特定位置是否为保留字中的字母或其大写
+
+// 程序
+bool program(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 字符串
+bool _string(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 常量
+bool _const(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 常量定义
+bool _const_define(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 常量说明
+bool _const_statement(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 变量定义
+bool _var_define(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 变量说明
+bool _var_statement(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 变量定义无初始化
+bool _var_define_no_initialization(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 变量定义及初始化
+bool _var_define_with_initialization(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 读语句
+bool _scanf(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 写语句
+bool _printf(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 项
+bool _term(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 因子
+bool _factor(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 表达式
+bool _expression(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 语句
+bool _statement(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 缺省
+bool _default(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 返回语句
+bool _return(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 无符号整数
+bool _unsigned_int(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 步长
+bool _step(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 主函数
+bool _main(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 声明头部
+bool _head_statement(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 整数
+bool _int(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 赋值语句
+bool _assign(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 情况语句
+bool _switch(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 情况子语句
+bool _case(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 情况表
+bool _table_cases(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 无返回值函数定义
+bool _function_no_return_define(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 有返回值函数定义
+bool _function_with_return_define(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 无返回值函数调用语句
+bool _function_no_return_call(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 有返回值函数调用语句
+bool _function_with_return_call(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 循环语句
+bool _loop(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 参数表
+bool _table_parameter(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 值参数表
+bool _table_parameter_value(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 条件
+bool _condition(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 条件语句
+bool _if(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 语句列
+bool _list_statement(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 复合语句
+bool _statement_combination(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+// 字符
+bool _char(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+
+void P_code (Sym_stack & symStack, Sym_symbol & symSymbol, Mid_code & midCode);
+
+char buffer[Max];
+ifstream f_in;
+ofstream f_out;
+void getBuffer() {
+    f_in.open("../testfile.txt");
+    f_out.open("../pcoderesult.txt");
+}
+void getsym(char buffer[]);
+int main() {
+    getBuffer();
+    while (!f_in.eof()) {
+        f_in.getline(buffer, Max);
+        row = 0;
+        getsym(buffer);
+        line += 1;
+    }
+    program(S_list, S_print, S_stack, S_symbol);
+    P_code(S_stack, S_symbol, M_code);
+
+    f_in.close();
+    f_out.close();
+    return 0;
+}
+void getsym(char buffer[]) {
+    for (row = 0; row < Max;) {
+       while (isSpace(buffer[row])) {
+           row += 1;
+       }
+       if (isPlus(buffer[row])) {
+           analysis_2_slist(S_list, "+", "PLUS", 1);
+       }
+       else if (isMinus(buffer[row])) {
+           analysis_2_slist(S_list, "-", "MINU", 1);
+       }
+       else if (isStar(buffer[row])) {
+           analysis_2_slist(S_list, "*", "MULT", 1);
+       }
+       else if (isDiv(buffer[row])) {
+           analysis_2_slist(S_list, "/", "DIV", 1);
+       }
+       else if (isLess(buffer[row]) && !isEqual(buffer[row + 1])) {
+           analysis_2_slist(S_list, "<", "LSS", 1);
+       }
+       else if (isLess(buffer[row]) && isEqual(buffer[row + 1])) {
+           analysis_2_slist(S_list, "<=", "LEQ", 2);
+       }
+       else if (isGreater(buffer[row]) && !isEqual(buffer[row + 1])) {
+           analysis_2_slist(S_list, ">", "GRE", 1);
+       }
+       else if (isGreater(buffer[row]) && isEqual(buffer[row + 1])) {
+           analysis_2_slist(S_list, ">=", "GEQ", 2);
+       }
+       else if (isEqual(buffer[row]) && isEqual(buffer[row + 1])) {
+           analysis_2_slist(S_list, "==", "EQL", 2);
+       }
+       else if (isExclamation(buffer[row]) && isEqual(buffer[row + 1])) {
+           analysis_2_slist(S_list, "!=", "NEQ", 2);
+       }
+       else if (isEqual(buffer[row]) && !isEqual(buffer[row + 1])) {
+           analysis_2_slist(S_list, "=", "ASSIGN", 1);
+       }
+       else if (isSemicolon(buffer[row])) {
+           analysis_2_slist(S_list, ";", "SEMICN", 1);
+       }
+       else if (isComma(buffer[row])) {
+           analysis_2_slist(S_list, ",", "COMMA", 1);
+       }
+       else if (isLParent(buffer[row])) {
+           analysis_2_slist(S_list, "(", "LPARENT", 1);
+       }
+       else if (isRParent(buffer[row])) {
+           analysis_2_slist(S_list, ")", "RPARENT", 1);
+       }
+       else if (isLBrack(buffer[row])) {
+           analysis_2_slist(S_list, "[", "LBRACK", 1);
+       }
+       else if (isRBrack(buffer[row])) {
+           analysis_2_slist(S_list, "]", "RBRACK", 1);
+       }
+       else if (isLBrace(buffer[row])) {
+           analysis_2_slist(S_list, "{", "LBRACE", 1);
+       }
+       else if (isRBrace(buffer[row])) {
+           analysis_2_slist(S_list, "}", "RBRACE", 1);
+       }
+       else if (isReservedWord(buffer, 0, 'c') && isReservedWord(buffer, 1, 'o')
+                && isReservedWord(buffer, 2, 'n') && isReservedWord(buffer, 3, 's')
+                && isReservedWord(buffer, 4, 't')
+                && (isSpace(buffer[row + 5]) || (!isUnderscore(buffer[row + 5]) && !isDigit(buffer[row + 5])))) {
+           analysis_2_slist(S_list, "const", "CONSTTK", 5);
+       }
+       else if (isReservedWord(buffer, 0, 'i') && isReservedWord(buffer, 1, 'n')
+                && isReservedWord(buffer, 2, 't')
+                && (isSpace(buffer[row + 3]) || (!isUnderscore(buffer[row + 3]) && !isDigit(buffer[row + 3])))) {
+           analysis_2_slist(S_list, "int", "INTTK", 3);
+       }
+       else if (isReservedWord(buffer, 0, 'c') && isReservedWord(buffer, 1, 'h')
+                && isReservedWord(buffer, 2, 'a') && isReservedWord(buffer, 3, 'r')
+                && (isSpace(buffer[row + 4]) || (!isUnderscore(buffer[row + 4]) && !isDigit(buffer[row + 4])))) {
+           analysis_2_slist(S_list, "char", "CHARTK", 4);
+       }
+       else if (isReservedWord(buffer, 0, 'v') && isReservedWord(buffer, 1, 'o')
+                && isReservedWord(buffer, 2, 'i') && isReservedWord(buffer, 3, 'd')
+                && (isSpace(buffer[row + 4]) || (!isUnderscore(buffer[row + 4]) && !isDigit(buffer[row + 4])))) {
+           analysis_2_slist(S_list, "void", "VOIDTK", 4);
+       }
+       else if (isReservedWord(buffer, 0, 'm') && isReservedWord(buffer, 1, 'a')
+                && isReservedWord(buffer, 2, 'i') && isReservedWord(buffer, 3, 'n')
+                && (isSpace(buffer[row + 4]) || (!isUnderscore(buffer[row + 4]) && !isDigit(buffer[row + 4])))) {
+           analysis_2_slist(S_list, "main", "MAINTK", 4);
+       }
+    }
 }
 
-void catToken() {
-    token += c;
-}   // Add c to token
-void clearSymbol() {
-    symbol = FOUL;
-}
-
-
-void getChar() {
-    c = buffer[index_buffer++];
-    if (isNextline()) {
-        ++line;
-    }
-}
-
-void combo() {
-    catToken();
-    getChar();
-}
-void retract() {
-    c = buffer[--index_buffer];
-    if (isNextline()) {
-        --line;
-    }
-}   // Move the fin pointer 1 step back
-bool isReserved_Token() {
-    string token_temp(token);
-    int token_temp_len = token_temp.size();
-    for(int i = 0; i < token_temp_len; ++i){
-        token_temp.at(i) = tolower(token_temp.at(i));
-    }
-    return (reservedWords.find(token_temp) != reservedWords.end());
-}   // Whether token is legal
-void Reserver_Token() {
-    if (isReserved_Token()) {
-        string token_temp(token);
-        int token_temp_len = token_temp.size();
-        for(int i = 0; i < token_temp_len; ++i){
-            token_temp.at(i) = tolower(token_temp.at(i));
-        }
-        symbol = reservedWords[token_temp];
-    }   else {
-        symbol = IDENFR;
-    }
-}
-
-void getsym(bool output) {
-    if (symbol != FOUL && output) {
-        fprintf(f_out, "%s %s\n", SymbolType_String[symbol].c_str(), token.c_str());
-        printf("%s %s\n", SymbolType_String[symbol].c_str(), token.c_str());
-
-    }
-    clearToken();
-    clearSymbol();
-    getChar();
-    while (isInvisibleSymbol()) {
-        getChar();
-    }
-    if (isEOF()) {
-        return;
-    }
-    if (isLetter() || isUnderscore()) {
-        while (isLetter() || isUnderscore() || isDigit()) {
-            combo();
-        }
-        retract();
-        Reserver_Token();
-    } else if (isDigit()) {
-        while (isDigit()) {
-            combo();
-        }
-        retract();
-        symbol = INTCON;
-    } else if (isSingleQuote()) {
-        getChar();
-        if (!(isPlus() || isMinus() || isStar() || isDiv() || isLetter() || isUnderscore() || isDigit())) {
-            error();
-        }
-        combo();
-        if (!isSingleQuote()) {
-            error();
-        }
-        symbol = CHARCON;
-    } else if (isDoubleQuote()) {
-        getChar();
-        while (!isDoubleQuote()) {
-            if (isNextline()) {
-                error();
-                break;
-            }
-            catToken();
-            getChar();
-        }
-        symbol = STRCON;
-    } else if (isLess()) {
-        combo();
-        if (isEqual()) {
-            catToken();
-            symbol = LEQ;
-        } else {
-            symbol = LSS;
-            retract();
-        }
-    } else if (isGreater()) {
-        combo();
-        if (isEqual()) {
-            catToken();
-            symbol = GEQ;
-        } else {
-            symbol = GRE;
-            retract();
-        }
-    } else if (isEqual()) {
-        combo();
-        if (isEqual()) {
-            catToken();
-            symbol = EQL;
-        } else {
-            symbol = ASSIGN;
-            retract();
-        }
-    } else if (isExclamation()) {
-        combo();
-        if (isEqual()) {
-            catToken();
-        } else {
-            error();
-        }
-        symbol = NEQ;
-    } else if (isPlus() || isMinus() || isStar() || isDiv() || isSemicolon() || isComma() || isColon() || \
-        isLParent() || isRParent() || isLBrack() || isRBrack() || isLBrace() || isRBrace()) {
-        catToken();
-        symbol = reservedSymbol[c];
-    } else if (!isEOF()) {
-        error();
-    }
-}
-
-// 词法分析
-
-void program(); // 程序
-void _string(); // 字符串
-void _const(); // 常量
-void _const_define(); // 常量定义
-void _const_statement(); // 常量说明
-void _var_define(); // 变量定义
-void _var_statement(); // 变量说明
-void _var_define_no_initialization(); // 变量定义无初始化
-void _var_define_with_initialization(); // 变量定义及初始化
-void _scanf(); // 读语句
-void _printf(); // 写语句
-void _term(); // 项
-void _factor(); // 因子
-void _expression(); // 表达式
-void _statement(); // 语句
-void _default(); // 缺省
-void _return(); // 返回语句
-void _unsigned_int(); // 无符号整数
-void _step(); // 步长
-void _main(); // 主函数
-void _head_statement(); // 声明头部
-void _int(); // 整数
-void _assign(); // 赋值语句
-void _switch(); // 情况语句
-void _case(); // 情况子语句
-void _table_cases(); // 情况表
-void _function_no_return_define(); // 无返回值函数定义
-void _function_with_return_define(); // 有返回值函数定义
-void _function_no_return_call(); // 无返回值函数调用语句
-void _function_with_return_call(); // 有返回值函数调用语句
-void _loop(); // 循环语句
-void _table_parameter(); // 参数表
-void _table_parameter_value(); // 值参数表
-void _condition(); // 条件
-void _if(); // 条件语句
-void _list_statement(); // 语句列
-void _statement_combination(); // 复合语句
-void _char(); // 字符
 
 // 老子是分割线 //
 SymbolType symbol_pre;
