@@ -25,6 +25,10 @@ int pos_S_print;
 int pos_S_symbol;
 int line = 1;
 int row = 0;
+int pos_temp_has_return;
+int pos_has_return;
+int pos_no_return;
+int func = 0;   // 函数嵌套
 string key[Max] = { "const",
                    "int", "char",
                    "void", "main",
@@ -79,7 +83,7 @@ struct Sym_symbol {
     string name[Maximum];
     int type[Maximum]; // 1: int, 2: char, 3: array, 4: none
     int kind[Maximum]; // 1: const, 2: variable, 3: function_name, 4: function_parameter
-    int ref;    // 值
+    int ref[Maximum];    // 值
     int level[Maximum]; // 层次
     int addr[Maximum]; // 在运行栈中的位置
 }   S_symbol;
@@ -133,8 +137,9 @@ void slist_0_sprint (Sym_list & slist, Sym_print & sprint) {
     pos_S_print += 1;
 }
 
-void slist_1_sprint (Sym_list & slist, Sym_print & sprint) {
+void slist_1_sprint (Sym_list & slist, Sym_print & sprint, string name) {
     sprint.num[pos_S_print] = 1;
+    sprint.name[pos_S_print] = name;
     pos_S_print += 1;
 }
 
@@ -232,6 +237,10 @@ bool isDoubleQuote(char c) {
 bool isReservedWord(char buffer[], int addr, char c) {
     return tolower(buffer[row + addr]) == c;
 }   // 特定位置是否为保留字中的字母或其大写
+void retract(int len) {
+    pos_S_list -= len;
+    pos_S_print -= len;
+}   // 回溯 pos_S_list, pos_S_print
 
 // 程序
 bool program(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
@@ -274,7 +283,7 @@ bool _step(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_s
 // 主函数
 bool _main(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
 // 声明头部
-bool _head_statement(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
+int _head_statement(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
 // 整数
 bool _int(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
 // 赋值语句
@@ -551,177 +560,363 @@ void getsym(char buffer[]) {
     }
 }
 
-
 // 老子是分割线 //
-SymbolType symbol_pre;
-string array_function_with_return[1000]; // 有返回值函数名
-string array_function_no_return[1000];    // 无返回值函数名
-int index_array_function_with_return;
-int index_array_function_no_return;
 
-void pre_read_Symbol(int n){
-    // 预读
-    SymbolType symbol_origin = symbol;
-    string token_origin = token;
-    int index_buffer_origin = index_buffer;
-    while (n--) {
-        getsym(no);
-    }
-    symbol_pre = symbol;    // 预读得到的symbol
-    symbol = symbol_origin; // 还原symbol
-    token = token_origin;   // 还原token
-    index_buffer = index_buffer_origin; // 还原指针
-} // 预读
-
-// 老子也是分割线 //
-
-void program() {
+bool program(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     /* ＜程序＞    ::= ［＜常量说明＞］［＜变量说明＞］{＜有返回值函数定义＞
      *              | ＜无返回值函数定义＞}＜主函数＞
      */
-    if (symbol == CONSTTK) {
-        _const_statement(); // 常量说明
+    int flag = 0;
+    if (_const_statement(symList, symPrint, symStack, symSymbol)) {
+        flag += 1; // 常量说明
     }
-    pre_read_Symbol(2);
-    if (symbol_pre != LPARENT) {
-        _var_statement();   // 变量说明
+    if (_var_statement(symList, symPrint, symStack, symSymbol)) {
+        flag += 1;   // 变量说明
     }
-    while (yes) {
-        pre_read_Symbol(1);
-        if (symbol_pre == MAINTK) {
-            break;
+    while (_function_with_return_define(symList, symPrint, symStack, symSymbol)
+            || _function_no_return_define(symList, symPrint, symStack, symSymbol)) {
+        flag += 1;
+    }
+    if (_main(symList, symPrint, symStack, symSymbol)) {
+        slist_1_sprint(symList, symPrint, "<程序>");
+        return true;
+    }
+    else {
+        if (flag) {
+            pos_S_list -= flag;
+            pos_S_print -= flag;
         }
-        if (symbol == VOIDTK) {
-            _function_no_return_define();
-        } else {
-            _function_with_return_define();
-        }
+        return false;
     }
-    _main();
-    fprintf(f_out, "<程序>\n");
-    cout << "<程序>" << endl;
 }
 
-void _const_statement() {
+bool _const_statement(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜常量说明＞ ::=  const＜常量定义＞;{ const＜常量定义＞;}
-    if (symbol == CONSTTK) {
-        while (symbol == CONSTTK) {
-            getsym(yes);
-            _const_define(); // 常量定义
-            if (symbol == SEMICN) { // ;
-                getsym(yes);
+    if (symList.type[pos_S_list] == "CONSTTK") {
+        slist_0_sprint(symList, symPrint);
+        if (_const_define(symList, symPrint, symStack, symSymbol)) {
+            // 常量定义
+            if (symList.type[pos_S_list] == ";") { // ;
+                slist_0_sprint(symList, symPrint);
+                while (symList.type[pos_S_list] == "CONSTTK") {
+                    slist_0_sprint(symList, symPrint);
+                    if (_const_define(symList, symPrint, symStack, symSymbol)) {
+                        if (symList.type[pos_S_list] == ";") {
+                            slist_0_sprint(symList, symPrint);
+                        }
+                        else {
+                            retract(2);
+                            break;
+                        }
+                    }
+                    else {
+                        retract(1);
+                        break;
+                    }
+                }
+                slist_1_sprint(symList, symPrint, "<常量说明>");
+                return true;
+            }
+            else {
+                retract(2);
+                return false;
             }
         }
+        else {  // 不是<常量定义>，回退一格，继续判断const
+            retract(1);
+            return false;
+        }
     }
-    fprintf(f_out, "<常量说明>\n");
-//    cout << "<常量说明>" << endl;
+    else {  // 不是const
+        return false;
+    }
 }
 
-////////////////////
-void _var_statement() {
+bool _var_statement(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜变量说明＞  ::= ＜变量定义＞;{＜变量定义＞;}
-    do {
-        _var_define();  // 变量定义
-        if (symbol == SEMICN) { // ;
-            getsym(yes);
+    if (_var_define(symList, symPrint, symStack, symSymbol)) {
+        if (symList.type[pos_S_list] == ";") {
+            slist_0_sprint(symList, symPrint);
+            while (_var_define(symList, symPrint, symStack, symSymbol)) {
+                if (symList.type[pos_S_list] == ";") {
+                    slist_0_sprint(symList, symPrint);
+                }
+                else {
+                    retract(1);
+                    break;
+                }
+            }
+            slist_1_sprint(symList, symPrint, "<变量说明>");
+            return true;
         }
-        if (symbol != INTTK && symbol != CHARTK) { // int || char
-            break;
+        else {
+            retract(1);
         }
-        pre_read_Symbol(2);
-        if (symbol_pre == LPARENT) { // (
-            break;
-        }
-    }   while (yes);
-    fprintf(f_out, "<变量说明>\n");
-    cout << "<变量说明>" << endl;
+    }
+    else {
+        return false;
+    }
 }
-////////////////////
 
-void _const_define() {
+bool _const_define(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜常量定义＞   ::=   int＜标识符＞＝＜整数＞{,＜标识符＞＝＜整数＞}
     //                  | char＜标识符＞＝＜字符＞{,＜标识符＞＝＜字符＞}
-    if (symbol == INTTK) { // int
-        getsym(yes);
-        if (symbol == IDENFR) { // 标识符
-            getsym(yes);
-            if (symbol == ASSIGN) { // =
-                getsym(yes);
-                _int(); // 整数
-                while (symbol == COMMA) { // ,
-                    getsym(yes);
-                    if (symbol == IDENFR) { // 标识符
-                        getsym(yes);
+    if (symList.type[pos_S_list] == "INTTK" && symList.type[pos_S_list + 2] == "ASSIGN") { // int
+        slist_0_sprint(symList, symPrint);
+        if (symList.type[pos_S_list] == "IDENFR") { // 标识符
+            symSymbol.name[pos_S_symbol] = symList.name[pos_S_list];
+            symSymbol.addr[pos_S_symbol] = 0;
+            if (func) {
+                symSymbol.level[pos_S_symbol] = 1;
+            }
+            else {
+                symSymbol.level[pos_S_symbol] = 0;
+            }
+            symSymbol.kind[pos_S_symbol] = 1;
+            symSymbol.type[pos_S_symbol] = 1;
+            slist_0_sprint(symList, symPrint);
+            if (symList.type[pos_S_list] == "ASSIGN") { // =
+                slist_0_sprint(symList, symPrint);
+                if (_int(symList, symPrint, symStack, symSymbol)) {
+                    if (symList.type[pos_S_list - 2] == "PLUS") {
+                        symSymbol.ref[pos_S_symbol] = stoi(symList.name[pos_S_list - 1]);
                     }
-                    if (symbol == ASSIGN) { // =
-                        getsym(yes);
-                        _int(); // 整数
+                    else if (symList.type[pos_S_list - 2] == "MINU") {
+                        symSymbol.ref[pos_S_symbol] = -stoi(symList.name[pos_S_list]);
                     }
+                    else {
+                        symSymbol.ref[pos_S_symbol] = stoi(symList.name[pos_S_list - 1]);
+                    }
+                    pos_S_symbol += 1;
+                    while (symList.type[pos_S_list] == "COMMA") {
+                        slist_0_sprint(symList, symPrint);
+                        if (symList.type[pos_S_list] == "IDENFR") {
+                            symSymbol.name[pos_S_symbol] = symList.name[pos_S_list];
+                            symSymbol.addr[pos_S_symbol] = 0;
+                            if (func) {
+                                symSymbol.level[pos_S_symbol] = 1;
+                            }
+                            else {
+                                symSymbol.level[pos_S_symbol] = 0;
+                            }
+                            symSymbol.kind[pos_S_symbol] = 1;
+                            symSymbol.type[pos_S_symbol] = 1;
+                            slist_0_sprint(symList, symPrint);
+                            if (symList.type[pos_S_list] == "ASSIGN") {
+                                slist_0_sprint(symList, symPrint);
+                                if (_int(symList, symPrint, symStack, symSymbol)) {
+                                    // 整数
+                                    if (symList.type[pos_S_list - 2] == "PLUS") {
+                                        symSymbol.ref[pos_S_symbol] = stoi(symList.name[pos_S_list - 1]);
+                                    }
+                                    else if (symList.type[pos_S_list - 2] == "MINU") {
+                                        symSymbol.ref[pos_S_symbol] = -stoi(symList.name[pos_S_list - 1]);
+                                    }
+                                    else {
+                                        symSymbol.ref[pos_S_symbol] = stoi(symList.name[pos_S_list - 1]);
+                                    }
+                                    pos_S_symbol += 1;
+                                }
+                                else {
+                                    retract(3);
+                                    break;
+                                }
+                            }
+                            else {
+                                retract(2);
+                                break;
+                            }
+                        }
+                        else {
+                            retract(1);
+                            break;
+                        }
+                    }
+                    slist_1_sprint(symList, symPrint, "<常量定义>");
+                    return true;
+                }
+                else {
+                    retract(3);
                 }
             }
-        }
-    }
-
-    else if (symbol == CHARTK) { // char
-        getsym(yes);
-        if (symbol == IDENFR) { // 标识符
-            getsym(yes);
-            if (symbol == ASSIGN) { // =
-                getsym(yes);
-                _char(); // 字符
-                while (symbol == COMMA) { // ,
-                    getsym(yes);
-                    if (symbol == IDENFR) { // 标识符
-                        getsym(yes);
-                    }
-                    if (symbol == ASSIGN) { // =
-                        getsym(yes);
-                        _char(); // 字符
-                    }
-                }
+            else {
+                retract(2);
             }
         }
+        else {
+            retract(1);
+        }
     }
-    fprintf(f_out, "<常量定义>\n");
-    cout << "<常量定义>" << endl;
+    // char
+    else if (symList.type[pos_S_list] == "CHARTK" && symList.type[pos_S_list + 2] == "ASSIGN") { // int
+        slist_0_sprint(symList, symPrint);
+        if (symList.type[pos_S_list] == "IDENFR") { // 标识符
+            symSymbol.name[pos_S_symbol] = symList.name[pos_S_list];
+            symSymbol.addr[pos_S_symbol] = 0;
+            if (func) {
+                symSymbol.level[pos_S_symbol] = 1;
+            }
+            else {
+                symSymbol.level[pos_S_symbol] = 0;
+            }
+            symSymbol.kind[pos_S_symbol] = 1;
+            symSymbol.type[pos_S_symbol] = 2;
+            slist_0_sprint(symList, symPrint);
+            if (symList.type[pos_S_list] == "ASSIGN") { // =
+                slist_0_sprint(symList, symPrint);
+                if (symList.type[pos_S_list] == "CHARTK") {
+                    symSymbol.ref[pos_S_symbol] = (int)symList.name[pos_S_list][0];
+                    pos_S_symbol += 1;
+                    slist_0_sprint(symList, symPrint);
+                    while (symList.type[pos_S_list] == "COMMA") {
+                        slist_0_sprint(symList, symPrint);
+                        if (symList.type[pos_S_list] == "IDENFR") {
+                            symSymbol.name[pos_S_symbol] = symList.name[pos_S_list];
+                            symSymbol.addr[pos_S_symbol] = 0;
+                            if (func) {
+                                symSymbol.level[pos_S_symbol] = 1;
+                            }
+                            else {
+                                symSymbol.level[pos_S_symbol] = 0;
+                            }
+                            symSymbol.kind[pos_S_symbol] = 1;
+                            symSymbol.type[pos_S_symbol] = 2;
+                            slist_0_sprint(symList, symPrint);
+                            if (symList.type[pos_S_list] == "ASSIGN") {
+                                slist_0_sprint(symList, symPrint);
+                                if (symList.type[pos_S_list] == "CHARTK") {
+                                    // 字符
+                                    symSymbol.ref[pos_S_symbol] = stoi(symList.name[pos_S_list - 1]);
+                                    pos_S_symbol += 1;
+                                    slist_0_sprint(symList, symPrint);
+                                }
+                                else {
+                                    retract(3);
+                                }
+                            }
+                            else {
+                                retract(2);
+                            }
+                        }
+                        else {
+                            retract(1);
+                        }
+                    }
+                    slist_1_sprint(symList, symPrint, "<常量定义>");
+                    return true;
+                }
+                else {
+                    retract(3);
+                }
+            }
+            else {
+                retract(2);
+            }
+        }
+        else {
+            retract(1);
+        }
+    }
+    else {
+        return false;
+    }
 }
 
-void _function_with_return_define() {
+bool _function_with_return_define(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜有返回值函数定义＞  ::=  ＜声明头部＞'('＜参数表＞')' '{'＜复合语句＞'}'
-    _head_statement();  // 声明头部
-    if (symbol == LPARENT) { // (
-        getsym(yes);
-        _table_parameter(); // 参数表
-        if (symbol == RPARENT) { // )
-            getsym(yes);
-            if (symbol == LBRACE) { // {
-                getsym(yes);
-                _statement_combination(); // 复合语句
-                if (symbol == RBRACE) { // }
-                    getsym(yes);
+    if (_head_statement(symList, symPrint, symStack, symSymbol) && symList.type[pos_S_list] == "LPARENT") {
+        // 声明头部
+        func = 1;
+        symList.has_return[pos_has_return] = symList.name[pos_temp_has_return];
+        pos_has_return += 1;
+        if (symList.type[pos_S_list] == "LPARENT") {
+            slist_0_sprint(symList, symPrint);
+            if (_table_parameter(symList, symPrint, symStack, symSymbol)) {
+                // 参数表
+                if (symList.type[pos_S_list] == "RPARENT") {
+                    slist_0_sprint(symList, symPrint);
+                    if (symList.type[pos_S_list] == "LBRACE") {
+                        // {
+                        slist_0_sprint(symList, symPrint);
+                        if (_statement_combination(symList, symPrint, symStack, symSymbol)) {
+                            // 复合语句
+                            if (symList.type[pos_S_list] == "RBRACE") {
+                                // }
+                                slist_0_sprint(symList, symPrint);
+                                slist_1_sprint(symList, symPrint, "<有返回值函数定义>");
+                                func = 0;
+                                return true;
+                            }
+                            else {
+                                retract(6);
+                            }
+                        }
+                        else {
+                            retract(5);
+                        }
+                    }
+                    else {
+                        retract(4);
+                    }
+                }
+                else {
+                    retract(3);
                 }
             }
+            else {
+                retract(2);
+            }
+        }
+        else {
+            retract(1);
         }
     }
-    fprintf(f_out, "<有返回值函数定义>\n");
-    cout << "<有返回值函数定义>" << endl;
+    else {
+        return false;
+    }
 }
 
-void _head_statement() {
+int _head_statement(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜声明头部＞   ::=  int＜标识符＞
     //                |  char＜标识符＞
-    if (symbol == CHARTK || symbol == INTTK) { // int || char
-        getsym(yes);
-        array_function_with_return[index_array_function_with_return++] = token;
-        if (symbol == IDENFR) { // 标识符
-            getsym(yes);
+    if (symList.type[pos_S_list] == "INTTK" && symList.type[pos_S_list + 2] == "LPARENT") { // int || char
+        slist_0_sprint(symList, symPrint);
+        if (symList.type[pos_S_list] == "IDENFR") {
+            symPrint.name[pos_S_print] = symList.name[pos_S_list];
+            symPrint.type[pos_S_print] = symList.type[pos_S_list];
+            symPrint.num[pos_S_print] = 0;
+            pos_temp_has_return = pos_S_list;
+            pos_S_print += 1;
+            pos_S_list += 1;
+            slist_1_sprint(symList, symPrint, "<声明头部>");
+            return pos_temp_has_return;
+        }
+        else {
+            retract(1);
         }
     }
-    fprintf(f_out, "<声明头部>\n");
-    cout << "<声明头部>" << endl;
+    else if (symList.type[pos_S_list] == "CHARTK" && symList.type[pos_S_list + 2] == "LPARENT") { // int || char
+        slist_0_sprint(symList, symPrint);
+        if (symList.type[pos_S_list] == "IDENFR") {
+            symPrint.name[pos_S_print] = symList.name[pos_S_list];
+            symPrint.type[pos_S_print] = symList.type[pos_S_list];
+            symPrint.num[pos_S_print] = 0;
+            pos_temp_has_return = pos_S_list;
+            pos_S_print += 1;
+            pos_S_list += 1;
+            slist_1_sprint(symList, symPrint, "<声明头部>");
+            return pos_temp_has_return;
+        }
+        else {
+            retract(1);
+        }
+    }
+    else {
+        return 0;
+    }
 }
 
-void _table_parameter() {
+bool _table_parameter(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜参数表＞    ::=  ＜类型标识符＞＜标识符＞{,＜类型标识符＞＜标识符＞}
     //               |  ＜空＞
     if (symbol == INTTK || symbol == CHARTK) { // 类型标识符
@@ -745,7 +940,7 @@ void _table_parameter() {
     cout << "<参数表>" << endl;
 }
 
-void _statement_combination() {
+bool _statement_combination(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜复合语句＞   ::=  ［＜常量说明＞］［＜变量说明＞］＜语句列＞
     if (symbol == CONSTTK) { // 常量说明
         _const_statement();
@@ -758,59 +953,123 @@ void _statement_combination() {
     cout << "<复合语句>" << endl;
 }
 
-void _function_no_return_define() {
+bool _function_no_return_define(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜无返回值函数定义＞  ::= void＜标识符＞'('＜参数表＞')''{'＜复合语句＞'}'
-    if (symbol == VOIDTK) { // void
-        getsym(yes);
-        if (symbol == IDENFR) { // 标识符
-            array_function_no_return[index_array_function_no_return++] = token;
-            getsym(yes);
-            if (symbol == LPARENT) { // (
-                getsym(yes);
-                _table_parameter(); // 参数表
-                if (symbol == RPARENT) { // )
-                    getsym(yes);
-                    if (symbol == LBRACE) { // {
-                        getsym(yes);
-                        _statement_combination(); // 复合语句
-                        if (symbol == RBRACE) { // }
-                            getsym(yes);
+    int temp;
+    if (symList.type[pos_S_list] == "VOIDTK" && symList.type[pos_S_list + 1] != "MAINTK" && symList.type[pos_S_list + 2] == "LPARENT") { // void
+        func = 1;
+        slist_0_sprint(symList, symPrint);
+        if (symList.type[pos_S_list] == "IDENFR") { // 标识符
+            symPrint.name[pos_S_print] = symList.name[pos_S_list];
+            symPrint.type[pos_S_print] = symList.type[pos_S_list];
+            symPrint.num[pos_S_print] = 0;
+            temp = pos_S_list;
+            pos_S_print += 1;
+            pos_S_list += 1;
+            symList.no_return[pos_no_return] = symList.name[temp];
+            pos_no_return += 1;
+            if (symList.type[pos_S_list] == "LPARENT") { // (
+                slist_0_sprint(symList, symPrint);
+                if (_table_parameter(symList, symPrint, symStack, symSymbol)) {
+                    // 参数表
+                    if (symList.type[pos_S_list] == "RPARENT") {
+                        // )
+                        slist_0_sprint(symList, symPrint);
+                        if (symList.type[pos_S_list] == "LBRACE") {
+                            // {
+                            slist_0_sprint(symList, symPrint);
+                            if (_statement_combination(symList, symPrint, symStack, symSymbol)) {
+                                // 复合语句
+                                if (symList.type[pos_S_list] == "RBRACE") {
+                                    // }
+                                    slist_0_sprint(symList, symPrint);
+                                    slist_1_sprint(symList, symPrint, "<无返回值函数定义>");
+                                    func = 0;
+                                    return true;
+                                }
+                                else {
+                                    retract(7);
+                                }
+                            }
+                            else {
+                                retract(6);
+                            }
+                        }
+                        else {
+                            retract(5);
                         }
                     }
+                    else {
+                        retract(4);
+                    }
+                }
+                else {
+                    retract(3);
                 }
             }
+            else {
+                retract(2);
+            }
+        }
+        else {
+            retract(1);
+            return false;
         }
     }
-    fprintf(f_out, "<无返回值函数定义>\n");
-    cout << "<无返回值函数定义>" << endl;
+    else {
+        return false;
+    }
 }
 
-void _main() {
+bool _main(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜主函数＞    ::= void main‘(’‘)’ ‘{’＜复合语句＞‘}’
-    if (symbol == VOIDTK) { // void
-        getsym(yes);
-        if (symbol == MAINTK) { // main
-            getsym(yes);
-            if (symbol == LPARENT) { // (
-                getsym(yes);
-                if (symbol == RPARENT) { // )
-                    getsym(yes);
-                    if (symbol == LBRACE) { // {
-                        getsym(yes);
-                        _statement_combination(); // 复合语句
-                        if (symbol == RBRACE) { // }
-                            getsym(yes);
+    if (symList.type[pos_S_list] == "VOIDTK") { // void
+        slist_0_sprint(symList, symPrint);
+        if (symList.type[pos_S_list] == "MAINTK") { // main
+            slist_0_sprint(symList, symPrint);
+            if (symList.type[pos_S_list] == "LPARENT") { // (
+                slist_0_sprint(symList, symPrint);
+                if (symList.type[pos_S_list] == "RPARENT") { // )
+                    slist_0_sprint(symList, symPrint);
+                    if (symList.type[pos_S_list] == "LBRACE") { // {
+                        slist_0_sprint(symList, symPrint);
+                        if (_statement_combination(symList, symPrint, symStack, symSymbol)) {
+                            // 复合语句
+                            if (symList.type[pos_S_list] == "RBRACE") { // }
+                                slist_0_sprint(symList, symPrint);
+                                slist_1_sprint(symList, symPrint, "<主函数>");
+                                return true;
+                            }
+                            else {
+                                retract(6);
+                            }
+                        }
+                        else {
+                            retract(5);
                         }
                     }
+                    else {
+                        retract(4);
+                    }
+                }
+                else {
+                    retract(3);
                 }
             }
+            else {
+                retract(2);
+            }
+        }
+        else {
+            retract(1);
         }
     }
-    fprintf(f_out, "<主函数>\n");
-    cout << "<主函数>" << endl;
+    else {
+        return false;
+    }
 }
 
-void _list_statement() {
+bool _list_statement(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜语句列＞   ::= ｛＜语句＞｝
     while (symbol == IFTK || symbol == WHILETK || symbol == FORTK || symbol == LBRACE
            || symbol == IDENFR || symbol == SCANFTK || symbol == PRINTFTK || symbol == SEMICN
@@ -821,7 +1080,7 @@ void _list_statement() {
     cout << "<语句列>" << endl;
 }
 
-void _if() {
+bool _if(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜条件语句＞  ::= if '('＜条件＞')'＜语句＞［else＜语句＞］
     if (symbol == IFTK) { // if
         getsym(yes);
@@ -842,7 +1101,7 @@ void _if() {
     cout << "<条件语句>" << endl;
 }
 
-void _condition() {
+bool _condition(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜条件＞    ::=  ＜表达式＞＜关系运算符＞＜表达式＞
     _expression(); // 表达式
     if (symbol == LSS || symbol == LEQ
@@ -856,7 +1115,7 @@ void _condition() {
     cout << "<条件>" << endl;
 }
 
-void _expression() {
+bool _expression(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     //  ＜表达式＞    ::= ［＋｜－］＜项＞{＜加法运算符＞＜项＞}
     if (symbol == PLUS || symbol == MINU) { // 加法运算符
         getsym(yes);
@@ -870,7 +1129,7 @@ void _expression() {
     cout << "<表达式>" << endl;
 }
 
-void _term() {
+bool _term(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜项＞     ::= ＜因子＞{＜乘法运算符＞＜因子＞}
     _factor(); // 因子
     while (symbol == MULT || symbol == DIV) { // 乘法运算符
@@ -881,7 +1140,7 @@ void _term() {
     cout << "<项>" << endl;
 }
 
-void _loop() {
+bool _loop(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜循环语句＞   ::=  while '('＜条件＞')'＜语句＞
     // | for'('＜标识符＞＝＜表达式＞;＜条件＞;＜标识符＞＝＜标识符＞(+|-)＜步长＞')'＜语句＞
     if (symbol == WHILETK) { // while
@@ -937,47 +1196,63 @@ void _loop() {
     cout << "<循环语句>" << endl;
 }
 
-void _string() {
+bool _string(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜字符串＞   ::=  "｛十进制编码为32,33,35-126的ASCII字符｝"
-    if (symbol == STRCON) { // 字符串
-        getsym(yes);
+    if (symList.type[pos_S_list] == "STRCON") { // 字符串
+        slist_0_sprint(symList, symPrint);
+        slist_1_sprint(symList, symPrint, "<字符串>");
+        return true;
     }
-    fprintf(f_out, "<字符串>\n");
-    cout << "<字符串>" << endl;
+    else {
+        return false;
+    }
 }
 
-void _step() {
+bool _step(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜步长＞::= ＜无符号整数＞
     _unsigned_int(); // 无符号整数
     fprintf(f_out, "<步长>\n");
     cout << "<步长>" << endl;
 }
 
-void _unsigned_int() {
+bool _unsigned_int(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜无符号整数＞  ::= ＜数字＞｛＜数字＞｝
-    if (symbol == INTCON) {
-        getsym(yes);
+    if (symList.type[pos_S_list] == "INTCON") {
+        slist_0_sprint(symList, symPrint);
+        slist_1_sprint(symList, symPrint, "<无符号整数>");
+        return true;
     }
-    fprintf(f_out, "<无符号整数>\n");
-    cout << "<无符号整数>" << endl;
+    else {
+        return false;
+    }
 }
 
-void _int() {
-    if (symbol == PLUS || symbol == MINU) {
-        getsym(yes);
+bool _int(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
+    int flag = 1;
+    if (symList.type[pos_S_list] == "MINU" || symList.type[pos_S_list] == "PLUS") {
+        slist_0_sprint(symList, symPrint);
+        flag = 1;
     }
-    _unsigned_int(); // 无符号整数
-    fprintf(f_out, "<整数>\n");
-    cout << "<整数>" << endl;
+    if (_unsigned_int(symList, symPrint, symStack, symSymbol)) {
+        // 无符号整数
+        slist_1_sprint(symList, symPrint, "<整数>");
+        return true;
+    }
+    else {
+        if (flag == 1) {
+            retract(1);
+        }
+        return false;
+    }
 }
 
-void _char() {
+bool _char(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     if (symbol == CHARCON) { // 字符
         getsym(yes);
     }
 }
 
-void _scanf() {
+bool _scanf(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜读语句＞    ::=  scanf '('＜标识符＞')'
     if (symbol == SCANFTK) { // scanf
         getsym(yes);
@@ -995,7 +1270,7 @@ void _scanf() {
     cout << "<读语句>" << endl;
 }
 
-void _printf() {
+bool _printf(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜写语句＞    ::= printf '(' ＜字符串＞,＜表达式＞ ')'
     //              |  printf '('＜字符串＞ ')'
     //              | printf '('＜表达式＞')'
@@ -1022,7 +1297,7 @@ void _printf() {
     cout << "<写语句>" << endl;
 }
 
-void _return() {
+bool _return(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜返回语句＞   ::=  return['('＜表达式＞')']
     if (symbol == RETURNTK) { // return
         getsym(yes);
@@ -1038,7 +1313,7 @@ void _return() {
     cout << "<返回语句>" << endl;
 }
 
-void _function_with_return_call() {
+bool _function_with_return_call(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜有返回值函数调用语句＞ ::= ＜标识符＞'('＜值参数表＞')'
     if (symbol == IDENFR) { // 标识符
         getsym(yes);
@@ -1054,7 +1329,7 @@ void _function_with_return_call() {
     cout << "<有返回值函数调用语句>" << endl;
 }
 
-void _function_no_return_call() {
+bool _function_no_return_call(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜无返回值函数调用语句＞ ::= ＜标识符＞'('＜值参数表＞')'
     if (symbol == IDENFR) { // 标识符
         getsym(yes);
@@ -1070,7 +1345,7 @@ void _function_no_return_call() {
     cout << "<无返回值函数调用语句>" << endl;
 }
 
-void _table_parameter_value() {
+bool _table_parameter_value(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜值参数表＞   ::= ＜表达式＞{,＜表达式＞}
     //              ｜   ＜空＞
     if (symbol == RPARENT) { // 空
@@ -1088,7 +1363,7 @@ void _table_parameter_value() {
     }
 }
 
-void _statement() {
+bool _statement(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜语句＞    ::= ＜循环语句＞
     //              ｜＜条件语句＞
     //              | ＜有返回值函数调用语句＞;
@@ -1173,7 +1448,7 @@ void _statement() {
     cout << "<语句>" << endl;
 }
 
-void _default() {
+bool _default(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜缺省＞   ::=  default :＜语句＞
     if (symbol == DEFAULTTK) { // default
         getsym(yes);
@@ -1186,7 +1461,7 @@ void _default() {
     cout << "<缺省>" << endl;
 }
 
-void _switch() {
+bool _switch(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜情况语句＞  ::=  switch ‘(’＜表达式＞‘)’ ‘{’＜情况表＞＜缺省＞‘}’
     if (symbol == SWITCHTK) { // switch
         getsym(yes);
@@ -1212,7 +1487,7 @@ void _switch() {
     cout << "<情况语句>" << endl;
 }
 
-void _case() {
+bool _case(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜情况子语句＞  ::=  case＜常量＞：＜语句＞
     if (symbol == CASETK) {  // case
         getsym(yes);
@@ -1226,7 +1501,7 @@ void _case() {
     cout << "<情况子语句>" << endl;
 }
 
-void _table_cases() {
+bool _table_cases(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜情况表＞   ::=  ＜情况子语句＞{＜情况子语句＞}
     while (symbol == CASETK) {
         _case();
@@ -1235,7 +1510,7 @@ void _table_cases() {
     cout << "<情况表>" << endl;
 }
 
-void _const() {
+bool _const(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜常量＞   ::=  ＜整数＞
     //             |  ＜字符＞
 
@@ -1250,7 +1525,7 @@ void _const() {
     cout << "<常量>" << endl;
 }
 
-void _var_define() {
+bool _var_define(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜变量定义＞ ::= ＜变量定义无初始化＞
     //              | ＜变量定义及初始化＞
 
@@ -1285,7 +1560,7 @@ void _var_define() {
     cout << "<变量定义>" << endl;
 }
 
-void _assign() {
+bool _assign(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜赋值语句＞   ::=  ＜标识符＞＝＜表达式＞
     //                |  ＜标识符＞'['＜表达式＞']'=＜表达式＞
     //                |  ＜标识符＞'['＜表达式＞']''['＜表达式＞']' =＜表达式＞
@@ -1322,7 +1597,7 @@ void _assign() {
     cout << "<赋值语句>" << endl;
 }
 
-void _factor() {
+bool _factor(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜因子＞    ::= ＜标识符＞
     //              ｜＜标识符＞'['＜表达式＞']'
     //              | ＜标识符＞'['＜表达式＞']''['＜表达式＞']'
@@ -1370,7 +1645,7 @@ void _factor() {
     cout << "<因子>" << endl;
 }
 
-void _var_define_no_initialization() {
+bool _var_define_no_initialization(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜变量定义无初始化＞  ::= ＜类型标识符＞(＜标识符＞
     //                      | ＜标识符＞'['＜无符号整数＞']'
     //                      | ＜标识符＞'['＜无符号整数＞']''['＜无符号整数＞']')
@@ -1403,7 +1678,7 @@ void _var_define_no_initialization() {
     cout << "<变量定义无初始化>" << endl;
 }
 
-void _var_define_with_initialization() {
+bool _var_define_with_initialization(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜变量定义及初始化＞  ::= ＜类型标识符＞＜标识符＞=＜常量＞
     //                      | ＜类型标识符＞＜标识符＞'['＜无符号整数＞']'='{'＜常量＞{,＜常量＞}'}'
     //                      |＜类型标识符＞＜标识符＞'['＜无符号整数＞']''['＜无符号整数＞']'=
@@ -1423,15 +1698,6 @@ void _var_define_with_initialization() {
                     getsym(yes);
                     if (symbol == ASSIGN) { // =
                         getsym(yes);
-//                        if (symbol == LBRACE) { // {
-//                            do {
-//                                getsym(yes);
-//                                _const();    // 常量
-//                            }   while (symbol == COMMA);    // ,
-//                            if (symbol == RBRACE) { // }
-//                                getsym(yes);
-//                            }
-//                        }
                         while (symbol != SEMICN) {
                             if (LBRACE ==  symbol || RBRACE == symbol || COMMA == symbol) {
                                 getsym(yes);
@@ -1447,22 +1713,6 @@ void _var_define_with_initialization() {
                             getsym(yes);
                             if (symbol == ASSIGN) { // =
                                 getsym(yes);
-                                /*
-                                if (symbol == LBRACE) { // {
-                                    do {
-                                        do {
-                                            getsym(yes);
-                                            _const();   // 常量
-                                        }   while (symbol == COMMA);    // ,
-                                        if (symbol == RBRACE) { // }
-                                            getsym(yes);
-                                        }
-                                    }   while (symbol == COMMA);    // ,
-                                    if (symbol == RBRACE) { // }
-                                        getsym(yes);
-                                    }
-                                }*/
-
                                 while (symbol != SEMICN) {
                                     if (LBRACE ==  symbol || RBRACE == symbol || COMMA == symbol) {
                                         getsym(yes);
