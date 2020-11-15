@@ -16,8 +16,6 @@
 #define Maximum Max * Max
 using namespace std;
 
-
-//  语法分析
 int pos_M_code;
 int pos_S_list_analysis;
 int pos_S_list;
@@ -29,6 +27,19 @@ int pos_temp_has_return;
 int pos_has_return;
 int pos_no_return;
 int func = 0;   // 函数嵌套
+
+// 读语句存储
+int _scanf_int[100];
+char _scanf_char[100];
+int pos_scanf_int;
+int pos_scanf_char;
+int _scanf_int_temp;
+char _scanf_char_temp;
+
+// 写语句存储
+string STR[Maximum];
+int pos_STR;
+
 string key[Max] = { "const",
                    "int", "char",
                    "void", "main",
@@ -1492,17 +1503,48 @@ bool _char(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_s
 
 bool _scanf(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜读语句＞    ::=  scanf '('＜标识符＞')'
-    if (symbol == SCANFTK) { // scanf
-        getsym(yes);
-        if (symbol == LPARENT) { // (
-            getsym(yes);
-            if (symbol == IDENFR) { // 标识符
-                getsym(yes);
+    int temp = 0;
+    if (isParticular_S_List(symList, "SCANFTK")) { // scanf
+        slist_0_sprint(symList, symPrint);
+        if (isParticular_S_List(symList, "LPARENT")) { // (
+            slist_0_sprint(symList, symPrint);
+            if (isParticular_S_List(symList, "IDENFR")) { // 标识符
+                temp = search(symList, symSymbol);
+                if (symSymbol.type[temp] == 1) {
+                    // int
+                    cin >> _scanf_int_temp;
+                    _scanf_int[pos_scanf_int] = _scanf_int_temp;
+                    emit(7, pos_scanf_int, temp);
+                    pos_scanf_int += 1;
+                }
+                else if (symSymbol.type[temp] == 2) {
+                    // char
+                    cin >> _scanf_char_temp;
+                    _scanf_char[pos_scanf_char] = _scanf_char_temp;
+                    emit(7, pos_scanf_char, temp);
+                    pos_scanf_char += 1;
+                }
+                slist_0_sprint(symList, symPrint);
+                if (isParticular_S_List(symList, "RPARENT")) {
+                    // )
+                    slist_0_sprint(symList, symPrint);
+                    slist_1_sprint(symList, symPrint, "<读语句>");
+                    return true;
+                }
+                else {
+                    retract(3);
+                }
             }
-            if (symbol == RPARENT) { // }
-                getsym(yes);
+            else {
+                retract(2);
             }
         }
+        else {
+            retract(1);
+        }
+    }
+    else {
+        return false;
     }
 }
 
@@ -1510,43 +1552,105 @@ bool _printf(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym
     // ＜写语句＞    ::= printf '(' ＜字符串＞,＜表达式＞ ')'
     //              |  printf '('＜字符串＞ ')'
     //              | printf '('＜表达式＞')'
-    if (symbol == PRINTFTK) { // printf
-        getsym(yes);
-        if (symbol == LPARENT) { // (
-            getsym(yes);
-            if (symbol == STRCON) { // 字符串
-                _string();  // 字符串
-                if (symbol == COMMA) { // ,
-                    getsym(yes);
-                    _expression();  // 表达式
+    if (isParticular_S_List(symList, "PRINTFTK")) { // printf
+        slist_0_sprint(symList, symPrint);
+        if (isParticular_S_List(symList, "LPARENT")) { // (
+            slist_0_sprint(symList, symPrint);
+            if (_expression(symList, symPrint, symStack, symSymbol)) {
+                // 表达式
+                emit_op1(8);
+                if (isParticular_S_List(symList, "RPARENT")) {
+                    // )
+                    slist_0_sprint(symList, symPrint);
+                    slist_1_sprint(symList, symPrint, "<写语句>");
+                    return true;
+                }
+                else {
+                    retract(1);
                 }
             }
             else {
-                _expression(); // 表达式
-            }
-            if (symbol == RPARENT) { // )
-                getsym(yes);
+                if (_string(symList, symPrint, symStack, symSymbol)) {
+                    // 字符串
+                    STR[pos_STR] = symList.name[pos_S_list - 1];
+                    if (isParticular_S_List(symList, "COMMA")) {
+                        // ,
+                        emit_op2(11, pos_STR);
+                        pos_STR += 1;
+                        slist_0_sprint(symList, symPrint);
+                        if (_expression(symList, symPrint, symStack, symSymbol)) {
+                            // 表达式
+                            emit_op1(8);
+                            if (isParticular_S_List(symList, "RPARENT")) {
+                                // )
+                                slist_0_sprint(symList, symPrint);
+                                slist_1_sprint(symList, symPrint, "<写语句>");
+                                return true;
+                            }
+                            else {
+                                retract(2);
+                            }
+                        }
+                        else {
+                            retract(1);
+                        }
+                    }
+                    else if (isParticular_S_List(symList, "RPARENT")) {
+                        // )
+                        emit_op2(9, pos_STR);
+                        pos_STR += 1;
+                        slist_0_sprint(symList, symPrint);
+                        slist_1_sprint(symList, symPrint, "<写语句>");
+                        return true;
+                    }
+                    else {
+                        retract(3);
+                    }
+                }
+                else {
+                    retract(2);
+                }
             }
         }
+        else {
+            retract(1);
+        }
     }
-    fprintf(f_out, "<写语句>\n");
-    cout << "<写语句>" << endl;
+    else {
+        return false;
+    }
 }
 
 bool _return(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜返回语句＞   ::=  return['('＜表达式＞')']
-    if (symbol == RETURNTK) { // return
-        getsym(yes);
-        if (symbol == LPARENT) { // (
-            getsym(yes);
-            _expression();  // 表达式
-            if (symbol == RPARENT) { // )
-                getsym(yes);
+    if (isParticular_S_List(symList, "RETURNTK")) { // return
+        slist_0_sprint(symList, symPrint);
+        if (isParticular_S_List(symList, "LPARENT")) { // (
+            slist_0_sprint(symList, symPrint);
+            if (_expression(symList, symPrint, symStack, symSymbol)) {
+                // 表达式
+                if (isParticular_S_List(symList, "RPARENT")) {
+                    // )
+                    slist_0_sprint(symList, symPrint);
+                    slist_1_sprint(symList, symPrint, "<返回语句>");
+                    return true;
+                }
+                else {
+                    retract(2);
+                }
+            }
+            else {
+                retract(1);
             }
         }
+        else {
+            slist_1_sprint(symList, symPrint, "<返回语句>");
+            return true;
+        }
     }
-    fprintf(f_out, "<返回语句>\n");
-    cout << "<返回语句>" << endl;
+    else {
+        return false;
+    }
 }
 
 bool _function_with_return_call(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
@@ -1584,18 +1688,28 @@ bool _function_no_return_call(Sym_list & symList, Sym_print & symPrint, Sym_stac
 bool _table_parameter_value(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
     // ＜值参数表＞   ::= ＜表达式＞{,＜表达式＞}
     //              ｜   ＜空＞
-    if (symbol == RPARENT) { // 空
-        fprintf(f_out, "<值参数表>\n");
-//        cout << "<值参数表>" << endl;
+    if (_expression(symList, symPrint, symStack, symSymbol)) {
+        // 表达式
+        while (isParticular_S_List(symList, "COMMA")) {
+            // ,
+            slist_0_sprint(symList, symPrint);
+            if (_expression(symList, symPrint, symStack, symSymbol)) {
+                // 表达式
+            }
+            else {
+                retract(1);
+            }
+        }
+        slist_1_sprint(symList, symPrint, "<值参数表>");
+        return true;
+    }
+    else if (isParticular_S_List(symList, "RPARENT")) {
+        // 空
+        slist_1_sprint(symList, symPrint, "<值参数表>");
+        return true;
     }
     else {
-        _expression();  // 表达式
-        while (symbol == COMMA) { // ,
-            getsym(yes);
-            _expression();  // 表达式
-        }
-        fprintf(f_out, "<值参数表>\n");
-        cout << "<值参数表>" << endl;
+        return false;
     }
 }
 
@@ -1785,10 +1899,6 @@ bool _var_define(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack,
             _var_define_no_initialization();    // 变量定义无初始化
         }
         else {
-            //pre_read_Symbol(1);
-//            if (symbol_pre == IDENFR) {    // 标识符
-//
-//            }
             _var_define_with_initialization();  // 变量定义及初始化
         }
     }
