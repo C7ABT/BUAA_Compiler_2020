@@ -8,1940 +8,1370 @@
 #include "map"
 #include <stdio.h>
 #include "fstream"
+#include "set"
 #include "ctype.h"
+#include "stdlib.h"
+#include "string.h"
 
 #define yes true
 #define no false
-#define Max 1024
-#define Maximum Max * Max
 using namespace std;
 
-int pos_M_code;
-int pos_S_list_analysis;
-int pos_S_list;
-int pos_S_print;
-int pos_S_symbol;
+
+//  Óï·¨·ÖÎö
+enum SymbolType {
+    IDENFR, INTCON,   CHARCON,  STRCON,     CONSTTK,
+    INTTK,  CHARTK,   VOIDTK,   MAINTK,     IFTK,
+    ELSETK, SWITCHTK, CASETK,   DEFAULTTK,  WHILETK,
+    FORTK,  SCANFTK,  PRINTFTK, RETURNTK,   PLUS,
+    MINU,   MULT,     DIV,      LSS,        LEQ,
+    GRE,    GEQ,      EQL,      NEQ,        COLON,
+    ASSIGN, SEMICN,   COMMA,    LPARENT,    RPARENT,
+    LBRACK, RBRACK,   LBRACE,   RBRACE,
+    FOUL // ERROR symbol
+};
+void error() {
+
+}
+map<string, SymbolType> reservedWords = {
+        {"const", CONSTTK},
+        {"int",   INTTK},
+        {"char",  CHARTK},
+        {"void",  VOIDTK},
+        {"main",  MAINTK},
+        {"if", IFTK},
+        {"else", ELSETK},
+        {"switch", SWITCHTK},
+        {"case", CASETK},
+        {"default", DEFAULTTK},
+        {"while", WHILETK},
+        {"for", FORTK},
+        {"scanf", SCANFTK},
+        {"printf", PRINTFTK},
+        {"return", RETURNTK}
+};
+map<char, SymbolType> reservedSymbol = {
+        {'+', PLUS},
+        {'-', MINU},
+        {'*', MULT},
+        {'/', DIV},
+        {'<', LSS},
+        {'>', GRE},
+        {':', COLON},
+        {'=', ASSIGN},
+        {';', SEMICN},
+        {',', COMMA},
+        {'(', LPARENT},
+        {')', RPARENT},
+        {'[', LBRACK},
+        {']', RBRACK},
+        {'{', LBRACE},
+        {'}', RBRACE}
+};
+
+const string SymbolType_String[] = {
+        "IDENFR", "INTCON",   "CHARCON",  "STRCON",     "CONSTTK",
+        "INTTK",  "CHARTK",   "VOIDTK",   "MAINTK",     "IFTK",
+        "ELSETK", "SWITCHTK", "CASETK",   "DEFAULTTK",  "WHILETK",
+        "FORTK",  "SCANFTK",  "PRINTFTK", "RETURNTK",   "PLUS",
+        "MINU",   "MULT",     "DIV",      "LSS",        "LEQ",
+        "GRE",    "GEQ",      "EQL",      "NEQ",        "COLON",
+        "ASSIGN", "SEMICN",   "COMMA",    "LPARENT",    "RPARENT",
+        "LBRACK", "RBRACK",   "LBRACE",   "RBRACE",
+        "FOUL" // ERROR symbol
+};
+
+string token;
+char c;     // The letter read now
+char buffer[88888810]; // Everything
+SymbolType symbol;
+int index_buffer; // index of buffer
 int line = 1;
-int row = 0;
-int pos_temp_has_return;
-int pos_has_return;
-int pos_no_return;
-int func = 0;   // å‡½æ•°åµŒå¥—
+FILE *f_in, *f_out;
 
-// è¯»è¯­å¥å­˜å‚¨
-int _scanf_int[100];
-char _scanf_char[100];
-int pos_scanf_int;
-int pos_scanf_char;
-int _scanf_int_temp;
-char _scanf_char_temp;
-
-// å†™è¯­å¥å­˜å‚¨
-string STR[Maximum];
-int pos_STR;
-
-string key[Max] = { "const",
-                   "int", "char",
-                   "void", "main",
-                   "if", "else",
-                   "switch", "default", "case",
-                   "while", "for",
-                   "scanf", "printf",
-                   "return",
-                   "do" };
-string keykind[Max] = { "CONSTTK",
-                       "INTTK", "CHARTK",
-                       "VOIDTK", "MAINTK",
-                       "IFTK", "ELSETK",
-                       "SWITCHTK", "CASETK", "DEFAULTTK",
-                       "WHILETK", "FORTK",
-                       "SCANFTK", "PRINTFTK",
-                       "RETURNTK",
-                       "DOTK" };
-string op[Max] = { "+", "-", "*", "/",
-                  "<", "<=", ">", ">=", "==", "!=",
-                  "=",
-                  ";", ", ",
-                  "(", ")", "[", "]", "{", "}" };
-string opkind[Max] = { "PLUS", "MINU", "MULT", "DIV",
-                      "LSS", "LEQ", "GRE", "GEQ", "EQL", "NEQ",
-                      "ASSIGN",
-                      "SEMICN", "COMMA",
-                      "LPARENT", "RPARENT", "LBRACK", "RBRACK", "LBRACE", "RBRACE" };
-string constkind[Max] = { "IDENFR", "INTCON", "CHARCON", "STRCON" };
-
-// è®°å½•è¡¨
-struct Sym_list {
-    string name[Maximum];
-    string type[Maximum];
-    string has_return[Maximum];
-    string no_return[Maximum];
-    int line[Maximum];
-    int row[Maximum];
-}   S_list;
-
-// è¾“å‡ºè¡¨
-struct Sym_print {
-    string name[Maximum];
-    string type[Maximum];
-    int num[Maximum]; // 0: è¯æ³•, 1: è¯­æ³•
-    int line[Maximum];
-    int row[Maximum];
-}   S_print;
-
-// ç¬¦å·è¡¨
-struct Sym_symbol {
-    string name[Maximum];
-    int type[Maximum]; // 1: int, 2: char, 3: array, 4: none
-    int kind[Maximum]; // 1: const, 2: variable, 3: function_name, 4: function_parameter
-    int ref[Maximum];    // å€¼
-    int level[Maximum]; // å±‚æ¬¡
-    int addr[Maximum]; // åœ¨è¿è¡Œæ ˆä¸­çš„ä½ç½®
-}   S_symbol;
-
-// è¿è¡Œæ ˆ
-struct Sym_stack {
-    string name[Maximum];
-    string CHAR[Maximum];
-    int type[Maximum]; // 1: int, 2: char, 3: array_int, 4: array_char
-}   S_stack;
-
-// PCode
-struct Mid_code {
-    int code[Maximum];
-    int op1[Maximum];
-    int op2[Maximum];
-}   M_code;
-
-void emit (int code, int op1, int op2) {
-    M_code.code[pos_M_code] = code;
-    M_code.op1[pos_M_code] = op1;
-    M_code.op2[pos_M_code] = op2;
-    pos_M_code += 1;
+void getBuffer_debug() {
+    f_in = fopen("../testfile.txt", "rb");
+    f_out = fopen("../pcoderesult.txt", "wb");
+    fread(buffer,1, 8888888, f_in);
 }
-void emit_op1 (int op1) {
-    M_code.op1[pos_M_code] = op1;
-    pos_M_code += 1;
+void getBuffer() {
+    f_in = fopen("testfile.txt", "rb");
+    f_out = fopen("pcoderesult.txt", "wb");
+    fread(buffer,1, 8888888, f_in);
 }
-void emit_op2 (int code, int op2) {
-    M_code.code[pos_M_code] = code;
-    M_code.op2[pos_M_code] = op2;
-    pos_M_code += 1;
-}
-
-void analysis_2_slist (Sym_list & slist, string name, string type, int pos) {
-    slist.name[pos_S_list_analysis] = name;
-    slist.type[pos_S_list_analysis] = type;
-    slist.row[pos_S_list_analysis] = row;
-    slist.line[pos_S_list_analysis] = line;
-    row += pos;
-    pos_S_list_analysis += 1;
-}
-
-void slist_0_sprint (Sym_list & slist, Sym_print & sprint) {
-    sprint.name[pos_S_print] = slist.name[pos_S_list];
-    sprint.type[pos_S_print] = slist.type[pos_S_list];
-    sprint.line[pos_S_print] = slist.line[pos_S_list];
-    sprint.row[pos_S_print] = slist.row[pos_S_list];
-    sprint.num[pos_S_print] = 0;
-    pos_S_list += 1;
-    pos_S_print += 1;
-}
-
-void slist_1_sprint (Sym_list & slist, Sym_print & sprint, string name) {
-    sprint.num[pos_S_print] = 1;
-    sprint.name[pos_S_print] = name;
-    pos_S_print += 1;
-}
-
-int search (Sym_list & slist, Sym_symbol & symSymbol) {
-    for (int z = pos_S_symbol; z >= 0; --z) {
-        if (slist.name[pos_S_list] == symSymbol.name[z]) {
-            return z;
-        }
+char* Int2String(int num,char *str)//10½øÖÆ
+{
+    int i = 0;//Ö¸Ê¾Ìî³ästr
+    if(num<0)//Èç¹ûnumÎª¸ºÊı£¬½«num±äÕı
+    {
+        num = -num;
+        str[i++] = '-';
     }
-    return 0;
-}
+    //×ª»»
+    do
+    {
+        str[i++] = num%10+48;//È¡num×îµÍÎ» ×Ö·û0~9µÄASCIIÂëÊÇ48~57£»¼òµ¥À´ËµÊı×Ö0+48=48£¬ASCIIÂë¶ÔÓ¦×Ö·û'0'
+        num /= 10;//È¥µô×îµÍÎ»
+    }while(num);//num²»Îª0¼ÌĞøÑ­»·
 
-bool isPlus(char c) {
+    str[i] = '\0';
+
+    //È·¶¨¿ªÊ¼µ÷ÕûµÄÎ»ÖÃ
+    int j = 0;
+    if(str[0]=='-')//Èç¹ûÓĞ¸ººÅ£¬¸ººÅ²»ÓÃµ÷Õû
+    {
+        j = 1;//´ÓµÚ¶şÎ»¿ªÊ¼µ÷Õû
+        ++i;//ÓÉÓÚÓĞ¸ººÅ£¬ËùÒÔ½»»»µÄ¶Ô³ÆÖáÒ²ÒªºóÒÆ1Î»
+    }
+    //¶Ô³Æ½»»»
+    for(;j<i/2;j++)
+    {
+        //¶Ô³Æ½»»»Á½¶ËµÄÖµ ÆäÊµ¾ÍÊÇÊ¡ÏÂÖĞ¼ä±äÁ¿½»»»a+bµÄÖµ£ºa=a+b;b=a-b;a=a-b;
+        str[j] = str[j] + str[i-1-j];
+        str[i-1-j] = str[j] - str[i-1-j];
+        str[j] = str[j] - str[i-1-j];
+    }
+
+    return str;//·µ»Ø×ª»»ºóµÄÖµ
+}
+bool isPlus() {
     return (c == '+');
 }   // +
-bool isMinus(char c) {
+bool isMinus() {
     return (c == '-');
 }   // -
-bool isStar(char c) {
+bool isStar() {
     return (c == '*');
 }   // *
-bool isDiv(char c) {
+bool isDiv() {
     return (c == '/');
 }      // /
-bool isColon(char c) {
+bool isColon() {
     return (c == ':');
 }   // :
-bool isComma(char c) {
+bool isComma() {
     return (c == ',');
 }   // ,
-bool isSemicolon(char c) {
+bool isSemicolon() {
     return (c == ';');
 }   // ;
-bool isEqual(char c) {
+bool isEqual() {
     return (c == '=');
 }   // =
-bool isLParent(char c) {
+bool isLParent() {
     return (c == '(');
 }   // (
-bool isRParent(char c) {
+bool isRParent() {
     return (c == ')');
 }   // )
-bool isLBrack(char c) {
+bool isLBrack() {
     return (c == '[');
 }   // [
-bool isRBrack(char c) {
+bool isRBrack() {
     return (c == ']');
 }   // ]
-bool isLBrace(char c) {
+bool isLBrace() {
     return (c == '{');
 }   // {
-bool isRBrace(char c) {
+bool isRBrace() {
     return (c == '}');
 }   // }
-bool isLess(char c) {
+bool isLess() {
     return (c == '<');
 }   // <
-bool isGreater(char c) {
+bool isGreater() {
     return (c == '>');
 }   // >
-bool isExclamation(char c) {
+bool isExclamation() {
     return (c == '!');
 }   // !
-bool isSpace(char c) {
+bool isSpace() {
     return (c == ' ');
 }   // " "
-bool isTab(char c) {
+bool isTab() {
     return (c == '\t');
 }   // \t
-bool isInvisibleSymbol(char c) {
+bool isInvisibleSymbol() {
     return (c > 0 && c <= 32);
 }   // Lee Sin
-bool isEOF(char c) {
+bool isEOF() {
     return (c == EOF);
 }   // EOF
-bool isNextline(char c) {
-    return (c == '\n');
-}   // \n
-bool isDigit(char c) {
+bool isLetter() {
+    return isalpha(c);
+}
+bool isNextline() {
+    return (c == '\n' || c == '\r');
+}   // \n, \r
+bool isDigit() {
     return (isdigit(c));
 }   // 0-9
-bool isUnderscore(char c) {
+bool isUnderscore() {
     return (c == '_');
 }   // _
-bool isLetter(char c) {
-    return isalpha(c) || isUnderscore(c);
-}   // '_' included
-bool isSingleQuote(char c) {
+bool isSingleQuote() {
     return (c == '\'');
 }   // \'
-bool isDoubleQuote(char c) {
+bool isDoubleQuote() {
     return (c == '\"');
 }   // \"
 
-bool isReservedWord(char buffer[], int addr, char c) {
-    return tolower(buffer[row + addr]) == c;
-}   // ç‰¹å®šä½ç½®æ˜¯å¦ä¸ºä¿ç•™å­—ä¸­çš„å­—æ¯æˆ–å…¶å¤§å†™
-void retract(int len) {
-    pos_S_list -= len;
-    pos_S_print -= len;
-}   // å›æº¯ pos_S_list, pos_S_print
-bool isParticular_S_List (Sym_list &symList, string s) {
-    return symList.type[pos_S_list] == s;
-}   // symList.type[pos] == s
-
-// ç¨‹åº
-bool program(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// å­—ç¬¦ä¸²
-bool _string(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// å¸¸é‡
-bool _const(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// å¸¸é‡å®šä¹‰
-bool _const_define(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// å¸¸é‡è¯´æ˜
-bool _const_statement(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// å˜é‡å®šä¹‰
-bool _var_define(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// å˜é‡è¯´æ˜
-bool _var_statement(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// å˜é‡å®šä¹‰æ— åˆå§‹åŒ–
-bool _var_define_no_initialization(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// å˜é‡å®šä¹‰åŠåˆå§‹åŒ–
-bool _var_define_with_initialization(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// è¯»è¯­å¥
-bool _scanf(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// å†™è¯­å¥
-bool _printf(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// é¡¹
-bool _term(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// å› å­
-bool _factor(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// è¡¨è¾¾å¼
-bool _expression(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// è¯­å¥
-bool _statement(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// ç¼ºçœ
-bool _default(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// è¿”å›è¯­å¥
-bool _return(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// æ— ç¬¦å·æ•´æ•°
-bool _unsigned_int(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// æ­¥é•¿
-bool _step(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// ä¸»å‡½æ•°
-bool _main(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// å£°æ˜å¤´éƒ¨
-int _head_statement(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// æ•´æ•°
-bool _int(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// èµ‹å€¼è¯­å¥
-bool _assign(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// æƒ…å†µè¯­å¥
-bool _switch(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// æƒ…å†µå­è¯­å¥
-bool _case(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// æƒ…å†µè¡¨
-bool _table_cases(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// æ— è¿”å›å€¼å‡½æ•°å®šä¹‰
-bool _function_no_return_define(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// æœ‰è¿”å›å€¼å‡½æ•°å®šä¹‰
-bool _function_with_return_define(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// æ— è¿”å›å€¼å‡½æ•°è°ƒç”¨è¯­å¥
-bool _function_no_return_call(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// æœ‰è¿”å›å€¼å‡½æ•°è°ƒç”¨è¯­å¥
-bool _function_with_return_call(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// å¾ªç¯è¯­å¥
-bool _loop(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// å‚æ•°è¡¨
-bool _table_parameter(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// å€¼å‚æ•°è¡¨
-bool _table_parameter_value(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// æ¡ä»¶
-bool _condition(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// æ¡ä»¶è¯­å¥
-bool _if(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// è¯­å¥åˆ—
-bool _list_statement(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// å¤åˆè¯­å¥
-bool _statement_combination(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-// å­—ç¬¦
-bool _char(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol);
-
-void P_code (Sym_stack & symStack, Sym_symbol & symSymbol, Mid_code & midCode);
-
-char buffer[Max];
-ifstream f_in;
-ofstream f_out;
-void getBuffer() {
-    f_in.open("../testfile.txt");
-    f_out.open("../pcoderesult.txt");
+void clearToken() {
+    token.clear();
 }
-void getsym(char buffer[]);
-int main() {
-    getBuffer();
-    while (!f_in.eof()) {
-        f_in.getline(buffer, Max);
-        row = 0;
-        getsym(buffer);
-        line += 1;
-    }
-    program(S_list, S_print, S_stack, S_symbol);
-    P_code(S_stack, S_symbol, M_code);
 
-    f_in.close();
-    f_out.close();
-    return 0;
+void catToken() {
+    token += c;
+}   // Add c to token
+void clearSymbol() {
+    symbol = FOUL;
 }
-void getsym(char buffer[]) {
-    for (row = 0; row < Max;) {
-       while (isSpace(buffer[row])) {
-           row += 1;
-       }
-       if (isPlus(buffer[row])) {
-           analysis_2_slist(S_list, "+", "PLUS", 1);
-       }
-       else if (isMinus(buffer[row])) {
-           analysis_2_slist(S_list, "-", "MINU", 1);
-       }
-       else if (isStar(buffer[row])) {
-           analysis_2_slist(S_list, "*", "MULT", 1);
-       }
-       else if (isDiv(buffer[row])) {
-           analysis_2_slist(S_list, "/", "DIV", 1);
-       }
-       else if (isLess(buffer[row]) && !isEqual(buffer[row + 1])) {
-           analysis_2_slist(S_list, "<", "LSS", 1);
-       }
-       else if (isLess(buffer[row]) && isEqual(buffer[row + 1])) {
-           analysis_2_slist(S_list, "<=", "LEQ", 2);
-       }
-       else if (isGreater(buffer[row]) && !isEqual(buffer[row + 1])) {
-           analysis_2_slist(S_list, ">", "GRE", 1);
-       }
-       else if (isGreater(buffer[row]) && isEqual(buffer[row + 1])) {
-           analysis_2_slist(S_list, ">=", "GEQ", 2);
-       }
-       else if (isEqual(buffer[row]) && isEqual(buffer[row + 1])) {
-           analysis_2_slist(S_list, "==", "EQL", 2);
-       }
-       else if (isExclamation(buffer[row]) && isEqual(buffer[row + 1])) {
-           analysis_2_slist(S_list, "!=", "NEQ", 2);
-       }
-       else if (isEqual(buffer[row]) && !isEqual(buffer[row + 1])) {
-           analysis_2_slist(S_list, "=", "ASSIGN", 1);
-       }
-       else if (isSemicolon(buffer[row])) {
-           analysis_2_slist(S_list, ";", "SEMICN", 1);
-       }
-       else if (isComma(buffer[row])) {
-           analysis_2_slist(S_list, ",", "COMMA", 1);
-       }
-       else if (isLParent(buffer[row])) {
-           analysis_2_slist(S_list, "(", "LPARENT", 1);
-       }
-       else if (isRParent(buffer[row])) {
-           analysis_2_slist(S_list, ")", "RPARENT", 1);
-       }
-       else if (isLBrack(buffer[row])) {
-           analysis_2_slist(S_list, "[", "LBRACK", 1);
-       }
-       else if (isRBrack(buffer[row])) {
-           analysis_2_slist(S_list, "]", "RBRACK", 1);
-       }
-       else if (isLBrace(buffer[row])) {
-           analysis_2_slist(S_list, "{", "LBRACE", 1);
-       }
-       else if (isRBrace(buffer[row])) {
-           analysis_2_slist(S_list, "}", "RBRACE", 1);
-       }
-       else if (isReservedWord(buffer, 0, 'c') && isReservedWord(buffer, 1, 'o')
-                && isReservedWord(buffer, 2, 'n') && isReservedWord(buffer, 3, 's')
-                && isReservedWord(buffer, 4, 't')
-                && (isSpace(buffer[row + 5]) || (!isLetter(buffer[row + 5]) && !isDigit(buffer[row + 5])))) {
-           analysis_2_slist(S_list, "const", "CONSTTK", 5);
-       }
-       else if (isReservedWord(buffer, 0, 'i') && isReservedWord(buffer, 1, 'n')
-                && isReservedWord(buffer, 2, 't')
-                && (isSpace(buffer[row + 3]) || (!isLetter(buffer[row + 3]) && !isDigit(buffer[row + 3])))) {
-           analysis_2_slist(S_list, "int", "INTTK", 3);
-       }
-       else if (isReservedWord(buffer, 0, 'c') && isReservedWord(buffer, 1, 'h')
-                && isReservedWord(buffer, 2, 'a') && isReservedWord(buffer, 3, 'r')
-                && (isSpace(buffer[row + 4]) || (!isLetter(buffer[row + 4]) && !isDigit(buffer[row + 4])))) {
-           analysis_2_slist(S_list, "char", "CHARTK", 4);
-       }
-       else if (isReservedWord(buffer, 0, 'v') && isReservedWord(buffer, 1, 'o')
-                && isReservedWord(buffer, 2, 'i') && isReservedWord(buffer, 3, 'd')
-                && (isSpace(buffer[row + 4]) || (!isLetter(buffer[row + 4]) && !isDigit(buffer[row + 4])))) {
-           analysis_2_slist(S_list, "void", "VOIDTK", 4);
-       }
-       else if (isReservedWord(buffer, 0, 'm') && isReservedWord(buffer, 1, 'a')
-                && isReservedWord(buffer, 2, 'i') && isReservedWord(buffer, 3, 'n')
-                && (isSpace(buffer[row + 4]) || (!isLetter(buffer[row + 4]) && !isDigit(buffer[row + 4])))) {
-           analysis_2_slist(S_list, "main", "MAINTK", 4);
-       }
-       else if (isReservedWord(buffer, 0, 'i') && isReservedWord(buffer, 1, 'f')
-                && (isSpace(buffer[row + 2]) || (!isLetter(buffer[row + 2]) && !isDigit(buffer[row + 2])))) {
-           analysis_2_slist(S_list, "if", "IFTK", 2);
-       }
-       else if (isReservedWord(buffer, 0, 'e') && isReservedWord(buffer, 1, 'l')
-                && isReservedWord(buffer, 2, 's') && isReservedWord(buffer, 3, 'e')
-                && (isSpace(buffer[row + 4]) || (!isLetter(buffer[row + 4]) && !isDigit(buffer[row + 4])))) {
-           analysis_2_slist(S_list, "else", "ELSETK", 4);
-       }
-       else if (isReservedWord(buffer, 0, 's') && isReservedWord(buffer, 1, 'w')
-                && isReservedWord(buffer, 2, 'i') && isReservedWord(buffer, 3, 't')
-                && isReservedWord(buffer, 4, 'c') && isReservedWord(buffer, 5, 'h')
-                && (isSpace(buffer[row + 6]) || (!isLetter(buffer[row + 6]) && !isDigit(buffer[row + 6])))) {
-           analysis_2_slist(S_list, "switch", "SWITCHTK", 6);
-       }
-       else if (isReservedWord(buffer, 0, 'c') && isReservedWord(buffer, 1, 'a')
-                && isReservedWord(buffer, 2, 's') && isReservedWord(buffer, 3, 'e')
-                && (isSpace(buffer[row + 4]) || (!isLetter(buffer[row + 4]) && !isDigit(buffer[row + 4])))) {
-           analysis_2_slist(S_list, "case", "CASETK", 4);
-       }
-       else if (isReservedWord(buffer, 0, 'd') && isReservedWord(buffer, 1, 'e')
-                && isReservedWord(buffer, 2, 'f') && isReservedWord(buffer, 3, 'a')
-                && isReservedWord(buffer, 4, 'u') && isReservedWord(buffer, 5, 'l')
-                && isReservedWord(buffer, 6, 't')
-                && (isSpace(buffer[row + 7]) || (!isLetter(buffer[row + 7]) && !isDigit(buffer[row + 7])))) {
-           analysis_2_slist(S_list, "default", "DEFAULTTK", 7);
-       }
-       else if (isReservedWord(buffer, 0, 'w') && isReservedWord(buffer, 1, 'h')
-                && isReservedWord(buffer, 2, 'i') && isReservedWord(buffer, 3, 'l')
-                && isReservedWord(buffer, 4, 'e')
-                && (isSpace(buffer[row + 5]) || (!isLetter(buffer[row + 5]) && !isDigit(buffer[row + 5])))) {
-           analysis_2_slist(S_list, "while", "WHILETK", 5);
-       }
-       else if (isReservedWord(buffer, 0, 'f') && isReservedWord(buffer, 1, 'o')
-                && isReservedWord(buffer, 2, 'r')
-                && (isSpace(buffer[row + 3]) || (!isLetter(buffer[row + 3]) && !isDigit(buffer[row + 3])))) {
-           analysis_2_slist(S_list, "for", "FORTK", 3);
-       }
-       else if (isReservedWord(buffer, 0, 's') && isReservedWord(buffer, 1, 'c')
-                && isReservedWord(buffer, 2, 'a') && isReservedWord(buffer, 3, 'n')
-                && isReservedWord(buffer, 4, 'f')
-                && (isSpace(buffer[row + 5]) || (!isLetter(buffer[row + 5]) && !isDigit(buffer[row + 5])))) {
-           analysis_2_slist(S_list, "scanf", "SCANFTK", 5);
-       }
-       else if (isReservedWord(buffer, 0, 'p') && isReservedWord(buffer, 1, 'r')
-                && isReservedWord(buffer, 2, 'i') && isReservedWord(buffer, 3, 'n')
-                && isReservedWord(buffer, 4, 't') && isReservedWord(buffer, 5, 'f')
-                && (isSpace(buffer[row + 6]) || (!isLetter(buffer[row + 6]) && !isDigit(buffer[row + 6])))) {
-           analysis_2_slist(S_list, "printf", "PRINTFTK", 6);
-       }
-       else if (isReservedWord(buffer, 0, 'r') && isReservedWord(buffer, 1, 'e')
-                && isReservedWord(buffer, 2, 't') && isReservedWord(buffer, 3, 'u')
-                && isReservedWord(buffer, 4, 'r') && isReservedWord(buffer, 5, 'n')
-                && (isSpace(buffer[row + 6]) || (!isLetter(buffer[row + 6]) && !isDigit(buffer[row + 6])))) {
-           analysis_2_slist(S_list, "return", "RETURNTK", 6);
-       }
-       //////////////////////// do do do do do do
-       else if (isReservedWord(buffer, 0, 'd') && isReservedWord(buffer, 1, 'o')
-                && (isSpace(buffer[row + 2]) || (!isLetter(buffer[row + 2]) && !isDigit(buffer[row + 2])))) {
-           analysis_2_slist(S_list, "do", "DOTK", 2);
-       }
-       //////////////////////// do do do do do do
-       else if (isDigit(buffer[row])) {
-           S_list.type[pos_S_list_analysis] = "INTCON";
-           S_list.name[pos_S_list_analysis] = buffer[row];
-           S_list.row[pos_S_list_analysis] = row;
-           S_list.line[pos_S_list_analysis] = line;
-           row += 1;
-           while (isDigit(buffer[row])) {
-               S_list.name[pos_S_list_analysis] += buffer[row];
-               row += 1;
-           }
-           pos_S_list_analysis += 1;
-       }
-       else if (isLetter(buffer[row])) {
-           S_list.type[pos_S_list_analysis] = "IDENFR";
-           S_list.name[pos_S_list_analysis] = buffer[row];
-           S_list.row[pos_S_list_analysis] = row;
-           S_list.line[pos_S_list_analysis] = line;
-           row += 1;
-           while (isLetter(buffer[row]) || isDigit(buffer[row])) {
-               S_list.name[pos_S_list_analysis] += buffer[row];
-               row += 1;
-           }
-           pos_S_list_analysis += 1;
-       }
-       else if (isSingleQuote(buffer[row])) {
-           row += 1;
-           if (isPlus(buffer[row]) || isMinus(buffer[row])
-                || isStar(buffer[row]) || isDiv(buffer[row])
-                || isDigit(buffer[row]) || isLetter(buffer[row])) {
-               row += 1;
-               if (isSingleQuote(buffer[row])) {
-                   S_list.type[pos_S_list_analysis] = "CHARCON";
-                   S_list.name[pos_S_list_analysis] = buffer[row - 1];
-                   S_list.row[pos_S_list_analysis] = row;
-                   S_list.line[pos_S_list_analysis] = line;
-                   row += 1;
-                   pos_S_list_analysis += 1;
-               }
-           }
-       }
-       else if (isDoubleQuote(buffer[row])) {
-           S_list.type[pos_S_list_analysis] = "STRCON";
-           row += 1;
-           S_list.row[pos_S_list_analysis] = row;
-           S_list.line[pos_S_list_analysis] = line;
-           while (!isDoubleQuote(buffer[row])) {
-               if (isSpace(buffer[row]) || isExclamation(buffer[row])
-                    || (buffer[row] >= 35 && buffer[row] <= 126)) {
-                   S_list.name[pos_S_list_analysis] += buffer[row];
-                   row += 1;
-               }
-           }
-           row += 1;
-           pos_S_list_analysis += 1;
-       }
-       else if (isNextline(buffer[row]) || buffer[row] == '\0' || isTab(buffer[row])
-                || (buffer[row] == '\r' && isNextline(buffer[row + 1]))) {
-           return;
-       }
-       else {
-           row += 1;
-           return;
-       }
+
+
+void getChar() {
+    c = buffer[index_buffer++];
+    if (isNextline()) {
+        ++line;
     }
 }
 
-// è€å­æ˜¯åˆ†å‰²çº¿ //
-
-bool program(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    /* ï¼œç¨‹åºï¼    ::= ï¼»ï¼œå¸¸é‡è¯´æ˜ï¼ï¼½ï¼»ï¼œå˜é‡è¯´æ˜ï¼ï¼½{ï¼œæœ‰è¿”å›å€¼å‡½æ•°å®šä¹‰ï¼
-     *              | ï¼œæ— è¿”å›å€¼å‡½æ•°å®šä¹‰ï¼}ï¼œä¸»å‡½æ•°ï¼
-     */
-    int flag = 0;
-    if (_const_statement(symList, symPrint, symStack, symSymbol)) {
-        flag += 1; // å¸¸é‡è¯´æ˜
+void combo() {
+    catToken();
+    getChar();
+}
+void retract() {
+    c = buffer[--index_buffer];
+    if (isNextline()) {
+        --line;
     }
-    if (_var_statement(symList, symPrint, symStack, symSymbol)) {
-        flag += 1;   // å˜é‡è¯´æ˜
+}   // Move the fin pointer 1 step back
+bool isReserved_Token() {
+    string token_temp(token);
+    int token_temp_len = token_temp.size();
+    for(int i = 0; i < token_temp_len; ++i){
+        token_temp.at(i) = tolower(token_temp.at(i));
     }
-    while (_function_with_return_define(symList, symPrint, symStack, symSymbol)
-            || _function_no_return_define(symList, symPrint, symStack, symSymbol)) {
-        flag += 1;
-    }
-    if (_main(symList, symPrint, symStack, symSymbol)) {
-        slist_1_sprint(symList, symPrint, "<ç¨‹åº>");
-        return true;
-    }
-    else {
-        if (flag) {
-            pos_S_list -= flag;
-            pos_S_print -= flag;
+    return (reservedWords.find(token_temp) != reservedWords.end());
+}   // Whether token is legal
+void Reserver_Token() {
+    if (isReserved_Token()) {
+        string token_temp(token);
+        int token_temp_len = token_temp.size();
+        for(int i = 0; i < token_temp_len; ++i){
+            token_temp.at(i) = tolower(token_temp.at(i));
         }
-        return false;
+        symbol = reservedWords[token_temp];
+    }   else {
+        symbol = IDENFR;
     }
 }
 
-bool _const_statement(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    // ï¼œå¸¸é‡è¯´æ˜ï¼ ::=  constï¼œå¸¸é‡å®šä¹‰ï¼;{ constï¼œå¸¸é‡å®šä¹‰ï¼;}
-    if (symList.type[pos_S_list] == "CONSTTK") {
-        slist_0_sprint(symList, symPrint);
-        if (_const_define(symList, symPrint, symStack, symSymbol)) {
-            // å¸¸é‡å®šä¹‰
-            if (symList.type[pos_S_list] == ";") { // ;
-                slist_0_sprint(symList, symPrint);
-                while (symList.type[pos_S_list] == "CONSTTK") {
-                    slist_0_sprint(symList, symPrint);
-                    if (_const_define(symList, symPrint, symStack, symSymbol)) {
-                        if (symList.type[pos_S_list] == ";") {
-                            slist_0_sprint(symList, symPrint);
-                        }
-                        else {
-                            retract(2);
-                            break;
-                        }
-                    }
-                    else {
-                        retract(1);
-                        break;
-                    }
-                }
-                slist_1_sprint(symList, symPrint, "<å¸¸é‡è¯´æ˜>");
-                return true;
-            }
-            else {
-                retract(2);
-                return false;
-            }
+void getsym(bool output) {
+    clearToken();
+    clearSymbol();
+    getChar();
+    while (isInvisibleSymbol()) {
+        getChar();
+    }
+    if (isEOF()) {
+        return;
+    }
+    if (isLetter() || isUnderscore()) {
+        while (isLetter() || isUnderscore() || isDigit()) {
+            combo();
         }
-        else {  // ä¸æ˜¯<å¸¸é‡å®šä¹‰>ï¼Œå›é€€ä¸€æ ¼ï¼Œç»§ç»­åˆ¤æ–­const
-            retract(1);
-            return false;
+        retract();
+        Reserver_Token();
+    } else if (isDigit()) {
+        while (isDigit()) {
+            combo();
         }
-    }
-    else {  // ä¸æ˜¯const
-        return false;
-    }
-}
-
-bool _var_statement(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    // ï¼œå˜é‡è¯´æ˜ï¼  ::= ï¼œå˜é‡å®šä¹‰ï¼;{ï¼œå˜é‡å®šä¹‰ï¼;}
-    if (_var_define(symList, symPrint, symStack, symSymbol)) {
-        if (symList.type[pos_S_list] == ";") {
-            slist_0_sprint(symList, symPrint);
-            while (_var_define(symList, symPrint, symStack, symSymbol)) {
-                if (symList.type[pos_S_list] == ";") {
-                    slist_0_sprint(symList, symPrint);
-                }
-                else {
-                    retract(1);
-                    break;
-                }
-            }
-            slist_1_sprint(symList, symPrint, "<å˜é‡è¯´æ˜>");
-            return true;
+        retract();
+        symbol = INTCON;
+    } else if (isSingleQuote()) {
+        getChar();
+        if (!(isPlus() || isMinus() || isStar() || isDiv() || isLetter() || isUnderscore() || isDigit())) {
+            error();
         }
-        else {
-            retract(1);
+        combo();
+        if (!isSingleQuote()) {
+            error();
         }
-    }
-    else {
-        return false;
-    }
-}
-
-bool _const_define(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    // ï¼œå¸¸é‡å®šä¹‰ï¼   ::=   intï¼œæ ‡è¯†ç¬¦ï¼ï¼ï¼œæ•´æ•°ï¼{,ï¼œæ ‡è¯†ç¬¦ï¼ï¼ï¼œæ•´æ•°ï¼}
-    //                  | charï¼œæ ‡è¯†ç¬¦ï¼ï¼ï¼œå­—ç¬¦ï¼{,ï¼œæ ‡è¯†ç¬¦ï¼ï¼ï¼œå­—ç¬¦ï¼}
-    if (symList.type[pos_S_list] == "INTTK" && symList.type[pos_S_list + 2] == "ASSIGN") { // int
-        slist_0_sprint(symList, symPrint);
-        if (symList.type[pos_S_list] == "IDENFR") { // æ ‡è¯†ç¬¦
-            symSymbol.name[pos_S_symbol] = symList.name[pos_S_list];
-            symSymbol.addr[pos_S_symbol] = 0;
-            if (func) {
-                symSymbol.level[pos_S_symbol] = 1;
-            }
-            else {
-                symSymbol.level[pos_S_symbol] = 0;
-            }
-            symSymbol.kind[pos_S_symbol] = 1;
-            symSymbol.type[pos_S_symbol] = 1;
-            slist_0_sprint(symList, symPrint);
-            if (symList.type[pos_S_list] == "ASSIGN") { // =
-                slist_0_sprint(symList, symPrint);
-                if (_int(symList, symPrint, symStack, symSymbol)) {
-                    if (symList.type[pos_S_list - 2] == "PLUS") {
-                        symSymbol.ref[pos_S_symbol] = stoi(symList.name[pos_S_list - 1]);
-                    }
-                    else if (symList.type[pos_S_list - 2] == "MINU") {
-                        symSymbol.ref[pos_S_symbol] = -stoi(symList.name[pos_S_list]);
-                    }
-                    else {
-                        symSymbol.ref[pos_S_symbol] = stoi(symList.name[pos_S_list - 1]);
-                    }
-                    pos_S_symbol += 1;
-                    while (symList.type[pos_S_list] == "COMMA") {
-                        slist_0_sprint(symList, symPrint);
-                        if (symList.type[pos_S_list] == "IDENFR") {
-                            symSymbol.name[pos_S_symbol] = symList.name[pos_S_list];
-                            symSymbol.addr[pos_S_symbol] = 0;
-                            if (func) {
-                                symSymbol.level[pos_S_symbol] = 1;
-                            }
-                            else {
-                                symSymbol.level[pos_S_symbol] = 0;
-                            }
-                            symSymbol.kind[pos_S_symbol] = 1;
-                            symSymbol.type[pos_S_symbol] = 1;
-                            slist_0_sprint(symList, symPrint);
-                            if (symList.type[pos_S_list] == "ASSIGN") {
-                                slist_0_sprint(symList, symPrint);
-                                if (_int(symList, symPrint, symStack, symSymbol)) {
-                                    // æ•´æ•°
-                                    if (symList.type[pos_S_list - 2] == "PLUS") {
-                                        symSymbol.ref[pos_S_symbol] = stoi(symList.name[pos_S_list - 1]);
-                                    }
-                                    else if (symList.type[pos_S_list - 2] == "MINU") {
-                                        symSymbol.ref[pos_S_symbol] = -stoi(symList.name[pos_S_list - 1]);
-                                    }
-                                    else {
-                                        symSymbol.ref[pos_S_symbol] = stoi(symList.name[pos_S_list - 1]);
-                                    }
-                                    pos_S_symbol += 1;
-                                }
-                                else {
-                                    retract(3);
-                                    break;
-                                }
-                            }
-                            else {
-                                retract(2);
-                                break;
-                            }
-                        }
-                        else {
-                            retract(1);
-                            break;
-                        }
-                    }
-                    slist_1_sprint(symList, symPrint, "<å¸¸é‡å®šä¹‰>");
-                    return true;
-                }
-                else {
-                    retract(3);
-                }
-            }
-            else {
-                retract(2);
-            }
-        }
-        else {
-            retract(1);
-        }
-    }
-    // char
-    else if (symList.type[pos_S_list] == "CHARTK" && symList.type[pos_S_list + 2] == "ASSIGN") { // int
-        slist_0_sprint(symList, symPrint);
-        if (symList.type[pos_S_list] == "IDENFR") { // æ ‡è¯†ç¬¦
-            symSymbol.name[pos_S_symbol] = symList.name[pos_S_list];
-            symSymbol.addr[pos_S_symbol] = 0;
-            if (func) {
-                symSymbol.level[pos_S_symbol] = 1;
-            }
-            else {
-                symSymbol.level[pos_S_symbol] = 0;
-            }
-            symSymbol.kind[pos_S_symbol] = 1;
-            symSymbol.type[pos_S_symbol] = 2;
-            slist_0_sprint(symList, symPrint);
-            if (symList.type[pos_S_list] == "ASSIGN") { // =
-                slist_0_sprint(symList, symPrint);
-                if (symList.type[pos_S_list] == "CHARTK") {
-                    symSymbol.ref[pos_S_symbol] = (int)symList.name[pos_S_list][0];
-                    pos_S_symbol += 1;
-                    slist_0_sprint(symList, symPrint);
-                    while (symList.type[pos_S_list] == "COMMA") {
-                        slist_0_sprint(symList, symPrint);
-                        if (symList.type[pos_S_list] == "IDENFR") {
-                            symSymbol.name[pos_S_symbol] = symList.name[pos_S_list];
-                            symSymbol.addr[pos_S_symbol] = 0;
-                            if (func) {
-                                symSymbol.level[pos_S_symbol] = 1;
-                            }
-                            else {
-                                symSymbol.level[pos_S_symbol] = 0;
-                            }
-                            symSymbol.kind[pos_S_symbol] = 1;
-                            symSymbol.type[pos_S_symbol] = 2;
-                            slist_0_sprint(symList, symPrint);
-                            if (symList.type[pos_S_list] == "ASSIGN") {
-                                slist_0_sprint(symList, symPrint);
-                                if (symList.type[pos_S_list] == "CHARTK") {
-                                    // å­—ç¬¦
-                                    symSymbol.ref[pos_S_symbol] = stoi(symList.name[pos_S_list - 1]);
-                                    pos_S_symbol += 1;
-                                    slist_0_sprint(symList, symPrint);
-                                }
-                                else {
-                                    retract(3);
-                                }
-                            }
-                            else {
-                                retract(2);
-                            }
-                        }
-                        else {
-                            retract(1);
-                        }
-                    }
-                    slist_1_sprint(symList, symPrint, "<å¸¸é‡å®šä¹‰>");
-                    return true;
-                }
-                else {
-                    retract(3);
-                }
-            }
-            else {
-                retract(2);
-            }
-        }
-        else {
-            retract(1);
-        }
-    }
-    else {
-        return false;
-    }
-}
-
-bool _function_with_return_define(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    // ï¼œæœ‰è¿”å›å€¼å‡½æ•°å®šä¹‰ï¼  ::=  ï¼œå£°æ˜å¤´éƒ¨ï¼'('ï¼œå‚æ•°è¡¨ï¼')' '{'ï¼œå¤åˆè¯­å¥ï¼'}'
-    if (_head_statement(symList, symPrint, symStack, symSymbol) && symList.type[pos_S_list] == "LPARENT") {
-        // å£°æ˜å¤´éƒ¨
-        func = 1;
-        symList.has_return[pos_has_return] = symList.name[pos_temp_has_return];
-        pos_has_return += 1;
-        if (symList.type[pos_S_list] == "LPARENT") {
-            slist_0_sprint(symList, symPrint);
-            if (_table_parameter(symList, symPrint, symStack, symSymbol)) {
-                // å‚æ•°è¡¨
-                if (symList.type[pos_S_list] == "RPARENT") {
-                    slist_0_sprint(symList, symPrint);
-                    if (symList.type[pos_S_list] == "LBRACE") {
-                        // {
-                        slist_0_sprint(symList, symPrint);
-                        if (_statement_combination(symList, symPrint, symStack, symSymbol)) {
-                            // å¤åˆè¯­å¥
-                            if (symList.type[pos_S_list] == "RBRACE") {
-                                // }
-                                slist_0_sprint(symList, symPrint);
-                                slist_1_sprint(symList, symPrint, "<æœ‰è¿”å›å€¼å‡½æ•°å®šä¹‰>");
-                                func = 0;
-                                return true;
-                            }
-                            else {
-                                retract(6);
-                            }
-                        }
-                        else {
-                            retract(5);
-                        }
-                    }
-                    else {
-                        retract(4);
-                    }
-                }
-                else {
-                    retract(3);
-                }
-            }
-            else {
-                retract(2);
-            }
-        }
-        else {
-            retract(1);
-        }
-    }
-    else {
-        return false;
-    }
-}
-
-int _head_statement(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    // ï¼œå£°æ˜å¤´éƒ¨ï¼   ::=  intï¼œæ ‡è¯†ç¬¦ï¼
-    //                |  charï¼œæ ‡è¯†ç¬¦ï¼
-    if (symList.type[pos_S_list] == "INTTK" && symList.type[pos_S_list + 2] == "LPARENT") { // int || char
-        slist_0_sprint(symList, symPrint);
-        if (symList.type[pos_S_list] == "IDENFR") {
-            symPrint.name[pos_S_print] = symList.name[pos_S_list];
-            symPrint.type[pos_S_print] = symList.type[pos_S_list];
-            symPrint.num[pos_S_print] = 0;
-            pos_temp_has_return = pos_S_list;
-            pos_S_print += 1;
-            pos_S_list += 1;
-            slist_1_sprint(symList, symPrint, "<å£°æ˜å¤´éƒ¨>");
-            return pos_temp_has_return;
-        }
-        else {
-            retract(1);
-        }
-    }
-    else if (symList.type[pos_S_list] == "CHARTK" && symList.type[pos_S_list + 2] == "LPARENT") { // int || char
-        slist_0_sprint(symList, symPrint);
-        if (symList.type[pos_S_list] == "IDENFR") {
-            symPrint.name[pos_S_print] = symList.name[pos_S_list];
-            symPrint.type[pos_S_print] = symList.type[pos_S_list];
-            symPrint.num[pos_S_print] = 0;
-            pos_temp_has_return = pos_S_list;
-            pos_S_print += 1;
-            pos_S_list += 1;
-            slist_1_sprint(symList, symPrint, "<å£°æ˜å¤´éƒ¨>");
-            return pos_temp_has_return;
-        }
-        else {
-            retract(1);
-        }
-    }
-    else {
-        return 0;
-    }
-}
-
-bool _table_parameter(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    // ï¼œå‚æ•°è¡¨ï¼    ::=  ï¼œç±»å‹æ ‡è¯†ç¬¦ï¼ï¼œæ ‡è¯†ç¬¦ï¼{,ï¼œç±»å‹æ ‡è¯†ç¬¦ï¼ï¼œæ ‡è¯†ç¬¦ï¼}
-    //               |  ï¼œç©ºï¼
-    if (symList.type[pos_S_list] == "INTTK" || symList.type[pos_S_list] == "CHARTK") { // ç±»å‹æ ‡è¯†ç¬¦
-        slist_0_sprint(symList, symPrint);
-        if (symList.type[pos_S_list] == "IDENFR") { // æ ‡è¯†ç¬¦
-            slist_0_sprint(symList, symPrint);
-            while (symList.type[pos_S_list] == "COMMA") { // ,
-                slist_0_sprint(symList, symPrint);
-                if (symList.type[pos_S_list] == "INTTK" || symList.type[pos_S_list] == "CHARTK") { // ç±»å‹æ ‡è¯†ç¬¦
-                    slist_0_sprint(symList, symPrint);
-                    if (symList.type[pos_S_list] == "IDENFR") { // æ ‡è¯†ç¬¦
-                        slist_0_sprint(symList, symPrint);
-                    }
-                    else {
-                        retract(2);
-                        break;
-                    }
-                }
-                else {
-                    retract(1);
-                    break;
-                }
-            }
-            slist_1_sprint(symList, symPrint, "<å‚æ•°è¡¨>");
-            return true;
-        }
-        else {
-            retract(1);
-        }
-    }
-    else if (symList.type[pos_S_list] == "RPARENT") {   // )
-        slist_1_sprint(symList, symPrint, "<å‚æ•°è¡¨>");
-        return true;
-    }
-    else {
-        return false;
-    }
-}
-
-bool _statement_combination(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    // ï¼œå¤åˆè¯­å¥ï¼   ::=  ï¼»ï¼œå¸¸é‡è¯´æ˜ï¼ï¼½ï¼»ï¼œå˜é‡è¯´æ˜ï¼ï¼½ï¼œè¯­å¥åˆ—ï¼
-    int flag = 0;
-    if (_const_statement(symList, symPrint, symStack, symSymbol)) { // å¸¸é‡è¯´æ˜
-        flag += 1;
-    }
-    if (_var_statement(symList, symPrint, symStack, symSymbol)) { // å˜é‡è¯´æ˜
-        flag += 1;
-    }
-    if (_list_statement(symList, symPrint, symStack, symSymbol)) {
-        // è¯­å¥åˆ—
-        slist_1_sprint(symList, symPrint, "<å¤åˆè¯­å¥>");
-        return true;
-    }
-    else {
-        if (flag) {
-            retract(1);
-        }
-        return false;
-    }
-}
-
-bool _function_no_return_define(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    // ï¼œæ— è¿”å›å€¼å‡½æ•°å®šä¹‰ï¼  ::= voidï¼œæ ‡è¯†ç¬¦ï¼'('ï¼œå‚æ•°è¡¨ï¼')''{'ï¼œå¤åˆè¯­å¥ï¼'}'
-    int temp;
-    if (symList.type[pos_S_list] == "VOIDTK" && symList.type[pos_S_list + 1] != "MAINTK" && symList.type[pos_S_list + 2] == "LPARENT") { // void
-        func = 1;
-        slist_0_sprint(symList, symPrint);
-        if (symList.type[pos_S_list] == "IDENFR") { // æ ‡è¯†ç¬¦
-            symPrint.name[pos_S_print] = symList.name[pos_S_list];
-            symPrint.type[pos_S_print] = symList.type[pos_S_list];
-            symPrint.num[pos_S_print] = 0;
-            temp = pos_S_list;
-            pos_S_print += 1;
-            pos_S_list += 1;
-            symList.no_return[pos_no_return] = symList.name[temp];
-            pos_no_return += 1;
-            if (symList.type[pos_S_list] == "LPARENT") { // (
-                slist_0_sprint(symList, symPrint);
-                if (_table_parameter(symList, symPrint, symStack, symSymbol)) {
-                    // å‚æ•°è¡¨
-                    if (symList.type[pos_S_list] == "RPARENT") {
-                        // )
-                        slist_0_sprint(symList, symPrint);
-                        if (symList.type[pos_S_list] == "LBRACE") {
-                            // {
-                            slist_0_sprint(symList, symPrint);
-                            if (_statement_combination(symList, symPrint, symStack, symSymbol)) {
-                                // å¤åˆè¯­å¥
-                                if (symList.type[pos_S_list] == "RBRACE") {
-                                    // }
-                                    slist_0_sprint(symList, symPrint);
-                                    slist_1_sprint(symList, symPrint, "<æ— è¿”å›å€¼å‡½æ•°å®šä¹‰>");
-                                    func = 0;
-                                    return true;
-                                }
-                                else {
-                                    retract(7);
-                                }
-                            }
-                            else {
-                                retract(6);
-                            }
-                        }
-                        else {
-                            retract(5);
-                        }
-                    }
-                    else {
-                        retract(4);
-                    }
-                }
-                else {
-                    retract(3);
-                }
-            }
-            else {
-                retract(2);
-            }
-        }
-        else {
-            retract(1);
-            return false;
-        }
-    }
-    else {
-        return false;
-    }
-}
-
-bool _main(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    // ï¼œä¸»å‡½æ•°ï¼    ::= void mainâ€˜(â€™â€˜)â€™ â€˜{â€™ï¼œå¤åˆè¯­å¥ï¼â€˜}â€™
-    if (isParticular_S_List(symList, "VOIDTK")) { // void
-        slist_0_sprint(symList, symPrint);
-        if (symList.type[pos_S_list] == "MAINTK") { // main
-            slist_0_sprint(symList, symPrint);
-            if (symList.type[pos_S_list] == "LPARENT") { // (
-                slist_0_sprint(symList, symPrint);
-                if (symList.type[pos_S_list] == "RPARENT") { // )
-                    slist_0_sprint(symList, symPrint);
-                    if (symList.type[pos_S_list] == "LBRACE") { // {
-                        slist_0_sprint(symList, symPrint);
-                        if (_statement_combination(symList, symPrint, symStack, symSymbol)) {
-                            // å¤åˆè¯­å¥
-                            if (symList.type[pos_S_list] == "RBRACE") { // }
-                                slist_0_sprint(symList, symPrint);
-                                slist_1_sprint(symList, symPrint, "<ä¸»å‡½æ•°>");
-                                return true;
-                            }
-                            else {
-                                retract(6);
-                            }
-                        }
-                        else {
-                            retract(5);
-                        }
-                    }
-                    else {
-                        retract(4);
-                    }
-                }
-                else {
-                    retract(3);
-                }
-            }
-            else {
-                retract(2);
-            }
-        }
-        else {
-            retract(1);
-        }
-    }
-    else {
-        return false;
-    }
-}
-
-bool _list_statement(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    // ï¼œè¯­å¥åˆ—ï¼   ::= ï½›ï¼œè¯­å¥ï¼ï½
-    while (_statement(symList, symPrint, symStack, symSymbol)) {
-        // è¯­å¥) { // if while for ( æ ‡è¯†ç¬¦ scanf printf ; return switch
-    }
-    slist_1_sprint(symList, symPrint, "<è¯­å¥åˆ—>");
-    return true;
-}
-
-bool _if(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    // ï¼œæ¡ä»¶è¯­å¥ï¼  ::= if '('ï¼œæ¡ä»¶ï¼')'ï¼œè¯­å¥ï¼ï¼»elseï¼œè¯­å¥ï¼ï¼½
-    if (isParticular_S_List(symList, "IFTK")) { // if
-        slist_0_sprint(symList, symPrint);
-        if (isParticular_S_List(symList, "LPARENT")) { // (
-            slist_0_sprint(symList, symPrint);
-            if (_condition(symList, symPrint, symStack, symSymbol)) {
-                // æ¡ä»¶
-                if (isParticular_S_List(symList, "RPARENT")) {
-                    slist_0_sprint(symList, symPrint);
-                    if (_statement(symList, symPrint, symStack, symSymbol)) {
-                        if (isParticular_S_List(symList, "ELSETK")) {
-                            if (_statement(symList, symPrint, symStack, symSymbol)) {
-                                slist_1_sprint(symList, symPrint, "<æ¡ä»¶è¯­å¥>");
-                                return true;
-                            }
-                            else {
-                                retract(1);
-                            }
-                        }
-                        slist_1_sprint(symList, symPrint, "<æ¡ä»¶è¯­å¥>");
-                        return true;
-                    }
-                    else {
-                        retract(4);
-                    }
-                }
-                else {
-                    retract(3);
-                }
-            }
-            else {
-                retract(2);
-            }
-        }
-        else {
-            retract(1);
-        }
-    }
-    else {
-        return false;
-    }
-}
-
-bool _condition(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    // ï¼œæ¡ä»¶ï¼    ::=  ï¼œè¡¨è¾¾å¼ï¼ï¼œå…³ç³»è¿ç®—ç¬¦ï¼ï¼œè¡¨è¾¾å¼ï¼
-    if (_expression(symList, symPrint, symStack, symSymbol)) {
-        // è¡¨è¾¾å¼
-        if (isParticular_S_List(symList, "LSS") || isParticular_S_List(symList, "LEQ")
-            || isParticular_S_List(symList, "GRE") || isParticular_S_List(symList, "GEQ")
-            || isParticular_S_List(symList, "EQL") || isParticular_S_List(symList, "NEQ")) {
-            slist_0_sprint(symList, symPrint);
-            if (_expression(symList, symPrint, symStack, symSymbol)) {
-                slist_1_sprint(symList, symPrint, "<æ¡ä»¶>");
-                return true;
-            }
-            else {
-                retract(1);
-            }
-        }
-        else {
-            slist_1_sprint(symList, symPrint, "<æ¡ä»¶>");
-            return true;
-        }
-    }
-    else {
-        return false;
-    }
-}
-
-bool _expression(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    //  ï¼œè¡¨è¾¾å¼ï¼    ::= ï¼»ï¼‹ï½œï¼ï¼½ï¼œé¡¹ï¼{ï¼œåŠ æ³•è¿ç®—ç¬¦ï¼ï¼œé¡¹ï¼}
-    int flag = 0;
-    if (isParticular_S_List(symList, "PLUS")) { // +
-        slist_0_sprint(symList, symPrint);
-        flag = 1;
-    }
-    if (isParticular_S_List(symList, "MINU")) { // -
-        slist_0_sprint(symList, symPrint);
-        flag = 2;
-    }
-    if (_term(symList, symPrint, symStack, symSymbol)) {
-        // é¡¹
-        if (flag == 2) {
-            emit_op1(4);
-        }
-        if (isParticular_S_List(symList, "PLUS") || isParticular_S_List(symList, "MINU")) {
-            do {
-                if (isParticular_S_List(symList, "PLUS")) { // +
-                    flag = 1;
-                }
-                else if (isParticular_S_List(symList, "MINU")) { // -
-                    flag = 2;
-                }
-                slist_0_sprint(symList, symPrint);
-                if (_term(symList, symPrint, symStack, symSymbol)) {
-                    // é¡¹
-                }
-                if (flag == 1) {
-                    emit_op1(5); // stack_top_second += stack_top
-                }
-                else if (flag == 2) {
-                    emit_op1(6); // stack_top_second -= stack_top
-                }
-            }   while (isParticular_S_List(symList, "PLUS") || isParticular_S_List(symList, "MINU"));
-        }
-        slist_1_sprint(symList, symPrint, "<è¡¨è¾¾å¼>");
-        return true;
-    }
-    else {
-        if (flag) {
-            retract(1);
-        }
-        return false;
-    }
-}
-
-bool _term(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    // ï¼œé¡¹ï¼     ::= ï¼œå› å­ï¼{ï¼œä¹˜æ³•è¿ç®—ç¬¦ï¼ï¼œå› å­ï¼}
-    if (_factor(symList, symPrint, symStack, symSymbol)) {
-        // å› å­
-        if (isParticular_S_List(symList, "MULT") || isParticular_S_List(symList, "DIV")) {
-            do {
-                int temp = 0;
-                if (isParticular_S_List(symList, "MULT")) {
-                    temp = 1;
-                }
-                else if (isParticular_S_List(symList, "DIV")) {
-                    temp = 2;
-                }
-                slist_0_sprint(symList, symPrint);
-                if (_factor(symList, symPrint, symStack, symSymbol)) {
-                    // å› å­
-                }
-                else {
-                    retract(1);
-                    break;
-                }
-                if (temp == 1) {
-                    emit_op1(2);    // stack_top_second *= stack_top
-                }
-                else if (temp == 2) {
-                    emit_op1(3);    // stack_top_second /= stack_top
-                }
-            }   while (isParticular_S_List(symList, "MULT") || isParticular_S_List(symList, "DIV"));
-        }
-        slist_1_sprint(symList, symPrint, "<é¡¹>");
-        return true;
-    }
-    else {
-        return false;
-    }
-}
-
-bool _loop(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    // ï¼œå¾ªç¯è¯­å¥ï¼   ::=  while '('ï¼œæ¡ä»¶ï¼')'ï¼œè¯­å¥ï¼
-    // | for'('ï¼œæ ‡è¯†ç¬¦ï¼ï¼ï¼œè¡¨è¾¾å¼ï¼;ï¼œæ¡ä»¶ï¼;ï¼œæ ‡è¯†ç¬¦ï¼ï¼ï¼œæ ‡è¯†ç¬¦ï¼(+|-)ï¼œæ­¥é•¿ï¼')'ï¼œè¯­å¥ï¼
-    if (isParticular_S_List(symList, "WHILETK")) { // while
-        slist_0_sprint(symList, symPrint);
-        if (isParticular_S_List(symList, "LPARENT")) { // (
-            slist_0_sprint(symList, symPrint);
-            if (_condition(symList, symPrint, symStack, symSymbol)) {
-                // æ¡ä»¶
-                if (isParticular_S_List(symList, "RPARENT")) {
-                    // )
-                    slist_0_sprint(symList, symPrint);
-                    if (_statement(symList, symPrint, symStack, symSymbol)) {
-                        // è¯­å¥
-                        slist_1_sprint(symList, symPrint, "<å¾ªç¯è¯­å¥>");
-                        return true;
-                    }
-                    else {
-                        retract(4);
-                    }
-                }
-                else {
-                    retract(3);
-                }
-            }
-            else {
-                retract(2);
-            }
-        }
-        else {
-            retract(1);
-        }
-    }
-
-    else if (isParticular_S_List(symList, "FORTK")) { // for
-        slist_0_sprint(symList, symPrint);
-        if (isParticular_S_List(symList, "LPARENT")) {
-            // (
-            slist_0_sprint(symList, symPrint);
-            if (isParticular_S_List(symList, "IDENFR")) {
-                slist_0_sprint(symList, symPrint);
-                if (isParticular_S_List(symList, "ASSIGN")) {
-                    // =
-                    slist_0_sprint(symList, symPrint);
-                    if (_expression(symList, symPrint, symStack, symSymbol)) {
-                        // è¡¨è¾¾å¼
-                        if (isParticular_S_List(symList, "SEMICN")) {
-                            // ;
-                            slist_0_sprint(symList, symPrint);
-                            if (_condition(symList, symPrint, symStack, symSymbol)) {
-                                // æ¡ä»¶
-                                if (isParticular_S_List(symList, "SEMICN")) {
-                                    // ;
-                                    slist_0_sprint(symList, symPrint);
-                                    if (isParticular_S_List(symList, "IDENFR")) {
-                                        // æ ‡è¯†ç¬¦
-                                        slist_0_sprint(symList, symPrint);
-                                        if (isParticular_S_List(symList, "ASSIGN")) {
-                                            slist_0_sprint(symList, symPrint);
-                                            if (isParticular_S_List(symList, "IDENFR")) {
-                                                // æ ‡è¯†ç¬¦
-                                                slist_0_sprint(symList, symPrint);
-                                                if (isParticular_S_List(symList, "PLUS") || isParticular_S_List(symList, "MINU")) {
-                                                    // + -
-                                                    slist_0_sprint(symList, symPrint);
-                                                    if (_step(symList, symPrint, symStack, symSymbol)) {
-                                                        if (isParticular_S_List(symList, "LPARENT")) {
-                                                            // )
-                                                            slist_0_sprint(symList, symPrint);
-                                                            if (_statement(symList, symPrint, symStack, symSymbol)) {
-                                                                // è¯­å¥
-                                                                slist_1_sprint(symList, symPrint, "<å¾ªç¯è¯­å¥>");
-                                                                return true;
-                                                            }
-                                                            else {
-                                                                retract(14);
-                                                            }
-                                                        }
-                                                        else {
-                                                            retract(13);
-                                                        }
-                                                    }
-                                                    else {
-                                                        retract(12);
-                                                    }
-                                                }
-                                                else {
-                                                    retract(11);
-                                                }
-                                            }
-                                            else {
-                                                retract(10);
-                                            }
-                                        }
-                                        else {
-                                            retract(9);
-                                        }
-                                    }
-                                    else {
-                                        retract(8);
-                                    }
-                                }
-                                else {
-                                    retract(7);
-                                }
-                            }
-                            else {
-                                retract(6);
-                            }
-                        }
-                        else {
-                            retract(5);
-                        }
-                    }
-                    else {
-                        retract(4);
-                    }
-                }
-                else {
-                    retract(3);
-                }
-            }
-            else {
-                retract(2);
-            }
-        }
-        else {
-            retract(1);
-        }
-    }
-    else if (isParticular_S_List(symList, "DOTK")) {    // do
-        slist_0_sprint(symList, symPrint);
-        if (_statement(symList, symPrint, symStack, symSymbol)) {
-            // è¯­å¥
-            if (isParticular_S_List(symList, "WHILETK")) { // while
-                slist_0_sprint(symList, symPrint);
-                if (isParticular_S_List(symList, "LPARENT")) { // (
-                    slist_0_sprint(symList, symPrint);
-                    if (_condition(symList, symPrint, symStack, symSymbol)) {
-                        // æ¡ä»¶
-                        if (isParticular_S_List(symList, "RPARENT")) {
-                            // )
-                            slist_0_sprint(symList, symPrint);
-                            slist_1_sprint(symList, symPrint, "<å¾ªç¯è¯­å¥>");
-                            return true;
-                        }
-                        else {
-                            retract(5);
-                        }
-                    }
-                    else {
-                        retract(4);
-                    }
-                }
-                else {
-                    retract(3);
-                }
-            }
-            else {
-                retract(2);
-            }
-        }
-        else {
-            retract(1);
-        }
-    }
-    else {
-        return false;
-    }
-}
-
-bool _string(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    // ï¼œå­—ç¬¦ä¸²ï¼   ::=  "ï½›åè¿›åˆ¶ç¼–ç ä¸º32,33,35-126çš„ASCIIå­—ç¬¦ï½"
-    if (symList.type[pos_S_list] == "STRCON") { // å­—ç¬¦ä¸²
-        slist_0_sprint(symList, symPrint);
-        slist_1_sprint(symList, symPrint, "<å­—ç¬¦ä¸²>");
-        return true;
-    }
-    else {
-        return false;
-    }
-}
-
-bool _step(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    // ï¼œæ­¥é•¿ï¼::= ï¼œæ— ç¬¦å·æ•´æ•°ï¼
-    if (_unsigned_int(symList, symPrint, symStack, symSymbol)) {
-        // æ— ç¬¦å·æ•´æ•°
-        slist_1_sprint(symList, symPrint, "<æ­¥é•¿>");
-        return true;
-    }
-    return false;
-}
-
-bool _unsigned_int(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    // ï¼œæ— ç¬¦å·æ•´æ•°ï¼  ::= ï¼œæ•°å­—ï¼ï½›ï¼œæ•°å­—ï¼ï½
-    if (symList.type[pos_S_list] == "INTCON") {
-        slist_0_sprint(symList, symPrint);
-        slist_1_sprint(symList, symPrint, "<æ— ç¬¦å·æ•´æ•°>");
-        return true;
-    }
-    else {
-        return false;
-    }
-}
-
-bool _int(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    int flag = 1;
-    if (symList.type[pos_S_list] == "MINU" || symList.type[pos_S_list] == "PLUS") {
-        slist_0_sprint(symList, symPrint);
-        flag = 1;
-    }
-    if (_unsigned_int(symList, symPrint, symStack, symSymbol)) {
-        // æ— ç¬¦å·æ•´æ•°
-        slist_1_sprint(symList, symPrint, "<æ•´æ•°>");
-        return true;
-    }
-    else {
-        if (flag == 1) {
-            retract(1);
-        }
-        return false;
-    }
-}
-
-bool _char(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    if (symbol == CHARCON) { // å­—ç¬¦
-        getsym(yes);
-    }
-}
-
-bool _scanf(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    // ï¼œè¯»è¯­å¥ï¼    ::=  scanf '('ï¼œæ ‡è¯†ç¬¦ï¼')'
-    int temp = 0;
-    if (isParticular_S_List(symList, "SCANFTK")) { // scanf
-        slist_0_sprint(symList, symPrint);
-        if (isParticular_S_List(symList, "LPARENT")) { // (
-            slist_0_sprint(symList, symPrint);
-            if (isParticular_S_List(symList, "IDENFR")) { // æ ‡è¯†ç¬¦
-                temp = search(symList, symSymbol);
-                if (symSymbol.type[temp] == 1) {
-                    // int
-                    cin >> _scanf_int_temp;
-                    _scanf_int[pos_scanf_int] = _scanf_int_temp;
-                    emit(7, pos_scanf_int, temp);
-                    pos_scanf_int += 1;
-                }
-                else if (symSymbol.type[temp] == 2) {
-                    // char
-                    cin >> _scanf_char_temp;
-                    _scanf_char[pos_scanf_char] = _scanf_char_temp;
-                    emit(7, pos_scanf_char, temp);
-                    pos_scanf_char += 1;
-                }
-                slist_0_sprint(symList, symPrint);
-                if (isParticular_S_List(symList, "RPARENT")) {
-                    // )
-                    slist_0_sprint(symList, symPrint);
-                    slist_1_sprint(symList, symPrint, "<è¯»è¯­å¥>");
-                    return true;
-                }
-                else {
-                    retract(3);
-                }
-            }
-            else {
-                retract(2);
-            }
-        }
-        else {
-            retract(1);
-        }
-    }
-    else {
-        return false;
-    }
-}
-
-bool _printf(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    // ï¼œå†™è¯­å¥ï¼    ::= printf '(' ï¼œå­—ç¬¦ä¸²ï¼,ï¼œè¡¨è¾¾å¼ï¼ ')'
-    //              |  printf '('ï¼œå­—ç¬¦ä¸²ï¼ ')'
-    //              | printf '('ï¼œè¡¨è¾¾å¼ï¼')'
-    if (isParticular_S_List(symList, "PRINTFTK")) { // printf
-        slist_0_sprint(symList, symPrint);
-        if (isParticular_S_List(symList, "LPARENT")) { // (
-            slist_0_sprint(symList, symPrint);
-            if (_expression(symList, symPrint, symStack, symSymbol)) {
-                // è¡¨è¾¾å¼
-                emit_op1(8);
-                if (isParticular_S_List(symList, "RPARENT")) {
-                    // )
-                    slist_0_sprint(symList, symPrint);
-                    slist_1_sprint(symList, symPrint, "<å†™è¯­å¥>");
-                    return true;
-                }
-                else {
-                    retract(1);
-                }
-            }
-            else {
-                if (_string(symList, symPrint, symStack, symSymbol)) {
-                    // å­—ç¬¦ä¸²
-                    STR[pos_STR] = symList.name[pos_S_list - 1];
-                    if (isParticular_S_List(symList, "COMMA")) {
-                        // ,
-                        emit_op2(11, pos_STR);
-                        pos_STR += 1;
-                        slist_0_sprint(symList, symPrint);
-                        if (_expression(symList, symPrint, symStack, symSymbol)) {
-                            // è¡¨è¾¾å¼
-                            emit_op1(8);
-                            if (isParticular_S_List(symList, "RPARENT")) {
-                                // )
-                                slist_0_sprint(symList, symPrint);
-                                slist_1_sprint(symList, symPrint, "<å†™è¯­å¥>");
-                                return true;
-                            }
-                            else {
-                                retract(2);
-                            }
-                        }
-                        else {
-                            retract(1);
-                        }
-                    }
-                    else if (isParticular_S_List(symList, "RPARENT")) {
-                        // )
-                        emit_op2(9, pos_STR);
-                        pos_STR += 1;
-                        slist_0_sprint(symList, symPrint);
-                        slist_1_sprint(symList, symPrint, "<å†™è¯­å¥>");
-                        return true;
-                    }
-                    else {
-                        retract(3);
-                    }
-                }
-                else {
-                    retract(2);
-                }
-            }
-        }
-        else {
-            retract(1);
-        }
-    }
-    else {
-        return false;
-    }
-}
-
-bool _return(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    // ï¼œè¿”å›è¯­å¥ï¼   ::=  return['('ï¼œè¡¨è¾¾å¼ï¼')']
-    if (isParticular_S_List(symList, "RETURNTK")) { // return
-        slist_0_sprint(symList, symPrint);
-        if (isParticular_S_List(symList, "LPARENT")) { // (
-            slist_0_sprint(symList, symPrint);
-            if (_expression(symList, symPrint, symStack, symSymbol)) {
-                // è¡¨è¾¾å¼
-                if (isParticular_S_List(symList, "RPARENT")) {
-                    // )
-                    slist_0_sprint(symList, symPrint);
-                    slist_1_sprint(symList, symPrint, "<è¿”å›è¯­å¥>");
-                    return true;
-                }
-                else {
-                    retract(2);
-                }
-            }
-            else {
-                retract(1);
-            }
-        }
-        else {
-            slist_1_sprint(symList, symPrint, "<è¿”å›è¯­å¥>");
-            return true;
-        }
-    }
-    else {
-        return false;
-    }
-}
-
-bool _function_with_return_call(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    // ï¼œæœ‰è¿”å›å€¼å‡½æ•°è°ƒç”¨è¯­å¥ï¼ ::= ï¼œæ ‡è¯†ç¬¦ï¼'('ï¼œå€¼å‚æ•°è¡¨ï¼')'
-    if (isParticular_S_List(symList, "IDENFR")) {
-        // æ ‡è¯†ç¬¦
-        slist_0_sprint(symList, symPrint);
-        if (isParticular_S_List(symList, "LPARENT")) {
-            // (
-            slist_0_sprint(symList, symPrint);
-            if (_table_parameter_value(symList, symPrint, symStack, symSymbol)) {
-                // å€¼å‚æ•°è¡¨
-                if (isParticular_S_List(symList, "RPARENT")) {
-                    // )
-                    slist_0_sprint(symList, symPrint);
-                    slist_1_sprint(symList, symPrint, "<æœ‰è¿”å›å€¼å‡½æ•°è°ƒç”¨è¯­å¥>");
-                    return true;
-                }
-                else {
-                    retract(3);
-                }
-            }
-            else {
-                retract(2);
-            }
-        }
-        else {
-            retract(1);
-        }
-    }
-    else {
-        return false;
-    }
-}
-
-bool _function_no_return_call(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    // ï¼œæ— è¿”å›å€¼å‡½æ•°è°ƒç”¨è¯­å¥ï¼ ::= ï¼œæ ‡è¯†ç¬¦ï¼'('ï¼œå€¼å‚æ•°è¡¨ï¼')'
-    if (isParticular_S_List(symList, "IDENFR")) {
-        // æ ‡è¯†ç¬¦
-        slist_0_sprint(symList, symPrint);
-        if (isParticular_S_List(symList, "LPARENT")) {
-            // (
-            slist_0_sprint(symList, symPrint);
-            if (_table_parameter_value(symList, symPrint, symStack, symSymbol)) {
-                // å€¼å‚æ•°è¡¨
-                if (isParticular_S_List(symList, "RPARENT")) {
-                    // )
-                    slist_0_sprint(symList, symPrint);
-                    slist_1_sprint(symList, symPrint, "<æ— è¿”å›å€¼å‡½æ•°è°ƒç”¨è¯­å¥>");
-                    return true;
-                }
-                else {
-                    retract(3);
-                }
-            }
-            else {
-                retract(2);
-            }
-        }
-        else {
-            retract(1);
-        }
-    }
-    else {
-        return false;
-    }
-}
-
-bool _table_parameter_value(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    // ï¼œå€¼å‚æ•°è¡¨ï¼   ::= ï¼œè¡¨è¾¾å¼ï¼{,ï¼œè¡¨è¾¾å¼ï¼}
-    //              ï½œ   ï¼œç©ºï¼
-    if (_expression(symList, symPrint, symStack, symSymbol)) {
-        // è¡¨è¾¾å¼
-        while (isParticular_S_List(symList, "COMMA")) {
-            // ,
-            slist_0_sprint(symList, symPrint);
-            if (_expression(symList, symPrint, symStack, symSymbol)) {
-                // è¡¨è¾¾å¼
-            }
-            else {
-                retract(1);
-            }
-        }
-        slist_1_sprint(symList, symPrint, "<å€¼å‚æ•°è¡¨>");
-        return true;
-    }
-    else if (isParticular_S_List(symList, "RPARENT")) {
-        // ç©º
-        slist_1_sprint(symList, symPrint, "<å€¼å‚æ•°è¡¨>");
-        return true;
-    }
-    else {
-        return false;
-    }
-}
-
-bool _statement(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    // ï¼œè¯­å¥ï¼    ::= ï¼œå¾ªç¯è¯­å¥ï¼
-    //              ï½œï¼œæ¡ä»¶è¯­å¥ï¼
-    //              | ï¼œæœ‰è¿”å›å€¼å‡½æ•°è°ƒç”¨è¯­å¥ï¼;
-    //              | ï¼œæ— è¿”å›å€¼å‡½æ•°è°ƒç”¨è¯­å¥ï¼;
-    //              ï½œï¼œèµ‹å€¼è¯­å¥ï¼;
-    //              ï½œï¼œè¯»è¯­å¥ï¼;
-    //              ï½œï¼œå†™è¯­å¥ï¼;
-    //              ï½œï¼œæƒ…å†µè¯­å¥ï¼
-    //              ï½œï¼œç©ºï¼;
-    //              |ï¼œè¿”å›è¯­å¥ï¼;
-    //              | '{'ï¼œè¯­å¥åˆ—ï¼'}'
-    int temp;
-    int flag = 0;
-    if (_switch(symList, symPrint, symStack, symSymbol)) {
-        // æƒ…å†µè¯­å¥
-        slist_1_sprint(symList, symPrint, "<è¯­å¥>");
-        return true;
-    }
-    else if (_loop(symList, symPrint, symStack, symSymbol)) {
-        // å¾ªç¯è¯­å¥
-        slist_1_sprint(symList, symPrint, "<è¯­å¥>");
-        return true;
-    }
-    else if (_if(symList, symPrint, symStack, symSymbol)) {
-        // æ¡ä»¶è¯­å¥
-        slist_1_sprint(symList, symPrint, "<è¯­å¥>");
-        return true;
-    }
-    else if (isParticular_S_List(symList, "LBRACE")) {
-        // {
-        slist_0_sprint(symList, symPrint);
-        if (_list_statement(symList, symPrint, symStack, symSymbol)) {
-            // è¯­å¥åˆ—
-            if (isParticular_S_List(symList, "RBRACE")) {
-                // }
-                slist_0_sprint(symList, symPrint);
-                slist_1_sprint(symList, symPrint, "<è¯­å¥>");
-                return true;
-            }
-            else {
-                retract(2);
-            }
-        }
-        else {
-            retract(1);
-        }
-    }
-    else if (isParticular_S_List(symList, "IDENFR") && symList.type[pos_S_list + 1] == "LPARENT") {
-        // æœ‰æ— è¿”å›å€¼å‡½æ•°è°ƒç”¨è¯­å¥
-        flag = 0;
-        for (temp = 0; temp < pos_has_return; ++temp) {
-            if (symList.name[pos_S_list] == symList.has_return[temp]) {
-                flag = 1;
+        symbol = CHARCON;
+    } else if (isDoubleQuote()) {
+        getChar();
+        while (!isDoubleQuote()) {
+            if (isNextline()) {
+                error();
                 break;
             }
+            catToken();
+            getChar();
         }
-        if (flag) {
-            // æœ‰è¿”å›å€¼å‡½æ•°è°ƒç”¨è¯­å¥
-            if (_function_with_return_call(symList, symPrint, symStack, symSymbol)) {
-                if (isParticular_S_List(symList, "SEMICN")) {
-                    // ;
-                    slist_0_sprint(symList, symPrint);
-                    slist_1_sprint(symList, symPrint, "<è¯­å¥>");
-                    return true;
+        symbol = STRCON;
+    } else if (isLess()) {
+        combo();
+        if (isEqual()) {
+            catToken();
+            symbol = LEQ;
+        } else {
+            symbol = LSS;
+            retract();
+        }
+    } else if (isGreater()) {
+        combo();
+        if (isEqual()) {
+            catToken();
+            symbol = GEQ;
+        } else {
+            symbol = GRE;
+            retract();
+        }
+    } else if (isEqual()) {
+        combo();
+        if (isEqual()) {
+            catToken();
+            symbol = EQL;
+        } else {
+            symbol = ASSIGN;
+            retract();
+        }
+    } else if (isExclamation()) {
+        combo();
+        if (isEqual()) {
+            catToken();
+        } else {
+            error();
+        }
+        symbol = NEQ;
+    } else if (isPlus() || isMinus() || isStar() || isDiv() || isSemicolon() || isComma() || isColon() || \
+        isLParent() || isRParent() || isLBrack() || isRBrack() || isLBrace() || isRBrace()) {
+        catToken();
+        symbol = reservedSymbol[c];
+    } else if (!isEOF()) {
+        error();
+    }
+}
+
+struct Symbol_Table {
+    // ·ûºÅ±í
+    string name;
+    int value;
+    int type;   // 1: int, 2: char
+}   symbolTable[100000];
+int pos_symbolTable;
+
+char linn[1006]= {},linl[1006]= {};
+struct xhq_shuai {
+    int select;
+    int zhi;
+    char abi;
+    int you;
+} aa[10006],xxhq[10006];
+int chulibds(char ab[]) {
+    int i, j, l, p = -1, q = 0, k = 0;
+//    cout<<ab<<endl;
+//    system("pause");
+    l = strlen(ab);
+    for (i = 0; i < l; i++) {
+        if (ab[i] >= '0' && ab[i] <= '9') {
+            linn[q++] = ab[i];
+        } else {
+            if (q == 0) p++;
+            else p += 2;
+            aa[p].select = 2;
+            aa[p].abi = ab[i];
+            if (ab[i] == '+' || ab[i] == '-')aa[p].you = 1;
+            else if (ab[i] == '*' || ab[i] == '/')aa[p].you = 2;
+            else if (ab[i] == '(' || ab[i] == ')')aa[p].you = 3;
+            else if (ab[i] == '%') aa[p].you = 2;
+            if (q != 0) {
+                aa[p - 1].select = 1;
+                aa[p - 1].zhi = atoi(linn);
+                memset(linn, '\0', sizeof(linn));
+                q = 0;
+            }
+        }
+    }
+    if (q != 0) {
+        aa[p + 1].select = 1;
+        aa[p + 1].zhi = atoi(linn);
+    }
+    j = 0;
+    l = 0;
+    q = 0;
+    for (i = 0;; i++) {
+        if (aa[i].select != 1 && aa[i].select != 2) {
+            p = i;
+            break;
+        }
+    }
+    for (i = 0; i < p; i++) {
+        if (aa[i].select == 1) {
+            xxhq[j].select = 1;
+            xxhq[j++].zhi = aa[i].zhi;
+        } else {
+            k = l;
+            q = k - 1;
+            linn[l] = aa[i].abi;
+            linl[l] = aa[i].you;
+            if (aa[i].abi == ')') {
+                l--;
+                while (linn[l] != '(') {
+                    xxhq[j].select = 2;
+                    xxhq[j++].abi = linn[l];
+                    l--;
                 }
-                else {
-                    retract(1);
+                continue;
+            }
+            while (linl[k] <= linl[q] && (linn[q] != '(')) {
+                if (q < 0) break;
+                xxhq[j].select = 2;
+                xxhq[j++].abi = linn[q];
+                q--;
+            }
+            linn[q + 1] = aa[i].abi;
+            linl[q + 1] = aa[i].you;
+            l = q + 2;
+
+
+        }
+    }
+
+    for (l--; l >= 0; l--) {
+        xxhq[j].select = 2;
+        xxhq[j++].abi = linn[l];
+    }
+
+    for (i = 0; i < j; i++) {
+        if (xxhq[i].select == 2) {
+            if (xxhq[i].abi == '+') {
+                xxhq[i].zhi = xxhq[i - 1].zhi + xxhq[i - 2].zhi;
+                for (q = i - 1; (q - 2) >= 0; q--) {
+                    xxhq[q].zhi = xxhq[q - 2].zhi;
+                }
+
+            } else if (xxhq[i].abi == '-') {
+                xxhq[i].zhi = xxhq[i - 2].zhi - xxhq[i - 1].zhi;
+                for (q = i - 1; (q - 2) >= 0; q--) {
+                    xxhq[q].zhi = xxhq[q - 2].zhi;
+                }
+            } else if (xxhq[i].abi == '*') {
+                xxhq[i].zhi = xxhq[i - 1].zhi * xxhq[i - 2].zhi;
+                for (q = i - 1; (q - 2) >= 0; q--) {
+                    xxhq[q].zhi = xxhq[q - 2].zhi;
+                }
+            } else if (xxhq[i].abi == '/') {
+                xxhq[i].zhi = xxhq[i - 2].zhi / xxhq[i - 1].zhi;
+                for (q = i - 1; (q - 2) >= 0; q--) {
+                    xxhq[q].zhi = xxhq[q - 2].zhi;
+                }
+            } else if (xxhq[i].abi == '%') {
+                xxhq[i].zhi = xxhq[i - 2].zhi % xxhq[i - 1].zhi;
+                for (q = i - 1; (q - 2) >= 0; q--) {
+                    xxhq[q].zhi = xxhq[q - 2].zhi;
                 }
             }
         }
+    }
+    int res = xxhq[j-1].zhi;
+
+    memset(ab,'\0',sizeof(ab));
+    memset(aa,0,sizeof(aa));
+    memset(xxhq,0,sizeof(xxhq));
+    return res;
+}
+
+char caculator[10000];   // ´æ´¢±í´ïÊ½
+int ALU (char s[]) {
+    int len = strlen(s);
+    int j = 0;
+    int i = 0;
+    for(i=0; i<len-1; i++) { //´¦Àí++  +-  -+  --
+        if (s[i] == '+') {
+            if (s[i + 1] == '+') {
+                for (j = i + 1; j < len - 1; j++) {
+                    s[j] = s[j + 1];
+                }
+                s[len-1]='\0';
+                len--;
+            }
+            if (s[i + 1] == '-') {
+                for (j = i; j < len - 1; j++) {
+                    s[j] = s[j + 1];
+                }
+                s[len-1]='\0';
+                len--;
+            }
+        } else if (s[i] == '-') {
+            if (s[i + 1]== '+') {
+                for (j = i + 1; j < len - 1; j++) {
+                    s[j] = s[j + 1];
+                }
+                s[len-1]='\0';
+                len--;
+            }
+            else if (s[i + 1] == '-') {  //Óöµ½ÁË--µÄÇé¿ö
+                s[i + 1] = '+';
+                for (j = i; j < len - 1; j++) {
+                    s[j] = s[j + 1];
+                }
+                s[len-1]='\0';
+                len--;
+            }
+        } else if(s[i]=='(') {
+            if(s[i+1]=='+'||s[i+1]=='-') {
+                for(j=len; j>i+1; j--) {
+                    s[j]=s[j-1];
+                }
+                s[i + 1] = '0';
+                len++;
+            }
+        }
+        if(s[i]=='*'||s[i]=='/'){
+            if(s[i+1]=='-'||s[i+1]=='+'){
+                for(j=len+1;j>i+2;j--){
+                    s[j]=s[j-2];
+                }
+                s[i+2]='0';
+                s[i+1]='(';
+                for(j=i+4;isdigit(s[j]);j++);
+                int k;
+                for(k=len+2;k>j;k--){
+                    s[k]=s[k-1];
+                }
+                s[j]=')';
+                len+=3;
+                s[len]='\0';
+            }
+        }
+    }
+    return chulibds(s);
+}
+
+int flag_expression;    // 1: int, 2: char
+void insert_symbolTable (string name, int value, int type) {
+    symbolTable[pos_symbolTable].name = name;
+    symbolTable[pos_symbolTable].value = value;
+    symbolTable[pos_symbolTable].type = type;
+    pos_symbolTable += 1;
+}
+
+int find_symbolTable (string name) {
+    for (int i = pos_symbolTable; i >= 0; --i) {
+        if (symbolTable[i].name == name) {
+            return i;
+        }
+    }
+    return -1;
+}
+// ´Ê·¨·ÖÎö
+
+void program(); // ³ÌĞò
+void _string(); // ×Ö·û´®
+int _const(); // ³£Á¿
+void _const_define(); // ³£Á¿¶¨Òå
+void _const_statement(); // ³£Á¿ËµÃ÷
+void _var_define(); // ±äÁ¿¶¨Òå
+void _var_statement(); // ±äÁ¿ËµÃ÷
+void _var_define_no_initialization(); // ±äÁ¿¶¨ÒåÎŞ³õÊ¼»¯
+void _var_define_with_initialization(); // ±äÁ¿¶¨Òå¼°³õÊ¼»¯
+void _scanf(); // ¶ÁÓï¾ä
+void _printf(); // Ğ´Óï¾ä
+void _term(); // Ïî
+void _factor(); // Òò×Ó
+int _expression(); // ±í´ïÊ½
+void _statement(); // Óï¾ä
+void _default(); // È±Ê¡
+void _return(); // ·µ»ØÓï¾ä
+int _unsigned_int(); // ÎŞ·ûºÅÕûÊı
+void _step(); // ²½³¤
+void _main(); // Ö÷º¯Êı
+void _head_statement(); // ÉùÃ÷Í·²¿
+int _int(); // ÕûÊı
+void _assign(); // ¸³ÖµÓï¾ä
+void _switch(); // Çé¿öÓï¾ä
+void _case(); // Çé¿ö×ÓÓï¾ä
+void _table_cases(); // Çé¿ö±í
+void _function_no_return_define(); // ÎŞ·µ»ØÖµº¯Êı¶¨Òå
+void _function_with_return_define(); // ÓĞ·µ»ØÖµº¯Êı¶¨Òå
+void _function_no_return_call(); // ÎŞ·µ»ØÖµº¯Êıµ÷ÓÃÓï¾ä
+void _function_with_return_call(); // ÓĞ·µ»ØÖµº¯Êıµ÷ÓÃÓï¾ä
+void _loop(); // Ñ­»·Óï¾ä
+void _table_parameter(); // ²ÎÊı±í
+void _table_parameter_value(); // Öµ²ÎÊı±í
+void _condition(); // Ìõ¼ş
+void _if(); // Ìõ¼şÓï¾ä
+void _list_statement(); // Óï¾äÁĞ
+void _statement_combination(); // ¸´ºÏÓï¾ä
+int _char(); // ×Ö·û
+
+// ÀÏ×ÓÊÇ·Ö¸îÏß //
+SymbolType symbol_pre;
+string array_function_with_return[1000]; // ÓĞ·µ»ØÖµº¯ÊıÃû
+string array_function_no_return[1000];    // ÎŞ·µ»ØÖµº¯ÊıÃû
+int index_array_function_with_return;
+int index_array_function_no_return;
+string token_pre;
+void pre_read_Symbol(int n){
+    // Ô¤¶Á
+    SymbolType symbol_origin = symbol;
+    string token_origin = token;
+    int index_buffer_origin = index_buffer;
+    while (n--) {
+        getsym(no);
+    }
+    token_pre = token;
+    symbol_pre = symbol;    // Ô¤¶ÁµÃµ½µÄsymbol
+    symbol = symbol_origin; // »¹Ô­symbol
+    token = token_origin;   // »¹Ô­token
+    index_buffer = index_buffer_origin; // »¹Ô­Ö¸Õë
+} // Ô¤¶Á
+
+// ÀÏ×ÓÒ²ÊÇ·Ö¸îÏß //
+
+void program() {
+    /* £¼³ÌĞò£¾    ::= £Û£¼³£Á¿ËµÃ÷£¾£İ£Û£¼±äÁ¿ËµÃ÷£¾£İ{£¼ÓĞ·µ»ØÖµº¯Êı¶¨Òå£¾
+     *              | £¼ÎŞ·µ»ØÖµº¯Êı¶¨Òå£¾}£¼Ö÷º¯Êı£¾
+     */
+    if (symbol == CONSTTK) {
+        _const_statement(); // ³£Á¿ËµÃ÷
+    }
+    pre_read_Symbol(2);
+    if (symbol_pre != LPARENT) {
+        _var_statement();   // ±äÁ¿ËµÃ÷
+    }
+    while (yes) {
+        pre_read_Symbol(1);
+        if (symbol_pre == MAINTK) {
+            break;
+        }
+        if (symbol == VOIDTK) {
+            _function_no_return_define();
+        } else {
+            _function_with_return_define();
+        }
+    }
+    _main();
+//    fprintf(f_out, "<³ÌĞò>\n");
+//    cout << "<³ÌĞò>" << endl;
+}
+
+void _const_statement() {
+    // £¼³£Á¿ËµÃ÷£¾ ::=  const£¼³£Á¿¶¨Òå£¾;{ const£¼³£Á¿¶¨Òå£¾;}
+    if (symbol == CONSTTK) {
+        while (symbol == CONSTTK) {
+            getsym(yes);
+            _const_define(); // ³£Á¿¶¨Òå
+            if (symbol == SEMICN) { // ;
+                getsym(yes);
+            }
+        }
+    }
+//    fprintf(f_out, "<³£Á¿ËµÃ÷>\n");
+//    cout << "<³£Á¿ËµÃ÷>" << endl;
+}
+
+////////////////////
+void _var_statement() {
+    // £¼±äÁ¿ËµÃ÷£¾  ::= £¼±äÁ¿¶¨Òå£¾;{£¼±äÁ¿¶¨Òå£¾;}
+    do {
+        _var_define();  // ±äÁ¿¶¨Òå
+        if (symbol == SEMICN) { // ;
+            getsym(yes);
+        }
+        if (symbol != INTTK && symbol != CHARTK) { // int || char
+            break;
+        }
+        pre_read_Symbol(2);
+        if (symbol_pre == LPARENT) { // (
+            break;
+        }
+    }   while (yes);
+//    fprintf(f_out, "<±äÁ¿ËµÃ÷>\n");
+//    cout << "<±äÁ¿ËµÃ÷>" << endl;
+}
+////////////////////
+
+void _const_define() {
+    // £¼³£Á¿¶¨Òå£¾   ::=   int£¼±êÊ¶·û£¾£½£¼ÕûÊı£¾{,£¼±êÊ¶·û£¾£½£¼ÕûÊı£¾}
+    //                  | char£¼±êÊ¶·û£¾£½£¼×Ö·û£¾{,£¼±êÊ¶·û£¾£½£¼×Ö·û£¾}
+    int type, value;
+    string name;
+    if (symbol == INTTK) { // int
+        type = 1;
+        getsym(yes);
+        if (symbol == IDENFR) { // ±êÊ¶·û
+            name = token;
+            getsym(yes);
+            if (symbol == ASSIGN) { // =
+                getsym(yes);
+                value = _int(); // ÕûÊı
+                insert_symbolTable(name, value, type);
+                while (symbol == COMMA) { // ,
+                    type = 1;
+                    getsym(yes);
+                    if (symbol == IDENFR) { // ±êÊ¶·û
+                        name = token;
+                        getsym(yes);
+                    }
+                    if (symbol == ASSIGN) { // =
+                        getsym(yes);
+                        value = _int(); // ÕûÊı
+                        insert_symbolTable(name, value, type);
+                    }
+                }
+            }
+        }
+    }
+
+    else if (symbol == CHARTK) { // char
+        getsym(yes);
+        type = 2;
+        if (symbol == IDENFR) { // ±êÊ¶·û
+            name = token;
+            getsym(yes);
+            if (symbol == ASSIGN) { // =
+                getsym(yes);
+                value = _char(); // ×Ö·û
+                insert_symbolTable(name, value, type);
+                while (symbol == COMMA) { // ,
+                    type = 2;
+                    getsym(yes);
+                    if (symbol == IDENFR) { // ±êÊ¶·û
+                        name = token;
+                        getsym(yes);
+                    }
+                    if (symbol == ASSIGN) { // =
+                        getsym(yes);
+                        value = _char(); // ×Ö·û
+                        insert_symbolTable(name, value, type);
+                    }
+                }
+            }
+        }
+    }
+//    fprintf(f_out, "<³£Á¿¶¨Òå>\n");
+//    cout << "<³£Á¿¶¨Òå>" << endl;
+}
+
+void _function_with_return_define() {
+    // £¼ÓĞ·µ»ØÖµº¯Êı¶¨Òå£¾  ::=  £¼ÉùÃ÷Í·²¿£¾'('£¼²ÎÊı±í£¾')' '{'£¼¸´ºÏÓï¾ä£¾'}'
+    _head_statement();  // ÉùÃ÷Í·²¿
+    if (symbol == LPARENT) { // (
+        getsym(yes);
+        _table_parameter(); // ²ÎÊı±í
+        if (symbol == RPARENT) { // )
+            getsym(yes);
+            if (symbol == LBRACE) { // {
+                getsym(yes);
+                _statement_combination(); // ¸´ºÏÓï¾ä
+                if (symbol == RBRACE) { // }
+                    getsym(yes);
+                }
+            }
+        }
+    }
+//    fprintf(f_out, "<ÓĞ·µ»ØÖµº¯Êı¶¨Òå>\n");
+//    cout << "<ÓĞ·µ»ØÖµº¯Êı¶¨Òå>" << endl;
+}
+
+void _head_statement() {
+    // £¼ÉùÃ÷Í·²¿£¾   ::=  int£¼±êÊ¶·û£¾
+    //                |  char£¼±êÊ¶·û£¾
+    if (symbol == CHARTK || symbol == INTTK) { // int || char
+        getsym(yes);
+        array_function_with_return[index_array_function_with_return++] = token;
+        if (symbol == IDENFR) { // ±êÊ¶·û
+            getsym(yes);
+        }
+    }
+//    fprintf(f_out, "<ÉùÃ÷Í·²¿>\n");
+//    cout << "<ÉùÃ÷Í·²¿>" << endl;
+}
+
+void _table_parameter() {
+    // £¼²ÎÊı±í£¾    ::=  £¼ÀàĞÍ±êÊ¶·û£¾£¼±êÊ¶·û£¾{,£¼ÀàĞÍ±êÊ¶·û£¾£¼±êÊ¶·û£¾}
+    //               |  £¼¿Õ£¾
+    if (symbol == INTTK || symbol == CHARTK) { // ÀàĞÍ±êÊ¶·û
+        getsym(yes);
+        if (symbol == IDENFR) { // ±êÊ¶·û
+            getsym(yes);
+        }
+        if (symbol == COMMA) { // ,
+            while (symbol == COMMA) { // ,
+                getsym(yes);
+                if (symbol == INTTK || symbol == CHARTK) { // ÀàĞÍ±êÊ¶·û
+                    getsym(yes);
+                    if (symbol == IDENFR) { // ±êÊ¶·û
+                        getsym(yes);
+                    }
+                }
+            }
+        }
+    }
+//    fprintf(f_out, "<²ÎÊı±í>\n");
+//    cout << "<²ÎÊı±í>" << endl;
+}
+
+void _statement_combination() {
+    // £¼¸´ºÏÓï¾ä£¾   ::=  £Û£¼³£Á¿ËµÃ÷£¾£İ£Û£¼±äÁ¿ËµÃ÷£¾£İ£¼Óï¾äÁĞ£¾
+    if (symbol == CONSTTK) { // ³£Á¿ËµÃ÷
+        _const_statement();
+    }
+    if (symbol == INTTK || symbol == CHARTK) { // ±äÁ¿ËµÃ÷
+        _var_statement();
+    }
+    _list_statement();  // Óï¾äÁĞ
+//    fprintf(f_out, "<¸´ºÏÓï¾ä>\n");
+//    cout << "<¸´ºÏÓï¾ä>" << endl;
+}
+
+void _function_no_return_define() {
+    // £¼ÎŞ·µ»ØÖµº¯Êı¶¨Òå£¾  ::= void£¼±êÊ¶·û£¾'('£¼²ÎÊı±í£¾')''{'£¼¸´ºÏÓï¾ä£¾'}'
+    if (symbol == VOIDTK) { // void
+        getsym(yes);
+        if (symbol == IDENFR) { // ±êÊ¶·û
+            array_function_no_return[index_array_function_no_return++] = token;
+            getsym(yes);
+            if (symbol == LPARENT) { // (
+                getsym(yes);
+                _table_parameter(); // ²ÎÊı±í
+                if (symbol == RPARENT) { // )
+                    getsym(yes);
+                    if (symbol == LBRACE) { // {
+                        getsym(yes);
+                        _statement_combination(); // ¸´ºÏÓï¾ä
+                        if (symbol == RBRACE) { // }
+                            getsym(yes);
+                        }
+                    }
+                }
+            }
+        }
+    }
+//    fprintf(f_out, "<ÎŞ·µ»ØÖµº¯Êı¶¨Òå>\n");
+//    cout << "<ÎŞ·µ»ØÖµº¯Êı¶¨Òå>" << endl;
+}
+
+void _main() {
+    // £¼Ö÷º¯Êı£¾    ::= void main¡®(¡¯¡®)¡¯ ¡®{¡¯£¼¸´ºÏÓï¾ä£¾¡®}¡¯
+    if (symbol == VOIDTK) { // void
+        getsym(yes);
+        if (symbol == MAINTK) { // main
+            getsym(yes);
+            if (symbol == LPARENT) { // (
+                getsym(yes);
+                if (symbol == RPARENT) { // )
+                    getsym(yes);
+                    if (symbol == LBRACE) { // {
+                        getsym(yes);
+                        _statement_combination(); // ¸´ºÏÓï¾ä
+                        if (symbol == RBRACE) { // }
+                            getsym(yes);
+                        }
+                    }
+                }
+            }
+        }
+    }
+//    fprintf(f_out, "<Ö÷º¯Êı>\n");
+//    cout << "<Ö÷º¯Êı>" << endl;
+}
+
+void _list_statement() {
+    // £¼Óï¾äÁĞ£¾   ::= £û£¼Óï¾ä£¾£ı
+    while (symbol == IFTK || symbol == WHILETK || symbol == FORTK || symbol == LBRACE
+           || symbol == IDENFR || symbol == SCANFTK || symbol == PRINTFTK || symbol == SEMICN
+           || symbol == RETURNTK || symbol == SWITCHTK ) { // if while for ( ±êÊ¶·û scanf printf ; return switch
+        _statement(); // Óï¾ä
+    }
+//    fprintf(f_out, "<Óï¾äÁĞ>\n");
+//    cout << "<Óï¾äÁĞ>" << endl;
+}
+
+void _if() {
+    // £¼Ìõ¼şÓï¾ä£¾  ::= if '('£¼Ìõ¼ş£¾')'£¼Óï¾ä£¾£Ûelse£¼Óï¾ä£¾£İ
+    if (symbol == IFTK) { // if
+        getsym(yes);
+        if (symbol == LPARENT) { // (
+            getsym(yes);
+            _condition(); // Ìõ¼ş
+            if (symbol == RPARENT) { // )
+                getsym(yes);
+                _statement(); // Óï¾ä
+                if (symbol == ELSETK) { // else
+                    getsym(yes);
+                    _statement(); // Óï¾ä
+                }
+            }
+        }
+    }
+//    fprintf(f_out, "<Ìõ¼şÓï¾ä>\n");
+//    cout << "<Ìõ¼şÓï¾ä>" << endl;
+}
+
+void _condition() {
+    // £¼Ìõ¼ş£¾    ::=  £¼±í´ïÊ½£¾£¼¹ØÏµÔËËã·û£¾£¼±í´ïÊ½£¾
+    _expression(); // ±í´ïÊ½
+    if (symbol == LSS || symbol == LEQ
+        || symbol == GRE || symbol == GEQ
+        || symbol == NEQ || symbol == EQL) {
+        // < <= > >= != ==
+        getsym(yes);
+        _expression(); // ±í´ïÊ½
+    }
+//    fprintf(f_out, "<Ìõ¼ş>\n");
+//    cout << "<Ìõ¼ş>" << endl;
+}
+
+int _expression() {
+    //  £¼±í´ïÊ½£¾    ::= £Û£«£ü£­£İ£¼Ïî£¾{£¼¼Ó·¨ÔËËã·û£¾£¼Ïî£¾}
+    int i = 0;
+    int res = 0;
+    if (symbol == CHARCON) {
+        pre_read_Symbol(1);
+        if (symbol_pre == RPARENT) {
+            res = token[0];
+            flag_expression = 2;
+            return res;
+        }
+//        if (symbol_pre != PLUS && symbol_pre != MINU
+//            && symbol_pre != MULT && symbol_pre != DIV) {
+//            flag_expression = 2;
+//        }
         else {
-            flag = 0;
-            for (temp = 0; temp < pos_no_return; ++temp) {
-                if (symList.name[pos_S_list] == symList.no_return[temp]) {
-                    flag = 1;
+            flag_expression = 1;
+        }
+    }
+    else {
+        flag_expression = 1;
+    }
+    if (flag_expression == 1) {
+        pre_read_Symbol(2);
+        if (symbol_pre == SEMICN) {
+            int pos = find_symbolTable(token);
+            if (symbolTable[pos].type == 2) {
+                flag_expression = 2;
+            }
+            else {
+                flag_expression = 1;
+            }
+            getsym(no);
+            return symbolTable[pos].value;
+        }
+        symbol_pre = FOUL;
+        int flag = 0;
+        while (symbol_pre != SEMICN && flag == 0) {
+            pre_read_Symbol(i);
+            if (symbol_pre == IDENFR) {
+                int pos = find_symbolTable(token_pre);
+                char value[1000] = {};
+                Int2String(symbolTable[pos].value, value);
+                strcat(caculator, value);
+            }
+            else if (symbol_pre == CHARCON) {
+                int temp = token_pre[0];
+                char value[1000] = {};
+                Int2String(temp, value);
+                strcat(caculator, value);
+            }
+            else if (symbol_pre == SEMICN) {
+                int len = strlen(caculator);
+                flag = 1;
+                caculator[len - 1] = 0;
+//                break;
+            }
+            else if (flag == 0){
+                strcat(caculator, token_pre.c_str());
+            }
+            else {
+                break;
+            }
+            i += 1;
+        }
+//        cout << caculator;
+        res = ALU(caculator);
+    }
+
+    if (symbol == PLUS || symbol == MINU) { // ¼Ó·¨ÔËËã·û
+        getsym(yes);
+    }
+    _term(); // Ïî
+    while (symbol == PLUS || symbol == MINU) { // ¼Ó·¨ÔËËã·û
+        getsym(yes);
+        _term(); // Ïî
+    }
+    return res;
+//    fprintf(f_out, "<±í´ïÊ½>\n");
+//    cout << "<±í´ïÊ½>" << endl;
+}
+
+void _term() {
+    // £¼Ïî£¾     ::= £¼Òò×Ó£¾{£¼³Ë·¨ÔËËã·û£¾£¼Òò×Ó£¾}
+    _factor(); // Òò×Ó
+    while (symbol == MULT || symbol == DIV) { // ³Ë·¨ÔËËã·û
+        getsym(yes);
+        _factor();  // Òò×Ó
+    }
+//    fprintf(f_out, "<Ïî>\n");
+//    cout << "<Ïî>" << endl;
+}
+
+void _loop() {
+    // £¼Ñ­»·Óï¾ä£¾   ::=  while '('£¼Ìõ¼ş£¾')'£¼Óï¾ä£¾
+    // | for'('£¼±êÊ¶·û£¾£½£¼±í´ïÊ½£¾;£¼Ìõ¼ş£¾;£¼±êÊ¶·û£¾£½£¼±êÊ¶·û£¾(+|-)£¼²½³¤£¾')'£¼Óï¾ä£¾
+    if (symbol == WHILETK) { // while
+        getsym(yes);
+        if (symbol == LPARENT) { // (
+            getsym(yes);
+            _condition();   // Ìõ¼ş
+            if (symbol == RPARENT) { // )
+                getsym(yes);
+                _statement();   // Óï¾ä
+            }
+        }
+    }
+
+    else if (symbol == FORTK) { // for
+        getsym(yes);
+        if (symbol == LPARENT) { // (
+            getsym(yes);
+            if (symbol == IDENFR) { // ±êÊ¶·û
+                getsym(yes);
+                if (symbol == ASSIGN) { // =
+                    getsym(yes);
+                    _expression(); // ±í´ïÊ½
+                    if (symbol == SEMICN) { // ;
+                        getsym(yes);
+                        _condition(); // Ìõ¼ş
+                        if (symbol == SEMICN) { // ;
+                            getsym(yes);
+                            if (symbol == IDENFR) { // ±êÊ¶·û
+                                getsym(yes);
+                                if (symbol == ASSIGN) { // =
+                                    getsym(yes);
+                                    if (symbol == IDENFR) { // ±êÊ¶·û
+                                        getsym(yes);
+                                        if (symbol == PLUS || symbol == MINU) { // + || -
+                                            getsym(yes);
+                                            _step();    // ²½³¤
+                                            if (symbol == RPARENT) { // )
+                                                getsym(yes);
+                                                _statement(); // Óï¾ä
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+//    fprintf(f_out, "<Ñ­»·Óï¾ä>\n");
+//    cout << "<Ñ­»·Óï¾ä>" << endl;
+}
+
+void _string() {
+    // £¼×Ö·û´®£¾   ::=  "£ûÊ®½øÖÆ±àÂëÎª32,33,35-126µÄASCII×Ö·û£ı"
+    if (symbol == STRCON) { // ×Ö·û´®
+        getsym(yes);
+    }
+//    fprintf(f_out, "<×Ö·û´®>\n");
+//    cout << "<×Ö·û´®>" << endl;
+}
+
+void _step() {
+    // £¼²½³¤£¾::= £¼ÎŞ·ûºÅÕûÊı£¾
+    _unsigned_int(); // ÎŞ·ûºÅÕûÊı
+//    fprintf(f_out, "<²½³¤>\n");
+//    cout << "<²½³¤>" << endl;
+}
+
+int _unsigned_int() {
+    // £¼ÎŞ·ûºÅÕûÊı£¾  ::= £¼Êı×Ö£¾£û£¼Êı×Ö£¾£ı
+    if (symbol == INTCON) {
+//        int res = stoi(token);
+        int res = atoi(token.c_str());
+        getsym(yes);
+        return res;
+    }
+//    fprintf(f_out, "<ÎŞ·ûºÅÕûÊı>\n");
+//    cout << "<ÎŞ·ûºÅÕûÊı>" << endl;
+}
+
+int _int() {
+    // £¼ÕûÊı£¾        ::= £Û£«£ü£­£İ£¼ÎŞ·ûºÅÕûÊı£¾
+    int flag = 0;   // 1: ¸ºÊı
+    if (symbol == PLUS || symbol == MINU) {
+        flag = (symbol == MINU) ? 1 : 0;
+        getsym(yes);
+    }
+    if (flag == 1) {
+        return _unsigned_int() * (-1); // ¸ºÊı
+    }
+    return _unsigned_int(); // ·Ç¸ºÊı
+//    fprintf(f_out, "<ÕûÊı>\n");
+//    cout << "<ÕûÊı>" << endl;
+}
+
+int _char() {
+    int res;
+    if (symbol == CHARCON) { // ×Ö·û
+        res = (char)token[0];
+        getsym(yes);
+        return res;
+    }
+}
+
+void _scanf() {
+    // £¼¶ÁÓï¾ä£¾    ::=  scanf '('£¼±êÊ¶·û£¾')'
+    if (symbol == SCANFTK) { // scanf
+        getsym(yes);
+        if (symbol == LPARENT) { // (
+            getsym(yes);
+            if (symbol == IDENFR) { // ±êÊ¶·û
+                int pos = find_symbolTable(token);
+                cin >> symbolTable[pos].value;
+                getsym(yes);
+            }
+            if (symbol == RPARENT) { // }
+                getsym(yes);
+            }
+        }
+    }
+//    fprintf(f_out, "<¶ÁÓï¾ä>\n");
+//    cout << "<¶ÁÓï¾ä>" << endl;
+}
+
+void _printf() {
+    // £¼Ğ´Óï¾ä£¾    ::= printf '(' £¼×Ö·û´®£¾,£¼±í´ïÊ½£¾ ')'
+    //              |  printf '('£¼×Ö·û´®£¾ ')'
+    //              | printf '('£¼±í´ïÊ½£¾')'
+    int value;
+    if (symbol == PRINTFTK) { // printf
+        getsym(yes);
+        if (symbol == LPARENT) { // (
+            getsym(yes);
+            if (symbol == STRCON) { // ×Ö·û´®
+                fprintf(f_out, "%s", token.c_str());
+                _string();  // ×Ö·û´®
+                if (symbol == COMMA) { // ,
+                    getsym(yes);
+                    value = _expression();  // ±í´ïÊ½
+                    switch (flag_expression) {
+                        case 1:
+                            fprintf(f_out, "%d\n", value);
+                            break;
+                        case 2:
+                            fprintf(f_out, "%c\n", value);
+                            break;
+                    }
+                }
+                else {
+                    fprintf(f_out, "\n");
+                }
+            }
+            else {
+                value = _expression();  // ±í´ïÊ½
+                switch (flag_expression) {
+                    case 1:
+                        fprintf(f_out, "%d\n", value);
+                        break;
+                    case 2:
+                        fprintf(f_out, "%c\n", value);
+                        break;
+                }
+            }
+            if (symbol == RPARENT) { // )
+                getsym(yes);
+            }
+        }
+    }
+//    fprintf(f_out, "<Ğ´Óï¾ä>\n");
+//    cout << "<Ğ´Óï¾ä>" << endl;
+}
+
+void _return() {
+    // £¼·µ»ØÓï¾ä£¾   ::=  return['('£¼±í´ïÊ½£¾')']
+    if (symbol == RETURNTK) { // return
+        getsym(yes);
+        if (symbol == LPARENT) { // (
+            getsym(yes);
+            _expression();  // ±í´ïÊ½
+            if (symbol == RPARENT) { // )
+                getsym(yes);
+            }
+        }
+    }
+//    fprintf(f_out, "<·µ»ØÓï¾ä>\n");
+//    cout << "<·µ»ØÓï¾ä>" << endl;
+}
+
+void _function_with_return_call() {
+    // £¼ÓĞ·µ»ØÖµº¯Êıµ÷ÓÃÓï¾ä£¾ ::= £¼±êÊ¶·û£¾'('£¼Öµ²ÎÊı±í£¾')'
+    if (symbol == IDENFR) { // ±êÊ¶·û
+        getsym(yes);
+        if (symbol == LPARENT) { // (
+            getsym(yes);
+            _table_parameter_value(); // Öµ²ÎÊı±í
+            if (symbol == RPARENT) { // )
+                getsym(yes);
+            }
+        }
+    }
+//    fprintf(f_out, "<ÓĞ·µ»ØÖµº¯Êıµ÷ÓÃÓï¾ä>\n");
+//    cout << "<ÓĞ·µ»ØÖµº¯Êıµ÷ÓÃÓï¾ä>" << endl;
+}
+
+void _function_no_return_call() {
+    // £¼ÎŞ·µ»ØÖµº¯Êıµ÷ÓÃÓï¾ä£¾ ::= £¼±êÊ¶·û£¾'('£¼Öµ²ÎÊı±í£¾')'
+    if (symbol == IDENFR) { // ±êÊ¶·û
+        getsym(yes);
+        if (symbol == LPARENT) { // (
+            getsym(yes);
+            _table_parameter_value(); // Öµ²ÎÊı±í
+            if (symbol == RPARENT) { // )
+                getsym(yes);
+            }
+        }
+    }
+//    fprintf(f_out, "<ÎŞ·µ»ØÖµº¯Êıµ÷ÓÃÓï¾ä>\n");
+//    cout << "<ÎŞ·µ»ØÖµº¯Êıµ÷ÓÃÓï¾ä>" << endl;
+}
+
+void _table_parameter_value() {
+    // £¼Öµ²ÎÊı±í£¾   ::= £¼±í´ïÊ½£¾{,£¼±í´ïÊ½£¾}
+    //              £ü   £¼¿Õ£¾
+    if (symbol == RPARENT) { // ¿Õ
+//        fprintf(f_out, "<Öµ²ÎÊı±í>\n");
+//        cout << "<Öµ²ÎÊı±í>" << endl;
+    }
+    else {
+        _expression();  // ±í´ïÊ½
+        while (symbol == COMMA) { // ,
+            getsym(yes);
+            _expression();  // ±í´ïÊ½
+        }
+//        fprintf(f_out, "<Öµ²ÎÊı±í>\n");
+//        cout << "<Öµ²ÎÊı±í>" << endl;
+    }
+}
+
+void _statement() {
+    // £¼Óï¾ä£¾    ::= £¼Ñ­»·Óï¾ä£¾
+    //              £ü£¼Ìõ¼şÓï¾ä£¾
+    //              | £¼ÓĞ·µ»ØÖµº¯Êıµ÷ÓÃÓï¾ä£¾;
+    //              | £¼ÎŞ·µ»ØÖµº¯Êıµ÷ÓÃÓï¾ä£¾;
+    //              £ü£¼¸³ÖµÓï¾ä£¾;
+    //              £ü£¼¶ÁÓï¾ä£¾;
+    //              £ü£¼Ğ´Óï¾ä£¾;
+    //              £ü£¼Çé¿öÓï¾ä£¾
+    //              £ü£¼¿Õ£¾;
+    //              |£¼·µ»ØÓï¾ä£¾;
+    //              | '{'£¼Óï¾äÁĞ£¾'}'
+    if (symbol == SWITCHTK) {   // Çé¿öÓï¾ä
+        _switch();  // Çé¿öÓï¾ä
+    }
+    else if (symbol == IFTK) {   // Ìõ¼şÓï¾ä
+        _if();  // Ìõ¼şÓï¾ä
+    }
+    else if (symbol == WHILETK || symbol == FORTK) {    // Ñ­»·Óï¾ä
+        _loop();    // Ñ­»·Óï¾ä
+    }
+    else if (symbol == LBRACE) { // {Óï¾äÁĞ}
+        getsym(yes);
+        _list_statement();  // Óï¾äÁĞ
+        if (symbol == RBRACE) { // }
+            getsym(yes);
+        }
+    }
+    else if (symbol == IDENFR) {    // ¸³ÖµÓï¾ä ÓĞÎŞ·µ»ØÖµº¯Êıµ÷ÓÃÓï¾ä
+        pre_read_Symbol(1);
+        if (symbol_pre == LPARENT) { // (
+            // ÓĞÎŞ·µ»ØÖµº¯Êıµ÷ÓÃÓï¾ä
+            for (int i = 0; i < index_array_function_with_return; ++i) {
+                if (array_function_with_return[i] == token) {
+                    _function_with_return_call(); // ÓĞ·µ»ØÖµº¯Êıµ÷ÓÃÓï¾ä
                     break;
                 }
             }
-            if (flag) {
-                // æ— è¿”å›å€¼å‡½æ•°è°ƒç”¨è¯­å¥
-                if (_function_no_return_call(symList, symPrint, symStack, symSymbol)) {
-                    if (isParticular_S_List(symList, "SEMICN")) {
-                        // ;
-                        slist_0_sprint(symList, symPrint);
-                        slist_1_sprint(symList, symPrint, "<è¯­å¥>");
-                        return true;
-                    }
-                    else {
-                        retract(1);
-                    }
+            for (int i = 0; i < index_array_function_no_return; ++i) {
+                if (array_function_no_return[i] == token) {
+                    _function_no_return_call(); // ÎŞ·µ»ØÖµº¯Êıµ÷ÓÃÓï¾ä
+                    break;
                 }
             }
-        }
-    }
-    else if (_assign(symList, symPrint, symStack, symSymbol)) {
-        // èµ‹å€¼è¯­å¥
-        if (isParticular_S_List(symList, "SEMICN")) {
-            // ;
-            slist_0_sprint(symList, symPrint);
-            slist_1_sprint(symList, symPrint, "<è¯­å¥>");
-            return true;
-        }
-        else {
-            retract(1);
-        }
-    }
-    else if (_scanf(symList, symPrint, symStack, symSymbol)) {
-        // è¯»è¯­å¥
-        if (isParticular_S_List(symList, "SEMICN")) {
-            // ;
-            slist_0_sprint(symList, symPrint);
-            slist_1_sprint(symList, symPrint, "<è¯­å¥>");
-            return true;
-        }
-        else {
-            retract(1);
-        }
-    }
-    else if (_printf(symList, symPrint, symStack, symSymbol)) {
-        // å†™è¯­å¥
-        if (isParticular_S_List(symList, "SEMICN")) {
-            // ;
-            slist_0_sprint(symList, symPrint);
-            slist_1_sprint(symList, symPrint, "<è¯­å¥>");
-            return true;
-        }
-        else {
-            retract(1);
-        }
-    }
-    else if (isParticular_S_List(symList, "SEMICN")) {
-        // ; ç©º
-        slist_0_sprint(symList, symPrint);
-        slist_1_sprint(symList, symPrint, "<è¯­å¥>");
-        return true;
-    }
-    else if (_return(symList, symPrint, symStack, symSymbol)) {
-        // è¿”å›è¯­å¥
-        if (isParticular_S_List(symList, "SEMICN")) {
-            // ;
-            slist_0_sprint(symList, symPrint);
-            slist_1_sprint(symList, symPrint, "<è¯­å¥>");
-            return true;
-        }
-        else {
-            retract(1);
-        }
-    }
-    else {
-        return false;
-    }
-}
-
-bool _default(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    // ï¼œç¼ºçœï¼   ::=  default :ï¼œè¯­å¥ï¼
-    if (isParticular_S_List(symList, "DEFAULTTK")) {
-        // default
-        slist_0_sprint(symList, symPrint);
-        if (isParticular_S_List(symList, "COLON")) {
-            // :
-            slist_0_sprint(symList, symPrint);
-            if (_statement(symList, symPrint, symStack, symSymbol)) {
-                // è¯­å¥
-                slist_0_sprint(symList, symPrint);
-                slist_1_sprint(symList, symPrint, "<ç¼ºçœ>");
-                return true;
-            }
-            else {
-                retract(2);
+            if (symbol == SEMICN) { // ;
+                getsym(yes);
             }
         }
         else {
-            retract(1);
+            // ¸³ÖµÓï¾ä
+            _assign();
+            if (symbol == SEMICN) { // ;
+                getsym(yes);
+            }
         }
     }
-    else {
-        return false;
+    else if (symbol == SEMICN) { // ;
+        // ¿Õ
+        getsym(yes);
     }
+    else if (symbol == PRINTFTK) {
+        // Ğ´Óï¾ä
+        _printf();
+        if (symbol == SEMICN) { // ;
+            getsym(yes);
+        }
+    }
+    else if (symbol == SCANFTK) {
+        // ¶ÁÓï¾ä
+        _scanf();
+        if (symbol == SEMICN) { // ;
+            getsym(yes);
+        }
+    }
+    else if (symbol == RETURNTK) {
+        // ·µ»ØÓï¾ä
+        _return();
+        if (symbol == SEMICN) {
+            getsym(yes);
+        }
+    }
+//    fprintf(f_out, "<Óï¾ä>\n");
+//    cout << "<Óï¾ä>" << endl;
 }
 
-bool _switch(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    // ï¼œæƒ…å†µè¯­å¥ï¼  ::=  switch â€˜(â€™ï¼œè¡¨è¾¾å¼ï¼â€˜)â€™ â€˜{â€™ï¼œæƒ…å†µè¡¨ï¼ï¼œç¼ºçœï¼â€˜}â€™
+void _default() {
+    // £¼È±Ê¡£¾   ::=  default :£¼Óï¾ä£¾
+    if (symbol == DEFAULTTK) { // default
+        getsym(yes);
+        if (symbol == COLON) { // :
+            getsym(yes);
+            _statement();   // Óï¾ä
+        }
+    }
+//    fprintf(f_out, "<È±Ê¡>\n");
+//    cout << "<È±Ê¡>" << endl;
+}
+
+void _switch() {
+    // £¼Çé¿öÓï¾ä£¾  ::=  switch ¡®(¡¯£¼±í´ïÊ½£¾¡®)¡¯ ¡®{¡¯£¼Çé¿ö±í£¾£¼È±Ê¡£¾¡®}¡¯
     if (symbol == SWITCHTK) { // switch
         getsym(yes);
         if (symbol == LPARENT) { // (
             getsym(yes);
-            _expression();   // è¡¨è¾¾å¼
+            _expression();   // ±í´ïÊ½
             if (symbol == RPARENT) { // )
                 getsym(yes);
                 {
                     if (symbol == LBRACE) { // {
                         getsym(yes);
-                        _table_cases();  // æƒ…å†µè¡¨
-                        _default();  // ç¼ºçœ
+                        _table_cases();  // Çé¿ö±í
+                        _default();  // È±Ê¡
                         if (symbol == RBRACE) {
                             getsym(yes);
                         }
@@ -1950,343 +1380,227 @@ bool _switch(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym
             }
         }
     }
+//    fprintf(f_out, "<Çé¿öÓï¾ä>\n");
+//    cout << "<Çé¿öÓï¾ä>" << endl;
 }
 
-bool _case(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    // ï¼œæƒ…å†µå­è¯­å¥ï¼  ::=  caseï¼œå¸¸é‡ï¼ï¼šï¼œè¯­å¥ï¼
+void _case() {
+    // £¼Çé¿ö×ÓÓï¾ä£¾  ::=  case£¼³£Á¿£¾£º£¼Óï¾ä£¾
     if (symbol == CASETK) {  // case
         getsym(yes);
-        _const();    // å¸¸é‡
+        _const();    // ³£Á¿
         if (symbol == COLON) {   // :
             getsym(yes);
-            _statement();    // è¯­å¥
+            _statement();    // Óï¾ä
         }
     }
-    fprintf(f_out, "<æƒ…å†µå­è¯­å¥>\n");
-    cout << "<æƒ…å†µå­è¯­å¥>" << endl;
+//    fprintf(f_out, "<Çé¿ö×ÓÓï¾ä>\n");
+//    cout << "<Çé¿ö×ÓÓï¾ä>" << endl;
 }
 
-bool _table_cases(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    // ï¼œæƒ…å†µè¡¨ï¼   ::=  ï¼œæƒ…å†µå­è¯­å¥ï¼{ï¼œæƒ…å†µå­è¯­å¥ï¼}
+void _table_cases() {
+    // £¼Çé¿ö±í£¾   ::=  £¼Çé¿ö×ÓÓï¾ä£¾{£¼Çé¿ö×ÓÓï¾ä£¾}
     while (symbol == CASETK) {
         _case();
     }
-    fprintf(f_out, "<æƒ…å†µè¡¨>\n");
-    cout << "<æƒ…å†µè¡¨>" << endl;
+//    fprintf(f_out, "<Çé¿ö±í>\n");
+//    cout << "<Çé¿ö±í>" << endl;
 }
 
-bool _const(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    // ï¼œå¸¸é‡ï¼   ::=  ï¼œæ•´æ•°ï¼
-    //             |  ï¼œå­—ç¬¦ï¼
-    if (symbol == INTCON||symbol == PLUS || symbol == MINU) { // æ•´æ•°
-        _int(); // æ•´æ•°
+int _const() {
+    // £¼³£Á¿£¾   ::=  £¼ÕûÊı£¾
+    //             |  £¼×Ö·û£¾
+    if (symbol == INTCON || symbol == PLUS || symbol == MINU) { // ÕûÊı
+        return _int(); // ÕûÊı
     }
-    else if (symbol == CHARCON) { // å­—ç¬¦
-        _char();    // å­—ç¬¦
+    else if (symbol == CHARCON) { // ×Ö·û
+        return _char();    // ×Ö·û
     }
-    fprintf(f_out, "<å¸¸é‡>\n");
-    cout << "<å¸¸é‡>" << endl;
+    return 0;
+//    fprintf(f_out, "<³£Á¿>\n");
+//    cout << "<³£Á¿>" << endl;
 }
 
-bool _var_define(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    // ï¼œå˜é‡å®šä¹‰ï¼ ::= ï¼œå˜é‡å®šä¹‰æ— åˆå§‹åŒ–ï¼
-    //              | ï¼œå˜é‡å®šä¹‰åŠåˆå§‹åŒ–ï¼
+void _var_define() {
+    // £¼±äÁ¿¶¨Òå£¾ ::= £¼±äÁ¿¶¨ÒåÎŞ³õÊ¼»¯£¾
+    //              | £¼±äÁ¿¶¨Òå¼°³õÊ¼»¯£¾
 
-    // ï¼œå˜é‡å®šä¹‰æ— åˆå§‹åŒ–ï¼  ::= ï¼œç±»å‹æ ‡è¯†ç¬¦ï¼(ï¼œæ ‡è¯†ç¬¦ï¼
-    //                      | ï¼œæ ‡è¯†ç¬¦ï¼'['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']'
-    //                      | ï¼œæ ‡è¯†ç¬¦ï¼'['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']''['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']'){,(ï¼œæ ‡è¯†ç¬¦ï¼
-    //                      | ï¼œæ ‡è¯†ç¬¦ï¼'['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']'
-    //                      | ï¼œæ ‡è¯†ç¬¦ï¼'['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']''['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']' )}
+    // £¼±äÁ¿¶¨ÒåÎŞ³õÊ¼»¯£¾  ::= £¼ÀàĞÍ±êÊ¶·û£¾(£¼±êÊ¶·û£¾
+    //                      | £¼±êÊ¶·û£¾'['£¼ÎŞ·ûºÅÕûÊı£¾']'
+    //                      | £¼±êÊ¶·û£¾'['£¼ÎŞ·ûºÅÕûÊı£¾']''['£¼ÎŞ·ûºÅÕûÊı£¾']'){,(£¼±êÊ¶·û£¾
+    //                      | £¼±êÊ¶·û£¾'['£¼ÎŞ·ûºÅÕûÊı£¾']'
+    //                      | £¼±êÊ¶·û£¾'['£¼ÎŞ·ûºÅÕûÊı£¾']''['£¼ÎŞ·ûºÅÕûÊı£¾']' )}
 
-    // ï¼œå˜é‡å®šä¹‰åŠåˆå§‹åŒ–ï¼  ::= ï¼œç±»å‹æ ‡è¯†ç¬¦ï¼ï¼œæ ‡è¯†ç¬¦ï¼=ï¼œå¸¸é‡ï¼
-    //                      | ï¼œç±»å‹æ ‡è¯†ç¬¦ï¼ï¼œæ ‡è¯†ç¬¦ï¼'['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']'='{'ï¼œå¸¸é‡ï¼{,ï¼œå¸¸é‡ï¼}'}'
-    //                      | ï¼œç±»å‹æ ‡è¯†ç¬¦ï¼ï¼œæ ‡è¯†ç¬¦ï¼'['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']''['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']'='
-    //                      {''{'ï¼œå¸¸é‡ï¼{,ï¼œå¸¸é‡ï¼}'}'{, '{'ï¼œå¸¸é‡ï¼{,ï¼œå¸¸é‡ï¼}'}'}'}'
+    // £¼±äÁ¿¶¨Òå¼°³õÊ¼»¯£¾  ::= £¼ÀàĞÍ±êÊ¶·û£¾£¼±êÊ¶·û£¾=£¼³£Á¿£¾
+    //                      | £¼ÀàĞÍ±êÊ¶·û£¾£¼±êÊ¶·û£¾'['£¼ÎŞ·ûºÅÕûÊı£¾']'='{'£¼³£Á¿£¾{,£¼³£Á¿£¾}'}'
+    //                      | £¼ÀàĞÍ±êÊ¶·û£¾£¼±êÊ¶·û£¾'['£¼ÎŞ·ûºÅÕûÊı£¾']''['£¼ÎŞ·ûºÅÕûÊı£¾']'='
+    //                      {''{'£¼³£Á¿£¾{,£¼³£Á¿£¾}'}'{, '{'£¼³£Á¿£¾{,£¼³£Á¿£¾}'}'}'}'
 
-    if (symbol == INTTK || symbol == CHARTK) { // ç±»å‹æ ‡è¯†ç¬¦
+    if (symbol == INTTK || symbol == CHARTK) { // ÀàĞÍ±êÊ¶·û
         int i = 1;
         while (symbol_pre != COMMA && symbol_pre != SEMICN && symbol_pre != ASSIGN) {
             pre_read_Symbol(i++) ;
         }
         if (symbol_pre == SEMICN || symbol_pre == COMMA) { // ; ,
-            _var_define_no_initialization();    // å˜é‡å®šä¹‰æ— åˆå§‹åŒ–
+            _var_define_no_initialization();    // ±äÁ¿¶¨ÒåÎŞ³õÊ¼»¯
         }
         else {
-            _var_define_with_initialization();  // å˜é‡å®šä¹‰åŠåˆå§‹åŒ–
+            _var_define_with_initialization();  // ±äÁ¿¶¨Òå¼°³õÊ¼»¯
         }
     }
-    fprintf(f_out, "<å˜é‡å®šä¹‰>\n");
-    cout << "<å˜é‡å®šä¹‰>" << endl;
+//    fprintf(f_out, "<±äÁ¿¶¨Òå>\n");
+//    cout << "<±äÁ¿¶¨Òå>" << endl;
 }
 
-bool _assign(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    // ï¼œèµ‹å€¼è¯­å¥ï¼   ::=  ï¼œæ ‡è¯†ç¬¦ï¼ï¼ï¼œè¡¨è¾¾å¼ï¼
-    //                |  ï¼œæ ‡è¯†ç¬¦ï¼'['ï¼œè¡¨è¾¾å¼ï¼']'=ï¼œè¡¨è¾¾å¼ï¼
-    //                |  ï¼œæ ‡è¯†ç¬¦ï¼'['ï¼œè¡¨è¾¾å¼ï¼']''['ï¼œè¡¨è¾¾å¼ï¼']' =ï¼œè¡¨è¾¾å¼ï¼
-    int temp;
-    if (isParticular_S_List(symList, "IDENFR") && symList.type[pos_S_list + 1] == "ASSIGN") {
-        // æ ‡è¯†ç¬¦
-        temp = search(symList, symSymbol);
-        slist_0_sprint(symList, symPrint);
-        if (isParticular_S_List(symList, "ASSIGN")) {
-            // =
-            slist_0_sprint(symList, symPrint);
-            if (_expression(symList, symPrint, symStack, symSymbol)) {
-                // è¡¨è¾¾å¼
-                emit_op2(10, temp);
-                slist_1_sprint(symList, symPrint, "<èµ‹å€¼è¯­å¥>");
-                return true;
-            }
-            else {
-                retract(2);
-            }
+void _assign() {
+    // £¼¸³ÖµÓï¾ä£¾   ::=  £¼±êÊ¶·û£¾£½£¼±í´ïÊ½£¾
+    //                |  £¼±êÊ¶·û£¾'['£¼±í´ïÊ½£¾']'=£¼±í´ïÊ½£¾
+    //                |  £¼±êÊ¶·û£¾'['£¼±í´ïÊ½£¾']''['£¼±í´ïÊ½£¾']' =£¼±í´ïÊ½£¾
+    int value;
+    string name;
+    int index;
+    if (symbol == IDENFR) { // ±êÊ¶·û
+        index = find_symbolTable(token);
+        getsym(yes);
+        if (symbol == ASSIGN) { // =
+            getsym(yes);
+            value = _expression();  // ±í´ïÊ½
+            symbolTable[index].value = value;
         }
-        else {
-            retract(1);
-        }
-    }
-    else if (isParticular_S_List(symList, "IDENFR") && symList.type[pos_S_list + 1] == "LBRACK") {
-        // æ•°ç»„
-        slist_0_sprint(symList, symPrint);
-        if (isParticular_S_List(symList, "LBRACK")) {
-            // [
-            slist_0_sprint(symList, symPrint);
-            if (_expression(symList, symPrint, symStack, symSymbol)) {
-                // è¡¨è¾¾å¼
-                if (isParticular_S_List(symList, "RBRACK")) {
-                    // ]
-                    slist_0_sprint(symList, symPrint);
-                    if (isParticular_S_List(symList, "ASSIGN")) {
-                        // = ä¸€ç»´æ•°ç»„
-                        slist_0_sprint(symList, symPrint);
-                        if (_expression(symList, symPrint, symStack, symSymbol)) {
-                            // è¡¨è¾¾å¼
-                            slist_1_sprint(symList, symPrint, "<èµ‹å€¼è¯­å¥>");
-                            return true;
+        else if (symbol == LBRACK) {    // [
+            getsym(yes);
+            _expression();  // ±í´ïÊ½
+            if (symbol == RBRACK) { // ]
+                getsym(yes);
+                if (symbol == ASSIGN) { // =
+                    getsym(yes);
+                    _expression(); // ±í´ïÊ½
+                }
+                else if (symbol == LBRACK) {    // [
+                    getsym(yes);
+                    _expression();  // ±í´ïÊ½
+                    if (symbol == RBRACK) { // ]
+                        getsym(yes);
+                        if (symbol == ASSIGN) { // =
+                            getsym(yes);
+                            _expression();  // ±í´ïÊ½
                         }
-                        else {
-                            retract(5);
-                        }
-                    }
-                    else if (isParticular_S_List(symList, "LBRACK")) {
-                        // [ äºŒç»´æ•°ç»„
-                        slist_0_sprint(symList, symPrint);
-                        if (_expression(symList, symPrint, symStack, symSymbol)) {
-                            if (isParticular_S_List(symList, "RBRACK")) {
-                                // ]
-                                slist_0_sprint(symList, symPrint);
-                                if (isParticular_S_List(symList, "ASSIGN")) {
-                                    // =
-                                    slist_0_sprint(symList, symPrint);
-                                    if (_expression(symList, symPrint, symStack, symSymbol)) {
-                                        // è¡¨è¾¾å¼
-                                        slist_1_sprint(symList, symPrint, "<èµ‹å€¼è¯­å¥>");
-                                        return true;
-                                    }
-                                    else {
-                                        retract(8);
-                                    }
-                                }
-                                else {
-                                    retract(7);
-                                }
-                            }
-                            else {
-                                retract(6);
-                            }
-                        }
-                        else {
-                            retract(5);
-                        }
-                    }
-                    else {
-                        retract(4);
                     }
                 }
-                else {
-                    retract(3);
-                }
-            }
-            else {
-                retract(2);
             }
         }
-        else {
-            retract(1);
-        }
     }
-    else {
-        return false;
-    }
+//    fprintf(f_out, "<¸³ÖµÓï¾ä>\n");
+//    cout << "<¸³ÖµÓï¾ä>" << endl;
 }
 
-bool _factor(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    // ï¼œå› å­ï¼    ::= ï¼œæ ‡è¯†ç¬¦ï¼
-    //              ï½œï¼œæ ‡è¯†ç¬¦ï¼'['ï¼œè¡¨è¾¾å¼ï¼']'
-    //              | ï¼œæ ‡è¯†ç¬¦ï¼'['ï¼œè¡¨è¾¾å¼ï¼']''['ï¼œè¡¨è¾¾å¼ï¼']'
-    //              |'('ï¼œè¡¨è¾¾å¼ï¼')'
-    //              ï½œï¼œæ•´æ•°ï¼
-    //              | ï¼œå­—ç¬¦ï¼
-    //              ï½œï¼œæœ‰è¿”å›å€¼å‡½æ•°è°ƒç”¨è¯­å¥ï¼
-    int temp;
-    if (_function_with_return_call(symList, symPrint, symStack, symSymbol)) {
-        // æœ‰è¿”å›å€¼å‡½æ•°è°ƒç”¨è¯­å¥
-        return true;
-    }
-    else if (isParticular_S_List(symList, "IDENFR")) {
-        // æ ‡è¯†ç¬¦
-        temp = search(symList, symSymbol);
-        if (symSymbol.kind[temp] == 1) {
-            // å¸¸é‡
-            if (symSymbol.type[temp] == 1) {
-                // int
-                emit_op2(1, symSymbol.ref[temp]);
-            }
-            else if (symSymbol.type[temp] == 2) {
-                // char
-                emit_op2(12, symSymbol.ref[temp]);
-            }
+void _factor() {
+    // £¼Òò×Ó£¾    ::= £¼±êÊ¶·û£¾
+    //              £ü£¼±êÊ¶·û£¾'['£¼±í´ïÊ½£¾']'
+    //              | £¼±êÊ¶·û£¾'['£¼±í´ïÊ½£¾']''['£¼±í´ïÊ½£¾']'
+    //              |'('£¼±í´ïÊ½£¾')'
+    //              £ü£¼ÕûÊı£¾
+    //              | £¼×Ö·û£¾
+    //              £ü£¼ÓĞ·µ»ØÖµº¯Êıµ÷ÓÃÓï¾ä£¾
+    if (symbol == IDENFR) { // ±êÊ¶·û ÓĞ·µ»ØÖµº¯Êıµ÷ÓÃÓï¾ä
+        pre_read_Symbol(1);
+        if (symbol_pre == LPARENT) {    // (
+            _function_with_return_call();
         }
         else {
-            // å˜é‡å€¼ç½®äºstack_top
-            // type: å˜é‡ç±»å‹
-            // addr: å˜é‡åœ¨è¿è¡Œæ ˆå†…ä½ç½®
-            emit(0, symSymbol.type[temp], symSymbol.addr[temp]);
-        }
-        slist_0_sprint(symList, symPrint);
-        if (isParticular_S_List(symList, "LBRACK")) {
-            // [
-            slist_0_sprint(symList, symPrint);
-            if (_expression(symList, symPrint, symStack, symSymbol)) {
-                // è¡¨è¾¾å¼
-                if (isParticular_S_List(symList, "RBRACK")) {
-                    // ]
-                    slist_0_sprint(symList, symPrint);
-                    if (!isParticular_S_List(symList, "LBRACK")) {
-                        // ä¸€ç»´æ•°ç»„
-                        slist_1_sprint(symList, symPrint, "<èµ‹å€¼è¯­å¥>");
-                        return true;
-                    }
-                    else if (isParticular_S_List(symList, "LBRACK")) {
-                        // [
-                        slist_0_sprint(symList, symPrint);
-                        if (_expression(symList, symPrint, symStack, symSymbol)) {
-                            // è¡¨è¾¾å¼
-                            if (isParticular_S_List(symList, "RBRACK")) {
-                                // ]
-                                slist_0_sprint(symList, symPrint);
-                                slist_1_sprint(symList, symPrint, "<å› å­>");
-                                return true;
-                            }
-                            else {
-                                retract(4);
-                            }
-                        }
-                        else {
-                            retract(3);
+            getsym(yes);
+            if (symbol == LBRACK) { // [
+                getsym(yes);
+                _expression();  // ±í´ïÊ½
+                if (symbol == RBRACK) { // ]
+                    getsym(yes);
+                    if (symbol == LBRACK) { // [
+                        getsym(yes);
+                        _expression();  // ±í´ïÊ½
+                        if (symbol == RBRACK) { // ]
+                            getsym(yes);
                         }
                     }
-                    else {
-                        retract(2);
-                    }
-                }
-                else {
-                    retract(1);
                 }
             }
-            else {
-                // <æ ‡è¯†ç¬¦>
-                slist_1_sprint(symList, symPrint, "<å› å­>");
-                return true;
-            }
         }
     }
-    else if (isParticular_S_List(symList, "LPARENT")) {
-        // '('ï¼œè¡¨è¾¾å¼ï¼')'
-        slist_0_sprint(symList, symPrint);
-        if (_expression(symList, symPrint, symStack, symSymbol)) {
-            // è¡¨è¾¾å¼
-            if (isParticular_S_List(symList, "RPARENT")) {
-                // )
-                slist_0_sprint(symList, symPrint);
-                slist_1_sprint(symList, symPrint, "<å› å­>");
-                return true;
-            }
-            else {
-                retract(2);
-            }
-        }
-        else {
-            retract(1);
+    else if (symbol == LPARENT) {   // (
+        getsym(yes);
+        _expression();  // ±í´ïÊ½
+        if (symbol == RPARENT) {    // )
+            getsym(yes);
         }
     }
-    else if (_int(symList, symPrint, symStack, symSymbol)) {
-        // int
-        emit_op2(1, (int)symList.name[pos_S_list - 1][0] - 48);
-        slist_1_sprint(symList, symPrint, "<å› å­>");
-        return true;
+    else if (symbol == PLUS || symbol == MINU || symbol == INTCON) {
+        _int(); // ÕûÊı
     }
-    else if (isParticular_S_List(symList, "CHARCON")) {
-        // char
-        emit_op2(12, (int)symList.name[pos_S_list][0]);
-        slist_0_sprint(symList, symPrint);
-        slist_1_sprint(symList, symPrint, "<å› å­>");
-        return true;
+    else if (symbol == CHARCON) {
+        _char();    // ×Ö·û
     }
-    else {
-        return false;
-    }
+//    fprintf(f_out, "<Òò×Ó>\n");
+//    cout << "<Òò×Ó>" << endl;
 }
 
-bool _var_define_no_initialization(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    // ï¼œå˜é‡å®šä¹‰æ— åˆå§‹åŒ–ï¼  ::= ï¼œç±»å‹æ ‡è¯†ç¬¦ï¼(ï¼œæ ‡è¯†ç¬¦ï¼
-    //                      | ï¼œæ ‡è¯†ç¬¦ï¼'['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']'
-    //                      | ï¼œæ ‡è¯†ç¬¦ï¼'['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']''['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']')
-    //                      {,(ï¼œæ ‡è¯†ç¬¦ï¼
-    //                      | ï¼œæ ‡è¯†ç¬¦ï¼'['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']'
-    //                      | ï¼œæ ‡è¯†ç¬¦ï¼'['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']''['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']' )}
-    if (symbol == INTTK || symbol == CHARTK) { // ç±»å‹æ ‡è¯†ç¬¦
+void _var_define_no_initialization() {
+    // £¼±äÁ¿¶¨ÒåÎŞ³õÊ¼»¯£¾  ::= £¼ÀàĞÍ±êÊ¶·û£¾(£¼±êÊ¶·û£¾
+    //                      | £¼±êÊ¶·û£¾'['£¼ÎŞ·ûºÅÕûÊı£¾']'
+    //                      | £¼±êÊ¶·û£¾'['£¼ÎŞ·ûºÅÕûÊı£¾']''['£¼ÎŞ·ûºÅÕûÊı£¾']')
+    //                      {,(£¼±êÊ¶·û£¾
+    //                      | £¼±êÊ¶·û£¾'['£¼ÎŞ·ûºÅÕûÊı£¾']'
+    //                      | £¼±êÊ¶·û£¾'['£¼ÎŞ·ûºÅÕûÊı£¾']''['£¼ÎŞ·ûºÅÕûÊı£¾']' )}
+    string name;
+    int type;
+    if (symbol == INTTK || symbol == CHARTK) { // ÀàĞÍ±êÊ¶·û
+        type = (symbol == INTTK) ? 1 : 2;
         do {
             getsym(yes);
-            if (symbol == IDENFR) { // æ ‡è¯†ç¬¦
+            if (symbol == IDENFR) { // ±êÊ¶·û
+                name = token;
                 getsym(yes);
                 if (symbol == LBRACK) { // [
                     getsym(yes);
-                    _unsigned_int();    // æ— ç¬¦å·æ•´æ•°
+                    _unsigned_int();    // ÎŞ·ûºÅÕûÊı
                     if (symbol == RBRACK) { // ]
                         getsym(yes);
                         if (symbol == LBRACK) { // [
                             getsym(yes);
-                            _unsigned_int();    // æ— ç¬¦å·æ•´æ•°
+                            _unsigned_int();    // ÎŞ·ûºÅÕûÊı
                             if (symbol == RBRACK) { // ]
                                 getsym(yes);
                             }
                         }
                     }
                 }
+                insert_symbolTable(name, 0, type);
             }
         }   while (symbol == COMMA);    // ;
     }
-    fprintf(f_out, "<å˜é‡å®šä¹‰æ— åˆå§‹åŒ–>\n");
-    cout << "<å˜é‡å®šä¹‰æ— åˆå§‹åŒ–>" << endl;
+//    fprintf(f_out, "<±äÁ¿¶¨ÒåÎŞ³õÊ¼»¯>\n");
+//    cout << "<±äÁ¿¶¨ÒåÎŞ³õÊ¼»¯>" << endl;
 }
 
-bool _var_define_with_initialization(Sym_list & symList, Sym_print & symPrint, Sym_stack & symStack, Sym_symbol & symSymbol) {
-    // ï¼œå˜é‡å®šä¹‰åŠåˆå§‹åŒ–ï¼  ::= ï¼œç±»å‹æ ‡è¯†ç¬¦ï¼ï¼œæ ‡è¯†ç¬¦ï¼=ï¼œå¸¸é‡ï¼
-    //                      | ï¼œç±»å‹æ ‡è¯†ç¬¦ï¼ï¼œæ ‡è¯†ç¬¦ï¼'['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']'='{'ï¼œå¸¸é‡ï¼{,ï¼œå¸¸é‡ï¼}'}'
-    //                      |ï¼œç±»å‹æ ‡è¯†ç¬¦ï¼ï¼œæ ‡è¯†ç¬¦ï¼'['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']''['ï¼œæ— ç¬¦å·æ•´æ•°ï¼']'=
-    //                      '{''{'ï¼œå¸¸é‡ï¼{,ï¼œå¸¸é‡ï¼}'}'{, '{'ï¼œå¸¸é‡ï¼{,ï¼œå¸¸é‡ï¼}'}'}'}'
-    if (symbol == INTTK || symbol == CHARTK) {  // ç±»å‹æ ‡è¯†ç¬¦
+void _var_define_with_initialization() {
+    // £¼±äÁ¿¶¨Òå¼°³õÊ¼»¯£¾  ::= £¼ÀàĞÍ±êÊ¶·û£¾£¼±êÊ¶·û£¾=£¼³£Á¿£¾
+    //                      | £¼ÀàĞÍ±êÊ¶·û£¾£¼±êÊ¶·û£¾'['£¼ÎŞ·ûºÅÕûÊı£¾']'='{'£¼³£Á¿£¾{,£¼³£Á¿£¾}'}'
+    //                      |£¼ÀàĞÍ±êÊ¶·û£¾£¼±êÊ¶·û£¾'['£¼ÎŞ·ûºÅÕûÊı£¾']''['£¼ÎŞ·ûºÅÕûÊı£¾']'=
+    //                      '{''{'£¼³£Á¿£¾{,£¼³£Á¿£¾}'}'{, '{'£¼³£Á¿£¾{,£¼³£Á¿£¾}'}'}'}'
+    int type, value;
+    string name;
+    if (symbol == INTTK || symbol == CHARTK) {  // ÀàĞÍ±êÊ¶·û
+        type = (symbol == INTTK) ? 1 : 2;
         getsym(yes);
-        if (symbol == IDENFR) { // æ ‡è¯†ç¬¦
+        if (symbol == IDENFR) { // ±êÊ¶·û
+            name = token;
             getsym(yes);
             if (symbol == ASSIGN) { // =
                 getsym(yes);
-                _const();   // å¸¸é‡
+                value = _const();   // ³£Á¿
+                insert_symbolTable(name, value, type);
             }
             else if (symbol == LBRACK) {    // [
                 getsym(yes);
-                _unsigned_int();    // æ— ç¬¦å·æ•´æ•°
+                _unsigned_int();    // ÎŞ·ûºÅÕûÊı
                 if (symbol == RBRACK) { // ]
                     getsym(yes);
                     if (symbol == ASSIGN) { // =
@@ -2301,7 +1615,7 @@ bool _var_define_with_initialization(Sym_list & symList, Sym_print & symPrint, S
                     }
                     else if (symbol == LBRACK) {    // [
                         getsym(yes);
-                        _unsigned_int();    // æ— ç¬¦å·æ•´æ•°
+                        _unsigned_int();    // ÎŞ·ûºÅÕûÊı
                         if (symbol == RBRACK) { // ]
                             getsym(yes);
                             if (symbol == ASSIGN) { // =
@@ -2323,6 +1637,21 @@ bool _var_define_with_initialization(Sym_list & symList, Sym_print & symPrint, S
             }
         }
     }
-    fprintf(f_out, "<å˜é‡å®šä¹‰åŠåˆå§‹åŒ–>\n");
-    cout << "<å˜é‡å®šä¹‰åŠåˆå§‹åŒ–>" << endl;
+//    fprintf(f_out, "<±äÁ¿¶¨Òå¼°³õÊ¼»¯>\n");
+//    cout << "<±äÁ¿¶¨Òå¼°³õÊ¼»¯>" << endl;
 }
+
+// main
+int main() {
+    getBuffer_debug();
+//    getBuffer();
+    getsym(no);
+    program();
+    return 0;
+}
+
+
+
+
+
+
