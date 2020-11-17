@@ -929,17 +929,32 @@ int _expression() {
     //  ＜表达式＞    ::= ［＋｜－］＜项＞{＜加法运算符＞＜项＞}
     int i = 0;
     int res = 0;
+    int flag = 0;  // 是否来自赋值语句, 赋值语句不需要去除末尾)
+    if (symbol == ASSIGN) {
+        flag = 1;
+        getsym(no);
+    }
+
     if (symbol == CHARCON) {
         pre_read_Symbol(1);
         if (symbol_pre == RPARENT) {
             res = token[0];
             flag_expression = 2;
+            getsym(no);
             return res;
+        }   // printf 单个字符
+        else {
+            flag_expression = 1;
         }
-//        if (symbol_pre != PLUS && symbol_pre != MINU
-//            && symbol_pre != MULT && symbol_pre != DIV) {
-//            flag_expression = 2;
-//        }
+    }
+    else if (symbol == INTCON) {
+        pre_read_Symbol(1);
+        if (symbol_pre == RPARENT) {
+            res = atoi(token.c_str());
+            flag_expression = 1;
+            getsym(no);
+            return res;
+        }   // printf 数字
         else {
             flag_expression = 1;
         }
@@ -953,16 +968,16 @@ int _expression() {
             int pos = find_symbolTable(token);
             if (symbolTable[pos].type == 2) {
                 flag_expression = 2;
-            }
+            }   // printf 标识符 char型
             else {
                 flag_expression = 1;
+                // printf 标识符 int型
             }
             getsym(no);
             return symbolTable[pos].value;
         }
         symbol_pre = FOUL;
-        int flag = 0;
-        while (symbol_pre != SEMICN && flag == 0) {
+        while (symbol_pre != SEMICN) {
             pre_read_Symbol(i);
             if (symbol_pre == IDENFR) {
                 int pos = find_symbolTable(token_pre);
@@ -977,21 +992,23 @@ int _expression() {
                 strcat(caculator, value);
             }
             else if (symbol_pre == SEMICN) {
-                int len = strlen(caculator);
-                flag = 1;
-                caculator[len - 1] = 0;
-//                break;
-            }
-            else if (flag == 0){
-                strcat(caculator, token_pre.c_str());
+                if (flag == 0) {
+                    // printf语句 去除末尾printf的)
+                    int len = strlen(caculator);
+                    caculator[len - 1] = 0;
+                }
             }
             else {
-                break;
+                strcat(caculator, token_pre.c_str());
             }
             i += 1;
         }
 //        cout << caculator;
         res = ALU(caculator);
+        while (i--) {
+            getsym(no);
+        }
+        return res;
     }
     if (symbol == PLUS || symbol == MINU) { // 加法运算符
         getsym(yes);
@@ -1461,12 +1478,15 @@ void _assign() {
     if (symbol == IDENFR) { // 标识符
         index = find_symbolTable(token);
         getsym(yes);
-        if (symbol == ASSIGN) { // =
-            getsym(yes);
-            value = _expression();  // 表达式
-            symbolTable[index].value = value;
-        }
-        else if (symbol == LBRACK) {    // [
+//        if (symbol == ASSIGN) { // =
+//            getsym(yes);
+//            value = _expression();  // 表达式
+//            symbolTable[index].value = value;
+//        }
+        // = 放进表达式中处理，分清表达式来源是赋值语句还是printf
+        value = _expression();  // 表达式
+        symbolTable[index].value = value;
+        if (symbol == LBRACK) {    // [
             getsym(yes);
             _expression();  // 表达式
             if (symbol == RBRACK) { // ]
@@ -1642,8 +1662,8 @@ void _var_define_with_initialization() {
 
 // main
 int main() {
-    getBuffer_debug();
-//    getBuffer();
+//    getBuffer_debug();
+    getBuffer();
     getsym(no);
     program();
     return 0;
