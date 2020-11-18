@@ -1027,6 +1027,7 @@ int _expression() {
 //            getsym(no);
 //            return symbolTable[pos].value;
 //        }
+        memset(caculator, '\0', sizeof(caculator));
         caculator[0] = '(';
         symbol_pre = FOUL;
         while (symbol_pre != SEMICN) {
@@ -1057,7 +1058,6 @@ int _expression() {
         }
 //        cout << caculator << endl;
         res = ALU(caculator);
-//        memset(caculator, '\0', sizeof(caculator));
         while (i--) {
             getsym(no);
         }

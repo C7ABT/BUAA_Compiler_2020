@@ -3,5 +3,6 @@ void main() {
     char a;
     int b = 5;
     scanf(a);
-    printf("NMSL", - 54);
+    a = 'c';
+    printf("NMSL", 0 - a);
 }
