@@ -943,6 +943,11 @@ int _expression() {
             getsym(no);
             return res;
         }   // printf 单个字符
+        else if (symbol_pre == SEMICN) {
+            res = token[0];
+            flag_expression = 2;
+            return res;
+        }   // 赋值 单个字符
         else {
             flag_expression = 1;
         }
@@ -955,6 +960,48 @@ int _expression() {
             getsym(no);
             return res;
         }   // printf 数字
+        else if (symbol_pre == SEMICN) {
+            res = atoi(token.c_str());
+            flag_expression = 1;
+            return res;
+        }   // 赋值 数字
+        else {
+            flag_expression = 1;
+        }
+    }
+    else if (symbol == IDENFR) {
+        pre_read_Symbol(1);
+        if (symbol_pre == RPARENT) {
+            int pos = find_symbolTable(token);
+            if (symbolTable[pos].type == 1) {
+                res = symbolTable[pos].value;
+                flag_expression = 1;
+                getsym(no);
+                return res;
+            }   // printf int型标识符
+            else if (symbolTable[pos].type == 2) {
+                res = symbolTable[pos].value;
+                flag_expression = 2;
+                getsym(no);
+                return res;
+            }   // printf char型标识符
+            else {
+                flag_expression = 1;
+            }
+        }
+        else if (symbol_pre == SEMICN) {
+            int pos = find_symbolTable(token);
+            if (symbolTable[pos].type == 1) {
+                res = symbolTable[pos].value;
+                flag_expression = 1;
+                return res;
+            }   // 赋值 int型标识符
+            else if (symbolTable[pos].type == 2) {
+                res = symbolTable[pos].value;
+                flag_expression = 2;
+                return res;
+            }   // 赋值 char型标识符
+        }
         else {
             flag_expression = 1;
         }
@@ -963,19 +1010,19 @@ int _expression() {
         flag_expression = 1;
     }
     if (flag_expression == 1) {
-        pre_read_Symbol(2);
-        if (symbol_pre == SEMICN) {
-            int pos = find_symbolTable(token);
-            if (symbolTable[pos].type == 2) {
-                flag_expression = 2;
-            }   // printf 标识符 char型
-            else {
-                flag_expression = 1;
-                // printf 标识符 int型
-            }
-            getsym(no);
-            return symbolTable[pos].value;
-        }
+//        pre_read_Symbol(2);
+//        if (symbol_pre == SEMICN) {
+//            int pos = find_symbolTable(token);
+//            if (symbolTable[pos].type == 2) {
+//                flag_expression = 2;
+//            }   // printf 标识符 char型
+//            else {
+//                flag_expression = 1;
+//                // printf 标识符 int型
+//            }
+//            getsym(no);
+//            return symbolTable[pos].value;
+//        }
         symbol_pre = FOUL;
         while (symbol_pre != SEMICN) {
             pre_read_Symbol(i);
@@ -1003,11 +1050,13 @@ int _expression() {
             }
             i += 1;
         }
-//        cout << caculator;
+//        cout << caculator << endl;
         res = ALU(caculator);
+//        memset(caculator, '\0', sizeof(caculator));
         while (i--) {
             getsym(no);
         }
+//        cout << res << endl;
         return res;
     }
     if (symbol == PLUS || symbol == MINU) { // 加法运算符
@@ -1150,10 +1199,17 @@ void _scanf() {
             getsym(yes);
             if (symbol == IDENFR) { // 标识符
                 int pos = find_symbolTable(token);
-                cin >> symbolTable[pos].value;
+                if (symbolTable[pos].type == 1) {
+                    cin >> symbolTable[pos].value;
+                }
+                else {
+                    char c;
+                    cin >> c;
+                    symbolTable[pos].value = (int)c;
+                }
                 getsym(yes);
             }
-            if (symbol == RPARENT) { // }
+            if (symbol == RPARENT) { // )
                 getsym(yes);
             }
         }
@@ -1662,8 +1718,8 @@ void _var_define_with_initialization() {
 
 // main
 int main() {
-//    getBuffer_debug();
-    getBuffer();
+    getBuffer_debug();
+//    getBuffer();
     getsym(no);
     program();
     return 0;
