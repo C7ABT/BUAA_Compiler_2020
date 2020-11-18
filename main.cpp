@@ -929,7 +929,7 @@ int _expression() {
     //  ＜表达式＞    ::= ［＋｜－］＜项＞{＜加法运算符＞＜项＞}
     int i = 0;
     int res = 0;
-    int flag = 0;  // 是否来自赋值语句, 赋值语句不需要去除末尾)
+    int flag = 0;  // 是否来自赋值语句, printf语句需要在开头添加(，同时结尾需要保留)
     if (symbol == ASSIGN) {
         flag = 1;
         getsym(no);
@@ -943,9 +943,10 @@ int _expression() {
             getsym(no);
             return res;
         }   // printf 单个字符
-        else if (symbol_pre == SEMICN) {
+        else if (symbol_pre == SEMICN || symbol_pre == COMMA) {
             res = token[0];
             flag_expression = 2;
+            getsym(no);
             return res;
         }   // 赋值 单个字符
         else {
@@ -960,9 +961,10 @@ int _expression() {
             getsym(no);
             return res;
         }   // printf 数字
-        else if (symbol_pre == SEMICN) {
+        else if (symbol_pre == SEMICN || symbol_pre == COMMA) {
             res = atoi(token.c_str());
             flag_expression = 1;
+            getsym(no);
             return res;
         }   // 赋值 数字
         else {
@@ -989,16 +991,18 @@ int _expression() {
                 flag_expression = 1;
             }
         }
-        else if (symbol_pre == SEMICN) {
+        else if (symbol_pre == SEMICN || symbol_pre == COMMA) {
             int pos = find_symbolTable(token);
             if (symbolTable[pos].type == 1) {
                 res = symbolTable[pos].value;
                 flag_expression = 1;
+                getsym(no);
                 return res;
             }   // 赋值 int型标识符
             else if (symbolTable[pos].type == 2) {
                 res = symbolTable[pos].value;
                 flag_expression = 2;
+                getsym(no);
                 return res;
             }   // 赋值 char型标识符
         }
@@ -1023,6 +1027,7 @@ int _expression() {
 //            getsym(no);
 //            return symbolTable[pos].value;
 //        }
+        caculator[0] = '(';
         symbol_pre = FOUL;
         while (symbol_pre != SEMICN) {
             pre_read_Symbol(i);
@@ -1039,10 +1044,10 @@ int _expression() {
                 strcat(caculator, value);
             }
             else if (symbol_pre == SEMICN) {
-                if (flag == 0) {
-                    // printf语句 去除末尾printf的)
+                if (flag == 1) {
+                    // 赋值语句 末尾添加)
                     int len = strlen(caculator);
-                    caculator[len - 1] = 0;
+                    caculator[len] = ')';
                 }
             }
             else {
@@ -1165,6 +1170,7 @@ int _unsigned_int() {
     }
 //    fprintf(f_out, "<无符号整数>\n");
 //    cout << "<无符号整数>" << endl;
+    return 0;
 }
 
 int _int() {
@@ -1189,6 +1195,7 @@ int _char() {
         getsym(yes);
         return res;
     }
+    return 0;
 }
 
 void _scanf() {
@@ -1229,6 +1236,7 @@ void _printf() {
             getsym(yes);
             if (symbol == STRCON) { // 字符串
                 fprintf(f_out, "%s", token.c_str());
+                printf("%s", token.c_str());
                 _string();  // 字符串
                 if (symbol == COMMA) { // ,
                     getsym(yes);
@@ -1236,14 +1244,17 @@ void _printf() {
                     switch (flag_expression) {
                         case 1:
                             fprintf(f_out, "%d\n", value);
+                            printf("%d\n", value);
                             break;
                         case 2:
                             fprintf(f_out, "%c\n", value);
+                            printf("%c\n", value);
                             break;
                     }
                 }
                 else {
                     fprintf(f_out, "\n");
+                    printf("\n");
                 }
             }
             else {
@@ -1251,9 +1262,11 @@ void _printf() {
                 switch (flag_expression) {
                     case 1:
                         fprintf(f_out, "%d\n", value);
+                        printf("%d\n", value);
                         break;
                     case 2:
                         fprintf(f_out, "%c\n", value);
+                        printf("%c\n", value);
                         break;
                 }
             }

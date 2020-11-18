@@ -1,5 +1,7 @@
 
 void main() {
-    int a = 9;
-    printf(-a * 5);
+    char a;
+    int b = 5;
+    scanf(a);
+    printf("NMSL", - 54);
 }
