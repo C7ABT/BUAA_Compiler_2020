@@ -431,7 +431,7 @@ void string();  //  ×Ö·û´®
 void program(); //  ³ÌÐò
 void constant_description();    //  ³£Á¿ËµÃ÷
 void constant_definition(); //  ³£Á¿¶¨Òå
-void signed_integer();  //  ÎÞ·ûºÅÕûÊý
+void unsigned_integer();  //  ÎÞ·ûºÅÕûÊý
 void integer(); //  ÕûÊý
 void identifier();  //  ±êÊ¶·û
 void declaration_head();    //  ÉùÃ÷Í·²¿
@@ -1626,55 +1626,68 @@ void loop_statement()   //  £¼Ñ­»·Óï¾ä£¾::=while'('£¼Ìõ¼þ£¾')'£¼Óï¾ä£¾
     }
     fprintf(fp_out,"<Ñ­»·Óï¾ä>\n");
 }
-void conditional_statement()//£¼Ìõ¼þÓï¾ä£¾::=if'('£¼Ìõ¼þ£¾')'£¼Óï¾ä£¾£Ûelse£¼Óï¾ä£¾£Ý
+void conditional_statement()    //  £¼Ìõ¼þÓï¾ä£¾::=if'('£¼Ìõ¼þ£¾')'£¼Óï¾ä£¾£Ûelse£¼Óï¾ä£¾£Ý
 {
-    int con=0;//±íÊ¾Ìõ¼þÕæ¼Ù£º1ÎªÕæ,0Îª¼Ù
+    int con=0;  //  ±íÊ¾Ìõ¼þÕæ¼Ù£º1ÎªÕæ, 0Îª¼Ù
     int state;
     state = run;
-    if(strcmp(store[now].type,"IFTK") == 0)
+    if(isReservedWord(0, "IFTK"))
     {
         getsym();
-        if(strcmp(store[now].type,"LPARENT") != 0) error_report();
+        if(!isReservedWord(0, "LPARENT")) {
+            error_report();
+        }
         else
         {
             getsym();
-            con = condition();//Ìõ¼þ
-            if(strcmp(store[now].type,"RPARENT") != 0) error_l();//´íÎól
-            else getsym();
-            if(con == 0)
+            con = condition();  //  Ìõ¼þ
+            if(!isReservedWord(0, "RPARENT")) {
+                error_l();  //  ´íÎól
+            }
+            else {
+                getsym();
+            }
+            if(con == 0) {
                 run = 0;
-            sentence();//Óï¾ä
-            if(state == 1 && ret_valid == 0) run = 1;
-            if(strcmp(store[now].type,"ELSETK") == 0)
+            }
+            sentence(); //  Óï¾ä
+            if(state == 1 && ret_valid == 0) {
+                run = 1;
+            }
+            if(isReservedWord(0, "ELSETK"))
             {
                 getsym();
-                if(con == 1)
+                if(con == 1) {
                     run = 0;
-                sentence();//Óï¾ä
-                if(state == 1 && ret_valid == 0) run = 1;
+                }
+                sentence(); //  Óï¾ä
+                if(state == 1 && ret_valid == 0) {
+                    run = 1;
+                }
             }
         }
     }
     fprintf(fp_out,"<Ìõ¼þÓï¾ä>\n");
 }
-void function_call_statement_with_return_value()//£¼ÓÐ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä£¾::=£¼±êÊ¶·û£¾'('£¼Öµ²ÎÊý±í£¾')'
+void function_call_statement_with_return_value()    //  £¼ÓÐ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä£¾::=£¼±êÊ¶·û£¾'('£¼Öµ²ÎÊý±í£¾')'
 {
     int i = 0;
-    int flag = 0;//ÊÇ·ñÕÒµ½ÏàÍ¬º¯ÊýÃûµÄ±êÖ¾
-    char use_name[MAX] = {};//º¯ÊýÃûÐ¡Ð´ÐÎÊ½
+    int flag = 0;   //  ÊÇ·ñÕÒµ½ÏàÍ¬º¯ÊýÃûµÄ±êÖ¾
+    char use_name[MAX] = {};    //  º¯ÊýÃûÐ¡Ð´ÐÎÊ½
     int value[30] = {};
     int back = 0;
     int to = 0;
     int state = 0;
     state = run;
-    if(strcmp(store[now].type,"IDENFR") == 0)
+    if(isReservedWord(0, "IDENFR"))
     {
-        error_c(1);//´íÎóc·ÖÎö
-        for(i=0; i<strlen(store[now].word); i++)
+        error_c(1); //  ´íÎóc·ÖÎö
+        for(i = 0; i < strlen(store[now].word); i++) {
             use_name[i] = tolower(store[now].word[i]);
-        for(i=0; i<func_num; i++)
+        }
+        for(i = 0; i < func_num; i++)
         {
-            if(strcmp(use_name,func_tab[i].name) == 0)
+            if(strcmp(use_name, func_tab[i].name) == 0)
             {
                 func_label = i;
                 to = func_tab[i].loc;
@@ -1682,47 +1695,55 @@ void function_call_statement_with_return_value()//£¼ÓÐ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä£¾::=£¼±
                 break;
             }
         }
-        if(flag == 0)
+        if(flag == 0) {
             func_label = -1;
+        }
         getsym();
-        if(strcmp(store[now].type,"LPARENT") != 0) error_report();
+        if(!isReservedWord(0, "LPARENT")) {
+            error_report();
+        }
         else
         {
             getsym();
-            value_parameter_table(value);//Öµ²ÎÊý±í
+            value_parameter_table(value);   //  Öµ²ÎÊý±í
             if(state == 1 && ret_valid == 0)
             {
                 back = now;
                 now = to;
-                function_definition_with_return_value(value);//ÓÐ·µ»ØÖµº¯Êý¶¨Òå
+                function_definition_with_return_value(value);   //  ÓÐ·µ»ØÖµº¯Êý¶¨Òå
                 now = back;
                 run = 1;
                 ret_valid = 0;
             }
-            if(strcmp(store[now].type,"RPARENT") != 0) error_l();//´íÎól
-            else getsym();
+            if(!isReservedWord(0, "RPARENT")) {
+                error_l();  //  ´íÎól
+            }
+            else {
+                getsym();
+            }
         }
     }
     fprintf(fp_out,"<ÓÐ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä>\n");
 }
-void function_call_statement_without_return_value()//£¼ÎÞ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä£¾::=£¼±êÊ¶·û£¾'('£¼Öµ²ÎÊý±í£¾')'
+void function_call_statement_without_return_value() //  £¼ÎÞ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä£¾::=£¼±êÊ¶·û£¾'('£¼Öµ²ÎÊý±í£¾')'
 {
     int i = 0;
     int flag = 0;
     int value[30] = {};
     int back = 0;
     int to = 0;
-    char use_name[MAX] = {};//º¯ÊýÃûÐ¡Ð´ÐÎÊ½
+    char use_name[MAX] = {};    //  º¯ÊýÃûÐ¡Ð´ÐÎÊ½
     int state = 0;
     state = run;
-    if(strcmp(store[now].type,"IDENFR") == 0)
+    if (isReservedWord(0, "IDENFR"))
     {
-        error_c(1);//´íÎóc·ÖÎö
-        for(i=0; i<strlen(store[now].word); i++)
+        error_c(1); //  ´íÎóc·ÖÎö
+        for (i = 0; i < strlen(store[now].word); i++) {
             use_name[i] = tolower(store[now].word[i]);
-        for(i=0; i<func_num; i++)
+        }
+        for (i = 0; i < func_num; i++)
         {
-            if(strcmp(use_name,func_tab[i].name) == 0)
+            if(strcmp(use_name, func_tab[i].name) == 0)
             {
                 func_label = i;
                 to = func_tab[i].loc;
@@ -1730,92 +1751,122 @@ void function_call_statement_without_return_value()//£¼ÎÞ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä£¾::=
                 break;
             }
         }
-        if(flag == 0)
+        if (flag == 0) {
             func_label = -1;
+        }
         getsym();
-        if(strcmp(store[now].type,"LPARENT") != 0) error_report();
+        if(!isReservedWord(0, "LPARENT")) {
+            error_report();
+        }
         else
         {
             getsym();
-            value_parameter_table(value);//Öµ²ÎÊý±í
+            value_parameter_table(value);   //  Öµ²ÎÊý±í
             if(state == 1 && ret_valid == 0)
             {
                 back = now;
                 now = to;
-                function_definition_without_return_value(value);//ÎÞ·µ»ØÖµº¯Êý¶¨Òå
+                function_definition_without_return_value(value);    //  ÎÞ·µ»ØÖµº¯Êý¶¨Òå
                 now = back;
                 run = 1;
                 ret_valid = 0;
             }
-            if(strcmp(store[now].type,"RPARENT") != 0) error_l();//´íÎól
-            else getsym();
+            if(!isReservedWord(0, "RPARENT")) {
+                error_l();  //  ´íÎól
+            }
+            else {
+                getsym();
+            }
         }
     }
     func_label = -1;
     fprintf(fp_out,"<ÎÞ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä>\n");
 }
-void assignment_statement()//£¼¸³ÖµÓï¾ä£¾::=£¼±êÊ¶·û£¾{'['£¼±í´ïÊ½£¾']'}02£½£¼±í´ïÊ½£¾
+void assignment_statement() //  £¼¸³ÖµÓï¾ä£¾::=£¼±êÊ¶·û£¾{'['£¼±í´ïÊ½£¾']'}£½£¼±í´ïÊ½£¾
 {
     int *index;
-    int i=0,j=0;
+    int i = 0, j = 0;
     char type = ' ';
-    if(strcmp(store[now].type,"IDENFR") == 0)
+    if(isReservedWord(0, "IDENFR"))
     {
-        error_c(2);//´íÎóc·ÖÎö
-        type = search_const();//¼ì²âÊÇ·ñÎªconstÀàÐÍ
-        if(type == 'x')
-            error_j();//´íÎój
-        index = get_index(store[now].word);//»ñÈ¡±êÊ¶·û±í¶ÔÓ¦±äÁ¿ÏÂ±ê¼°±íºÅ
+        error_c(2); //  ´íÎóc·ÖÎö
+        type = search_const();  //  ¼ì²âÊÇ·ñÎªconstÀàÐÍ
+        if(type == 'x') {
+            error_j();  //  ´íÎój
+        }
+        index = get_index(store[now].word); //  »ñÈ¡±êÊ¶·û±í¶ÔÓ¦±äÁ¿ÏÂ±ê¼°±íºÅ
         getsym();
-        if(strcmp(store[now].type,"ASSIGN") == 0)
+        if(isReservedWord(0, "ASSIGN"))
         {
             getsym();
-            expression();//±í´ïÊ½
+            expression();   //  ±í´ïÊ½
             if(run == 1 && ret_valid == 0)
             {
-                if(index[1] == 1)//ÔÚ¾Ö²¿±íÖÐ
-                    local_tab[index[0]].value[0] = temp_val;
-                else if(index[1] == 2)//ÔÚÈ«¾Ö±íÖÐ
-                    global_tab[index[0]].value[0] = temp_val;
-            }
-        }
-        else if(strcmp(store[now].type,"LBRACK") == 0)
-        {
-            getsym();
-            expression();//±í´ïÊ½
-            i = temp_val;
-            if(strcmp(store[now].type,"RBRACK") != 0) error_m();//´íÎóm
-            else getsym();
-            if(strcmp(store[now].type,"ASSIGN") == 0)
-            {
-                getsym();
-                expression();//±í´ïÊ½
-                if(run == 1 && ret_valid == 0)
+                if(index[1] == 1)   //  ÔÚ¾Ö²¿±íÖÐ
                 {
-                    if(index[1] == 1)//ÔÚ¾Ö²¿±íÖÐ
-                        local_tab[index[0]].value[i] = temp_val;
-                    else if(index[1] == 2)//ÔÚÈ«¾Ö±íÖÐ
-                        global_tab[index[0]].value[i] = temp_val;
+                    local_tab[index[0]].value[0] = temp_val;
+                }
+                else if(index[1] == 2)  //  ÔÚÈ«¾Ö±íÖÐ
+                {
+                    global_tab[index[0]].value[0] = temp_val;
                 }
             }
-            else if(strcmp(store[now].type,"LBRACK") == 0)
+        }
+        else if(isReservedWord(0, "LBRACK"))
+        {
+            getsym();
+            expression();   //  ±í´ïÊ½
+            i = temp_val;
+            if(!isReservedWord(0, "RBRACK")) {
+                error_m();  //  ´íÎóm
+            }
+            else {
+                getsym();
+            }
+            if(isReservedWord(0, "ASSIGN"))
             {
                 getsym();
-                expression();//±í´ïÊ½
+                expression();   //  ±í´ïÊ½
+                if(run == 1 && ret_valid == 0)
+                {
+                    if(index[1] == 1)   //  ÔÚ¾Ö²¿±íÖÐ
+                    {
+                        local_tab[index[0]].value[i] = temp_val;
+                    }
+                    else if(index[1] == 2)  //  ÔÚÈ«¾Ö±íÖÐ
+                    {
+                        global_tab[index[0]].value[i] = temp_val;
+                    }
+                }
+            }
+            else if(isReservedWord(0, "LBRACK"))
+            {
+                getsym();
+                expression();   //  ±í´ïÊ½
                 j = temp_val;
-                if(strcmp(store[now].type,"RBRACK") != 0) error_m();//´íÎóm
-                else getsym();
-                if(strcmp(store[now].type,"ASSIGN") != 0) error_report();
+                if(!isReservedWord(0, "RBRACK")) {
+                    error_m();  //  ´íÎóm
+                }
+                else {
+                    getsym();
+                }
+                if(!isReservedWord(0, "ASSIGN")) {
+                    error_report();
+                }
                 else
                 {
                     getsym();
-                    expression();//±í´ïÊ½
+                    expression();   //  ±í´ïÊ½
                     if(run == 1 && ret_valid == 0)
                     {
-                        if(index[1] == 1)//ÔÚ¾Ö²¿±íÖÐ
-                            local_tab[index[0]].value[i*local_tab[index[0]].j+j] = temp_val;
-                        else if(index[1] == 2)//ÔÚÈ«¾Ö±íÖÐ
-                            global_tab[index[0]].value[i*global_tab[index[0]].j+j] = temp_val;
+                        if(index[1] == 1)   //  ÔÚ¾Ö²¿±íÖÐ
+                        {
+                            local_tab[index[0]].value[i * local_tab[index[0]].j + j] = temp_val;
+                        }
+                        else if(index[1] == 2)  //  ÔÚÈ«¾Ö±íÖÐ
+                        {
+                            global_tab[index[0]].value[i * global_tab[index[0]].j + j] = temp_val;
+                        }
                     }
                 }
             }
@@ -1823,166 +1874,228 @@ void assignment_statement()//£¼¸³ÖµÓï¾ä£¾::=£¼±êÊ¶·û£¾{'['£¼±í´ïÊ½£¾']'}02£½£¼±í
     }
     fprintf(fp_out,"<¸³ÖµÓï¾ä>\n");
 }
-void read_statement()//£¼¶ÁÓï¾ä£¾::=scanf'('£¼±êÊ¶·û£¾')'
+void read_statement()   //  £¼¶ÁÓï¾ä£¾::=scanf'('£¼±êÊ¶·û£¾')'
 {
     int *index;
     char temp[30] = {};
     char type = ' ';
-    if(strcmp(store[now].type,"SCANFTK") == 0)
+    if(isReservedWord(0, "SCANFTK"))
     {
         getsym();
-        if(strcmp(store[now].type,"LPARENT") != 0) error_report();
+        if(!isReservedWord(0, "LPARENT")) {
+            error_report();
+        }
         else
         {
             getsym();
-            if(strcmp(store[now].type,"IDENFR") != 0) error_report();
+            if(!isReservedWord(0, "IDENFR")) {
+                error_report();
+            }
             else
             {
-                error_c(2);//´íÎóc·ÖÎö
-                type = search_const();//¼ì²âÊÇ·ñÎªconstÀàÐÍ
-                if(type == 'x')
-                    error_j();//´íÎój
-                index = get_index(store[now].word);//»ñÈ¡±êÊ¶·û±í¶ÔÓ¦±äÁ¿ÏÂ±ê¼°±íºÅ
+                error_c(2); //  ´íÎóc·ÖÎö
+                type = search_const();  //  ¼ì²âÊÇ·ñÎªconstÀàÐÍ
+                if(type == 'x') {
+                    error_j();  //  ´íÎój
+                }
+                index = get_index(store[now].word); //  »ñÈ¡±êÊ¶·û±í¶ÔÓ¦±äÁ¿ÏÂ±ê¼°±íºÅ
                 if(run == 1 && ret_valid == 0)
                 {
                     gets(temp);
-                    if(index[1] == 1)//ÔÚ¾Ö²¿±íÖÐ
+                    if(index[1] == 1)   //  ÔÚ¾Ö²¿±íÖÐ
                     {
-                        if(local_tab[index[0]].type == 1)//intÀàÐÍ
+                        if(local_tab[index[0]].type == 1)   //  intÀàÐÍ
+                        {
                             local_tab[index[0]].value[0] = atoi(temp);
-                        else if(local_tab[index[0]].type == 2)//charÀàÐÍ
+                        }
+                        else if(local_tab[index[0]].type == 2)  //  charÀàÐÍ
+                        {
                             local_tab[index[0]].value[0] = temp[0];
+                        }
                     }
-                    else if(index[1] == 2)//ÔÚÈ«¾Ö±íÖÐ
+                    else if(index[1] == 2)  //  ÔÚÈ«¾Ö±íÖÐ
                     {
-                        if(global_tab[index[0]].type == 1)//intÀàÐÍ
+                        if(global_tab[index[0]].type == 1)  //  intÀàÐÍ
+                        {
                             global_tab[index[0]].value[0] = atoi(temp);
-                        else if(global_tab[index[0]].type == 2)//charÀàÐÍ
+                        }
+                        else if(global_tab[index[0]].type == 2) //  charÀàÐÍ
+                        {
                             global_tab[index[0]].value[0] = temp[0];
+                        }
                     }
                 }
                 getsym();
-                if(strcmp(store[now].type,"RPARENT") != 0) error_l();//´íÎól
-                else getsym();
+                if(!isReservedWord(0, "RPARENT")) {
+                    error_l();  //  ´íÎól
+                }
+                else {
+                    getsym();
+                }
             }
         }
     }
     fprintf(fp_out,"<¶ÁÓï¾ä>\n");
 }
-void writing_statements()//£¼Ð´Óï¾ä£¾::=printf'('£¼×Ö·û´®£¾,£¼±í´ïÊ½£¾')'|printf'('£¼×Ö·û´®£¾')'|printf'('£¼±í´ïÊ½£¾')'
+void writing_statements()   //  £¼Ð´Óï¾ä£¾::=printf'('£¼×Ö·û´®£¾,£¼±í´ïÊ½£¾')'
+                            // |printf'('£¼×Ö·û´®£¾')'
+                            // |printf'('£¼±í´ïÊ½£¾')'
 {
-    if(strcmp(store[now].type,"PRINTFTK") == 0)
+    if(isReservedWord(0, "PRINTFTK"))
     {
         getsym();
-        if(strcmp(store[now].type,"LPARENT") != 0) error_report();
+        if(!isReservedWord(0, "LPARENT")) {
+            error_report();
+        }
         else
         {
             getsym();
-            if(strcmp(store[now].type,"STRCON") == 0)
+            if(isReservedWord(0, "STRCON"))
             {
-                string();//×Ö·û´®
-                if(strcmp(store[now].type,"COMMA") == 0)
+                string();   //  ×Ö·û´®
+                if(isReservedWord(0, "COMMA"))
                 {
-                    if(run == 1 && ret_valid == 0)
-                        fprintf(fp_result,"%s",temp_str);
+                    if(run == 1 && ret_valid == 0) {
+                        fprintf(fp_result, "%s", temp_str);
+                    }
                     getsym();
-                    expression();//±í´ïÊ½
+                    expression();   //  ±í´ïÊ½
                     if(run == 1 && ret_valid == 0)
                     {
-                        if(now_type == 'i')
-                            fprintf(fp_result,"%d\n",temp_val);
-                        else if(now_type == 'c')
-                            fprintf(fp_result,"%c\n",temp_val);
+                        if(now_type == 'i') {
+                            fprintf(fp_result, "%d\n", temp_val);
+                        }
+                        else if(now_type == 'c') {
+                            fprintf(fp_result, "%c\n", temp_val);
+                        }
                     }
-                    if(strcmp(store[now].type,"RPARENT") != 0) error_l();//´íÎól
-                    else getsym();
+                    if(!isReservedWord(0, "RPARENT")) {
+                        error_l();  //  ´íÎól
+                    }
+                    else {
+                        getsym();
+                    }
                 }
-                else if(strcmp(store[now].type,"RPARENT") != 0) error_l();//´íÎól
+                else if(!isReservedWord(0, "RPARENT")) {
+                    error_l();  //  ´íÎól
+                }
                 else
                 {
-                    if(run == 1 && ret_valid == 0)
-                        fprintf(fp_result,"%s\n",temp_str);
+                    if(run == 1 && ret_valid == 0) {
+                        fprintf(fp_result, "%s\n", temp_str);
+                    }
                     getsym();
                 }
             }
             else
             {
-                expression();//±í´ïÊ½
+                expression();   //  ±í´ïÊ½
                 if(run == 1 && ret_valid == 0)
                 {
-                    if(now_type == 'i')
-                        fprintf(fp_result,"%d\n",temp_val);
-                    else if(now_type == 'c')
-                        fprintf(fp_result,"%c\n",temp_val);
+                    if(now_type == 'i') {
+                        fprintf(fp_result, "%d\n", temp_val);
+                    }
+                    else if(now_type == 'c') {
+                        fprintf(fp_result, "%c\n", temp_val);
+                    }
                 }
-                if(strcmp(store[now].type,"RPARENT") != 0) error_l();//´íÎól
-                else getsym();
+                if(strcmp(store[now].type,"RPARENT") != 0) {
+                    error_l();  //  ´íÎól
+                }
+                else {
+                    getsym();
+                }
             }
         }
     }
     fprintf(fp_out,"<Ð´Óï¾ä>\n");
 }
-void case_statement()//£¼Çé¿öÓï¾ä£¾::=switch'('£¼±í´ïÊ½£¾')''{'£¼Çé¿ö±í£¾£¼È±Ê¡£¾'}'
+void case_statement()   //  £¼Çé¿öÓï¾ä£¾::=switch'('£¼±í´ïÊ½£¾')''{'£¼Çé¿ö±í£¾£¼È±Ê¡£¾'}'
 {
     int aim = 0;
     int sign = 0;
-    if(strcmp(store[now].type,"SWITCHTK") == 0)
+    if(isReservedWord(0, "SWITCHTK"))
     {
         getsym();
-        if(strcmp(store[now].type,"LPARENT") != 0) error_report();
+        if(!isReservedWord(0, "LPARENT")) {
+            error_report();
+        }
         else
         {
             getsym();
-            expression();//±í´ïÊ½
+            expression();   //  ±í´ïÊ½
             aim = temp_val;
-            if(now_type == 'i')
+            if(now_type == 'i') {
                 switch_type = 1;
-            else if(now_type == 'c')
+            }
+            else if(now_type == 'c') {
                 switch_type = 2;
-            if(strcmp(store[now].type,"RPARENT") != 0) error_l();//´íÎól
-            else getsym();
-            if(strcmp(store[now].type,"LBRACE") != 0) error_report();
+            }
+            if(!isReservedWord(0, "RPARENT")) {
+                error_l();  //  ´íÎól
+            }
+            else {
+                getsym();
+            }
+            if(!isReservedWord(0, "LBRACE")) {
+                error_report();
+            }
             else
             {
                 getsym();
-                sign = situation_table(aim);//Çé¿ö±í
-                default_sentence(sign);//È±Ê¡
-                if(strcmp(store[now].type,"RBRACE") != 0) error_report();
-                else
+                sign = situation_table(aim);    //  Çé¿ö±í
+                default_sentence(sign); //  È±Ê¡
+                if(!isReservedWord(0, "RBRACE")) {
+                    error_report();
+                }
+                else {
                     getsym();
+                }
             }
         }
     }
     fprintf(fp_out,"<Çé¿öÓï¾ä>\n");
 }
-void return_statement()//£¼·µ»ØÓï¾ä£¾::=return['('£¼±í´ïÊ½£¾')']
+void return_statement() //  £¼·µ»ØÓï¾ä£¾::=return['('£¼±í´ïÊ½£¾')']
 {
     int return_temp = 0;
-    if(strcmp(store[now].type,"RETURNTK") == 0)
+    if(isReservedWord(0, "RETURNTK"))
     {
         getsym();
-        if(void_ret == 1 && def == 1)//ÎÞ·µ»ØÖµ
+        if(void_ret == 1 && def == 1)   //  ÎÞ·µ»ØÖµ
         {
-            if(strcmp(store[now].type,"SEMICN") != 0)
-                error_g();//´íÎóg
+            if(!isReservedWord(0, "SEMICN")) {
+                error_g();  //  ´íÎóg
+            }
         }
-        else if(have_ret == 1 && def == 1)//ÓÐ·µ»ØÖµ
+        else if(have_ret == 1 && def == 1)  //  ÓÐ·µ»ØÖµ
         {
-            if(strcmp(store[now].type,"SEMICN") == 0)
-                error_h();//´íÎóh - ÐÎÈçreturn;
+            if(isReservedWord(0, "SEMICN")) {
+                error_h();  //  ´íÎóh - ÐÎÈçreturn;
+            }
         }
-        if(strcmp(store[now].type,"LPARENT") == 0)
+        if(isReservedWord(0, "LPARENT"))
         {
             getsym();
-            if(have_ret == 1 && strcmp(store[now].type,"RPARENT") == 0 && def == 1)
-                error_h();//´íÎóh - ÐÎÈçreturn();
-            expression();//±í´ïÊ½
-            if(run == 1)
+            if(have_ret == 1 && isReservedWord(0, "RPARENT") && def == 1) {
+                error_h();  //  ´íÎóh - ÐÎÈçreturn();
+            }
+            expression();   //  ±í´ïÊ½
+            if(run == 1) {
                 return_temp = temp_val;
-            if(have_ret == 1 && ((now_type == 'i' && func_tab[func_num].type != 5) || (now_type == 'c' && func_tab[func_num].type != 6)) && def == 1)
-                error_h();//´íÎóh - returnÓï¾äÖÐ±í´ïÊ½ÀàÐÍÓë·µ»ØÖµÀàÐÍ²»Ò»ÖÂ
-            if(strcmp(store[now].type,"RPARENT") != 0) error_l();//´íÎól
-            else getsym();
+            }
+            if(have_ret == 1
+            && ((now_type == 'i' && func_tab[func_num].type != 5)
+            || (now_type == 'c' && func_tab[func_num].type != 6))
+            && def == 1) {
+                error_h();  //  ´íÎóh - returnÓï¾äÖÐ±í´ïÊ½ÀàÐÍÓë·µ»ØÖµÀàÐÍ²»Ò»ÖÂ
+            }
+            if(!isReservedWord(0, "RPARENT")) {
+                error_l();  //  ´íÎól
+            }
+            else {
+                getsym();
+            }
         }
     }
     if(run == 1)
@@ -1993,89 +2106,103 @@ void return_statement()//£¼·µ»ØÓï¾ä£¾::=return['('£¼±í´ïÊ½£¾')']
     }
     fprintf(fp_out,"<·µ»ØÓï¾ä>\n");
 }
-int situation_table(int aim)//£¼Çé¿ö±í£¾::=£¼Çé¿ö×ÓÓï¾ä£¾{£¼Çé¿ö×ÓÓï¾ä£¾}
+int situation_table(int aim)    //  £¼Çé¿ö±í£¾::=£¼Çé¿ö×ÓÓï¾ä£¾{£¼Çé¿ö×ÓÓï¾ä£¾}
 {
     int flag = 0;
     int sign = 0;
     do
     {
-        flag = case_sub_statement(aim);//Çé¿ö×ÓÓï¾ä
-        if(flag == 1)
+        flag = case_sub_statement(aim); //  Çé¿ö×ÓÓï¾ä
+        if(flag == 1) {
             sign = 1;
-    }while(strcmp(store[now].type,"CASETK") == 0);
+        }
+    }   while(isReservedWord(0, "CASETK"));
     fprintf(fp_out,"<Çé¿ö±í>\n");
     return sign;
 }
-int case_sub_statement(int aim)//£¼Çé¿ö×ÓÓï¾ä£¾::=case£¼³£Á¿£¾£º£¼Óï¾ä£¾
+int case_sub_statement(int aim) //  £¼Çé¿ö×ÓÓï¾ä£¾::=case£¼³£Á¿£¾£º£¼Óï¾ä£¾
 {
     int state = run;
     int sign = 0;
     int type;
-    if(strcmp(store[now].type,"CASETK") == 0)
+    if(isReservedWord(0, "CASETK"))
     {
         getsym();
-        constant(switch_type);//³£Á¿
-        if(aim == temp_val)
-            sign=1;
-        if(strcmp(store[now].type,"COLON") != 0) error_report();
+        constant(switch_type);  //  ³£Á¿
+        if(aim == temp_val) {
+            sign = 1;
+        }        
+        if(!isReservedWord(0, "COLON")) {
+            error_report();
+        }       
         else
         {
             getsym();
-            if(sign != 1)
+            if(sign != 1) {
                 run = 0;
-            sentence();//Óï¾ä
-            if(state == 1 && ret_valid == 0) run = 1;
+            }            
+            sentence(); //  Óï¾ä
+            if(state == 1 && ret_valid == 0) {
+                run = 1;
+            }        
         }
     }
     fprintf(fp_out,"<Çé¿ö×ÓÓï¾ä>\n");
     return sign;
 }
-void default_sentence(int sign)//£¼È±Ê¡£¾::=default:£¼Óï¾ä£¾
+void default_sentence(int sign) //  £¼È±Ê¡£¾::=default:£¼Óï¾ä£¾
 {
     int state = run;
-    if(strcmp(store[now].type,"DEFAULTTK") != 0) error_p();
+    if(!isReservedWord(0, "DEFAULTTK")) {
+        error_p();
+    }
     else
     {
         getsym();
-        if(strcmp(store[now].type,"COLON") != 0) error_report();
+        if(!isReservedWord(0, "COLON")) {
+            error_report();
+        }        
         else
         {
             getsym();
-            if(sign == 1)
+            if(sign == 1) {
                 run = 0;
-            sentence();//Óï¾ä
-            if(state == 1 && ret_valid == 0) run = 1;
+            }            
+            sentence(); //  Óï¾ä
+            if(state == 1 && ret_valid == 0) {
+                run = 1;
+            }        
         }
     }
     fprintf(fp_out,"<È±Ê¡>\n");
 }
-void string()//£¼×Ö·û´®£¾::="£ûÊ®½øÖÆ±àÂëÎª32,33,35-126µÄASCII×Ö·û£ý"
+void string()   //  £¼×Ö·û´®£¾::="£ûÊ®½øÖÆ±àÂëÎª32,33,35-126µÄASCII×Ö·û£ý"
 {
-    if(strcmp(store[now].type,"STRCON") == 0)
+    if(isReservedWord(0, "STRCON"))
     {
-        strcpy(temp_str,store[now].word);
+        strcpy(temp_str, store[now].word);
         getsym();
     }
     fprintf(fp_out,"<×Ö·û´®>\n");
 }
-void value_parameter_table(int value[])//£¼Öµ²ÎÊý±í£¾::=£¼±í´ïÊ½£¾{,£¼±í´ïÊ½£¾}£ü£¼¿Õ£¾
+void value_parameter_table(int value[]) //  £¼Öµ²ÎÊý±í£¾::=£¼±í´ïÊ½£¾{,£¼±í´ïÊ½£¾}£ü£¼¿Õ£¾
 {
     int use_num = 0;
     char use_id[MAX] = {};
     int id_num = 0;
     int flag = 0;
     int val_num = 0;
-    if(strcmp(store[now].type,"RPARENT") != 0 && strcmp(store[now].type,"SEMICN") != 0)//£¼¿Õ£¾
+    if(!isReservedWord(0, "RPARENT") && !isReservedWord(0, "SEMICN"))   //£¼¿Õ£¾
     {
-        expression();//±í´ïÊ½
+        expression();   //  ±í´ïÊ½
         value[val_num++] = temp_val;
         use_id[id_num] = now_type;
         id_num++;
         use_num++;
-        while(strcmp(store[now].type,"COMMA") == 0)
+        while(isReservedWord(0, "COMMA"))
         {
             getsym();
-            expression();//±í´ïÊ½
+            expression();   //  ±í´ïÊ½
             value[val_num++] = temp_val;
             use_id[id_num] = now_type;
             id_num++;
@@ -2084,291 +2211,386 @@ void value_parameter_table(int value[])//£¼Öµ²ÎÊý±í£¾::=£¼±í´ïÊ½£¾{,£¼±í´ïÊ½£¾}£
     }
     if(func_label != -1 && use_num != func_tab[func_label].num)
     {
-        error_d();//´íÎód
+        error_d();  //  ´íÎód
         flag = 1;
     }
-    if(func_label != -1 && strcmp(use_id,func_tab[func_label].id)!=0 && flag == 0)
-        error_e();//´íÎóe
+    if(func_label != -1     
+    && strcmp(use_id, func_tab[func_label].id) != 0 
+    && flag == 0) {
+        error_e();  //  ´íÎóe
+    }
     fprintf(fp_out,"<Öµ²ÎÊý±í>\n");
 }
-void step()//£¼²½³¤£¾::=£¼ÎÞ·ûºÅÕûÊý£¾
+void step() //  £¼²½³¤£¾::=£¼ÎÞ·ûºÅÕûÊý£¾
 {
-    signed_integer();//ÎÞ·ûºÅÕûÊý
+    unsigned_integer();   //  ÎÞ·ûºÅÕûÊý
     fprintf(fp_out,"<²½³¤>\n");
 }
-int condition()//£¼Ìõ¼þ£¾::=£¼±í´ïÊ½£¾£¼¹ØÏµÔËËã·û£¾£¼±í´ïÊ½£¾
+int condition() //  £¼Ìõ¼þ£¾::=£¼±í´ïÊ½£¾£¼¹ØÏµÔËËã·û£¾£¼±í´ïÊ½£¾
 {
-    int left=0,right=0;
-    int result=0;
-    int opr=0;
-    expression();//±í´ïÊ½
+    int left = 0, right = 0;
+    int result = 0;
+    int opr = 0;
+    expression();   //  ±í´ïÊ½
     left = temp_val;
-    if(now_type != 'i')
-        error_f();//´íÎóf
-    if(strcmp(store[now].type,"LSS") != 0 && strcmp(store[now].type,"LEQ") != 0 &&
-       strcmp(store[now].type,"GRE") != 0 && strcmp(store[now].type,"GEQ") != 0 &&
-       strcmp(store[now].type,"EQL") != 0 && strcmp(store[now].type,"NEQ") != 0) error_report();
+    if(now_type != 'i') {
+        error_f();  //  ´íÎóf
+    }
+    if(!isReservedWord(0,"LSS") && !isReservedWord(0, "LEQ")
+    &&  !isReservedWord(0, "GRE") && !isReservedWord(0, "GEQ")
+    &&  !isReservedWord(0, "EQL") && !isReservedWord(0, "NEQ")) {
+        error_report();
+    }
     else
     {
-        if(strcmp(store[now].type,"LSS") == 0)//<
+        if (isReservedWord(0, "LSS"))    //  <
+        {
             opr = 1;
-        else if(strcmp(store[now].type,"LEQ") == 0)//<=
+        }
+        else if (isReservedWord(0, "LEQ"))   //  <=
+        {
             opr = 2;
-        else if(strcmp(store[now].type,"GRE") == 0)//>
+        }
+        else if (isReservedWord(0, "GRE"))   //  >
+        {
             opr = 3;
-        else if(strcmp(store[now].type,"GEQ") == 0)//>=
+        }
+        else if (isReservedWord(0, "GEQ"))  //  >=
+        {
             opr = 4;
-        else if(strcmp(store[now].type,"EQL") == 0)//==
+        }
+        else if (isReservedWord(0, "EQL"))  //  ==
+        {
             opr = 5;
-        else if(strcmp(store[now].type,"NEQ") == 0)//!=
+        }
+        else if (isReservedWord(0, "NEQ"))    // !=
+        {
             opr = 6;
+        }
         getsym();
-        expression();//±í´ïÊ½
+        expression();   //  ±í´ïÊ½
         right = temp_val;
-        if(now_type != 'i')
-            error_f();//´íÎóf
-        if(opr == 1)
-        {
-            if(left<right)
-                result = 1;
+        if (now_type != 'i') {
+            error_f();  //  ´íÎóf
         }
-        else if(opr == 2)
+        if (opr == 1)
         {
-            if(left<=right)
+            if (left < right) {
                 result = 1;
+            }
         }
-        else if(opr == 3)
+        else if (opr == 2)
         {
-            if(left>right)
+            if (left <= right) {
                 result = 1;
+            }
         }
-        else if(opr == 4)
+        else if (opr == 3)
         {
-            if(left>=right)
+            if (left > right) {
                 result = 1;
+            }
         }
-        else if(opr == 5)
+        else if (opr == 4)
         {
-            if(left==right)
+            if (left >= right) {
                 result = 1;
+            }
         }
-        else if(opr == 6)
+        else if (opr == 5)
         {
-            if(left!=right)
+            if (left == right) {
                 result = 1;
+            }
+        }
+        else if (opr == 6)
+        {
+            if (left != right) {
+                result = 1;
+            }
         }
     }
     fprintf(fp_out,"<Ìõ¼þ>\n");
     return result;
 }
-void expression()//£¼±í´ïÊ½£¾::=£Û£«£ü£­£Ý£¼Ïî£¾{£¼¼Ó·¨ÔËËã·û£¾£¼Ïî£¾}
+void expression()   //  £¼±í´ïÊ½£¾::=£Û£«£ü£­£Ý£¼Ïî£¾{£¼¼Ó·¨ÔËËã·û£¾£¼Ïî£¾}
 {
     int temp = 0;
     int minu_flag = 0;
     int opr = 0;
-    if(strcmp(store[now].type,"PLUS") == 0)
+    if(isReservedWord(0, "PLUS")) {
         getsym();
-    else if(strcmp(store[now].type,"MINU") == 0)
+    }
+    else if(isReservedWord(0, "MINU"))
     {
         minu_flag = 1;
         getsym();
     }
-    term();//Ïî
-    if(minu_flag == 1)
+    term(); //  Ïî
+    if(minu_flag == 1) {
         temp_val = -temp_val;
-    while(strcmp(store[now].type,"PLUS") == 0 || strcmp(store[now].type,"MINU") == 0)
+    }
+    while(isReservedWord(0, "PLUS") || isReservedWord(0, "MINU"))
     {
-        if(strcmp(store[now].type,"PLUS") == 0)
+        if(isReservedWord(0, "PLUS")) {
             opr = 1;
-        else
+        }
+        else {
             opr = 2;
+        }
         getsym();
         temp = temp_val;
-        term();//Ïî
-        if(opr == 1)//¼Ó·¨
-            temp_val = temp+temp_val;
-        else if(opr == 2)//¼õ·¨
-            temp_val = temp-temp_val;
+        term(); //  Ïî
+        if(opr == 1)    //  +
+        {
+            temp_val = temp + temp_val;
+        }
+        else if(opr == 2)   //  -
+        {
+            temp_val = temp - temp_val;
+        }
         now_type = 'i';
     }
     fprintf(fp_out,"<±í´ïÊ½>\n");
 }
-void term()//£¼Ïî£¾::=£¼Òò×Ó£¾{£¼³Ë·¨ÔËËã·û£¾£¼Òò×Ó£¾}
+void term() //  £¼Ïî£¾::=£¼Òò×Ó£¾{£¼³Ë·¨ÔËËã·û£¾£¼Òò×Ó£¾}
 {
     int temp = 0;
     int opr = 0;
-    factor();//Òò×Ó
-    while(strcmp(store[now].type,"MULT") == 0 || strcmp(store[now].type,"DIV") == 0)
+    factor();   //  Òò×Ó
+    while(isReservedWord(0, "MULT") || isReservedWord(0, "DIV"))
     {
-        if(strcmp(store[now].type,"MULT") == 0)
+        if(isReservedWord(0, "MULT")) {
             opr = 1;
-        else
+        }
+        else {
             opr = 2;
+        }
         getsym();
         temp = temp_val;
-        factor();//Òò×Ó
+        factor();   //  Òò×Ó
         if(run == 1)
         {
-            if(opr == 1)//³Ë·¨
-                temp_val = temp*temp_val;
-            else if(opr == 2)//³ý·¨
-                temp_val = temp/temp_val;
+            if(opr == 1)    //  *
+            {
+                temp_val = temp * temp_val;
+            }
+            else if(opr == 2)   // /
+            {
+                temp_val = temp / temp_val;
+            }
         }
         now_type = 'i';
     }
     fprintf(fp_out,"<Ïî>\n");
 }
-void factor()//£¼Òò×Ó£¾::=£¼±êÊ¶·û£¾£ü£¼±êÊ¶·û£¾'['£¼±í´ïÊ½£¾']'|£¼±êÊ¶·û£¾'['£¼±í´ïÊ½£¾']''['£¼±í´ïÊ½£¾']'|'('£¼±í´ïÊ½£¾')'£ü£¼ÕûÊý£¾|£¼×Ö·û£¾£ü£¼ÓÐ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä£¾
+void factor()   //  £¼Òò×Ó£¾::=£¼±êÊ¶·û£¾
+                // £ü£¼±êÊ¶·û£¾'['£¼±í´ïÊ½£¾']'
+                // |£¼±êÊ¶·û£¾'['£¼±í´ïÊ½£¾']''['£¼±í´ïÊ½£¾']'
+                // |'('£¼±í´ïÊ½£¾')'
+                // £ü£¼ÕûÊý£¾|£¼×Ö·û£¾£ü£¼ÓÐ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä£¾
 {
     int *index;
-    int i=0, j=0;
+    int i = 0, j = 0;
     int temp_ind = 0;
     int temp_tab = 0;
     int temp_label = 0;
     char temp_type = ' ';
-    int flag = 0;//ÊÇ·ñÕÒµ½ÏàÍ¬º¯ÊýÃûµÄ±êÖ¾
-    char use_name[MAX] = {};//º¯ÊýÃûÐ¡Ð´ÐÎÊ½
-    if(strcmp(store[now].type,"IDENFR") == 0 && strcmp(store[now+1].type,"LPARENT") != 0)
+    int flag = 0;  //   ÊÇ·ñÕÒµ½ÏàÍ¬º¯ÊýÃûµÄ±êÖ¾
+    char use_name[MAX] = {};    //  º¯ÊýÃûÐ¡Ð´ÐÎÊ½
+    if(isReservedWord(0, "IDENFR") && !isReservedWord(1, "LPARENT"))
     {
-        error_c(2);//´íÎóc·ÖÎö
-        temp_type = search_nametab();//»ñÈ¡±êÊ¶·ûÀàÐÍ
-        index = get_index(store[now].word);//»ñÈ¡±êÊ¶·û±í¶ÔÓ¦±äÁ¿ÏÂ±ê¼°±íºÅ
-        if(index[1] == 1)//ÔÚ¾Ö²¿±íÖÐ
+        error_c(2); //  ´íÎóc·ÖÎö
+        temp_type = search_nametab();   //  »ñÈ¡±êÊ¶·ûÀàÐÍ
+        index = get_index(store[now].word); //  »ñÈ¡±êÊ¶·û±í¶ÔÓ¦±äÁ¿ÏÂ±ê¼°±íºÅ
+        if(index[1] == 1)   //  ÔÚ¾Ö²¿±íÖÐ
+        {
             temp_val = local_tab[index[0]].value[0];
-        else if(index[1] == 2)//ÔÚÈ«¾Ö±íÖÐ
+        }
+        else if(index[1] == 2)  //  ÔÚÈ«¾Ö±íÖÐ
+        {
             temp_val = global_tab[index[0]].value[0];
+        }
         getsym();
-        if(strcmp(store[now].type,"LBRACK") == 0)
+        if(isReservedWord(0, "LBRACK"))
         {
             getsym();
             temp_ind = index[0];
             temp_tab = index[1];
-            expression();//±í´ïÊ½
+            expression();   //  ±í´ïÊ½
             i = temp_val;
-            if(temp_tab == 1)//ÔÚ¾Ö²¿±íÖÐ
+            if(temp_tab == 1)   //  ÔÚ¾Ö²¿±íÖÐ
+            {
                 temp_val = local_tab[temp_ind].value[i];
-            else if(temp_tab == 2)//ÔÚÈ«¾Ö±íÖÐ
+            }
+            else if(temp_tab == 2)  //  ÔÚÈ«¾Ö±íÖÐ
+            {
                 temp_val = global_tab[temp_ind].value[i];
-            if(now_type != 'i')
-                error_i();//´íÎói
+            }
+            if(now_type != 'i') {
+                error_i();  //  ´íÎói
+            }
             //now_type = 'i';
-            if(strcmp(store[now].type,"RBRACK") != 0) error_m();//´íÎóm
-            else getsym();
-            if(strcmp(store[now].type,"LBRACK") == 0)
+            if(!isReservedWord(0, "RBRACK")) {
+                error_m();  //  ´íÎóm
+            }
+            else {
+                getsym();
+            }
+            if(isReservedWord(0, "LBRACK"))
             {
                 getsym();
-                expression();//±í´ïÊ½
+                expression();   //  ±í´ïÊ½
                 j = temp_val;
-                if(temp_tab == 1)//ÔÚ¾Ö²¿±íÖÐ
-                    temp_val = local_tab[temp_ind].value[i*local_tab[temp_ind].j+j];
-                else if(temp_tab == 2)//ÔÚÈ«¾Ö±íÖÐ
-                    temp_val = global_tab[temp_ind].value[i*global_tab[temp_ind].j+j];
-                if(now_type != 'i')
-                    error_i();//´íÎói
+                if(temp_tab == 1)   //  ÔÚ¾Ö²¿±íÖÐ
+                {
+                    temp_val = local_tab[temp_ind].value[i * local_tab[temp_ind].j + j];
+                }
+                else if(temp_tab == 2)  //  ÔÚÈ«¾Ö±íÖÐ
+                {
+                    temp_val = global_tab[temp_ind].value[i * global_tab[temp_ind].j + j];
+                }
+                if(now_type != 'i') {
+                    error_i();  //  ´íÎói
+                }
                 //now_type = 'i';
-                if(strcmp(store[now].type,"RBRACK") != 0) error_m();//´íÎóm
-                else getsym();
+                if(!isReservedWord(0, "RBRACK")) {
+                    error_m();  //  ´íÎóm
+                }
+                else {
+                    getsym();
+                }
             }
         }
         now_type = temp_type;
     }
-    else if(strcmp(store[now].type,"LPARENT") == 0)
+    else if(isReservedWord(0, "LPARENT"))
     {
         getsym();
-        expression();//±í´ïÊ½
-        if(strcmp(store[now].type,"RPARENT") != 0) error_l();//´íÎól
-        else getsym();
+        expression();   //  ±í´ïÊ½
+        if(!isReservedWord(0, "RPARENT")) {
+            error_l();  //  ´íÎól
+        }
+        else {
+            getsym();
+        }
         now_type = 'i';
     }
-    else if(strcmp(store[now].type,"PLUS") == 0 || strcmp(store[now].type,"MINU") == 0 || strcmp(store[now].type,"INTCON") == 0)
+    else if(isReservedWord(0, "PLUS") || isReservedWord(0, "MINU") || isReservedWord(0, "INTCON"))
     {
-        integer();//ÕûÊý
+        integer();  //  ÕûÊý
         now_type = 'i';
     }
-    else if(strcmp(store[now].type,"CHARCON") == 0)
+    else if(isReservedWord(0, "CHARCON"))
     {
         now_type = 'c';
         temp_val = store[now].word[0];
         getsym();
     }
-    else if(strcmp(store[now].type,"IDENFR") == 0 && strcmp(store[now+1].type,"LPARENT") == 0)
+    else if(isReservedWord(0, "IDENFR") && isReservedWord(1, "LPARENT"))
     {
-        for(i=0; i<strlen(store[now].word); i++)
+        for(i = 0; i < strlen(store[now].word); i++) {
             use_name[i] = tolower(store[now].word[i]);
-        for(i=0; i<func_num; i++)
+        }
+        for(i = 0; i < func_num; i++)
         {
-            if(strcmp(use_name,func_tab[i].name) == 0)
+            if(strcmp(use_name, func_tab[i].name) == 0)
             {
                 func_label = i;
                 flag = 1;
                 break;
             }
         }
-        if(flag == 0)
+        if(flag == 0) {
             func_label = -1;
+        }
         if(func_label != -1)
         {
             temp_label = func_label;
-            function_call_statement_with_return_value();//ÓÐ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä
+            function_call_statement_with_return_value();    //  ÓÐ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä
             func_label = temp_label;
         }
-        else
-            function_call_statement_with_return_value();//ÓÐ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä
-        if(func_tab[func_label].type == 5)
+        else {
+            function_call_statement_with_return_value();    //  ÓÐ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä
+        }
+        if(func_tab[func_label].type == 5) {
             now_type = 'i';
-        else if(func_tab[func_label].type == 6)
+        }
+        else if(func_tab[func_label].type == 6) {
             now_type = 'c';
+        }
         temp_val = ret_value;
     }
     fprintf(fp_out,"<Òò×Ó>\n");
 }
-void parameter_table(int value[])//<²ÎÊý±í>::=<ÀàÐÍ±êÊ¶·û><±êÊ¶·û>{,<ÀàÐÍ±êÊ¶·û><±êÊ¶·û>}|<¿Õ>
+void parameter_table(int value[])   //  <²ÎÊý±í>::=<ÀàÐÍ±êÊ¶·û><±êÊ¶·û>{,<ÀàÐÍ±êÊ¶·û><±êÊ¶·û>}
+                                    // |<¿Õ>
 {
     int val_num = 0;
     int type;
     int id_num = 0;
-    if((strcmp(store[now].type,"INTTK") == 0 || strcmp(store[now].type,"CHARTK") == 0))
+    if(isReservedWord(0, "INTTK") || isReservedWord(0, "CHARTK"))
     {
-        if(strcmp(store[now].type,"INTTK") == 0) type = 1;
-        else type = 2;
+        if(isReservedWord(0, "INTTK")) {
+            type = 1;
+        }
+        else {
+            type = 2;
+        }
         getsym();
-        if(strcmp(store[now].type,"IDENFR") != 0) error_report();
+        if(!isReservedWord(0, "IDENFR")) {
+            error_report();
+        }
         else
         {
-            if(type == 1)
+            if(type == 1) {
                 func_tab[func_num].id[id_num] = 'i';
-            else if(type == 2)
+            }
+            else if(type == 2) {
                 func_tab[func_num].id[id_num] = 'c';
+            }
             func_tab[func_num].num++;
             id_num++;
-            error_b(type);//´íÎób·ÖÎö
+            error_b(type);  //  ´íÎób·ÖÎö
             local_tab[lt_num].func = 1;
-            if(run == 1 && ret_valid == 0)
+            if(run == 1 && ret_valid == 0) {
                 local_tab[lt_num].value[0] = value[val_num++];
+            }
             lt_num++;
             getsym();
-            while(strcmp(store[now].type,"COMMA") == 0)
+            while(isReservedWord(0, "COMMA"))
             {
                 getsym();
-                if((strcmp(store[now].type,"INTTK") != 0 && strcmp(store[now].type,"CHARTK") != 0)) error_report();
+                if((!isReservedWord(0, "INTTK") && !isReservedWord(0, "CHARTK"))) {
+                    error_report();
+                }
                 else
                 {
-                    if(strcmp(store[now].type,"INTTK") == 0) type = 1;
-                    else type = 2;
+                    if(isReservedWord(0, "INTTK")) {
+                        type = 1;
+                    }
+                    else {
+                        type = 2;
+                    }
                     getsym();
-                    if(strcmp(store[now].type,"IDENFR") != 0) error_report();
+                    if(!isReservedWord(0, "IDENFR")) {
+                        error_report();
+                    }
                     else
                     {
-                        if(type == 1)
+                        if(type == 1) {
                             func_tab[func_num].id[id_num] = 'i';
-                        else if(type == 2)
+                        }
+                        else if(type == 2) {
                             func_tab[func_num].id[id_num] = 'c';
+                        }
                         func_tab[func_num].num++;
                         id_num++;
-                        error_b(type);//´íÎób·ÖÎö
+                        error_b(type);  //  ´íÎób·ÖÎö
                         local_tab[lt_num].func = 1;
-                        if(run == 1 && ret_valid == 0)
+                        if(run == 1 && ret_valid == 0) {
                             local_tab[lt_num].value[0] = value[val_num++];
+                        }
                         lt_num++;
                         getsym();
                     }
@@ -2376,8 +2598,7 @@ void parameter_table(int value[])//<²ÎÊý±í>::=<ÀàÐÍ±êÊ¶·û><±êÊ¶·û>{,<ÀàÐÍ±êÊ¶·û>
             }
         }
     }
-    else if(strcmp(store[now].type,"RPARENT") == 0)
-        ;//<¿Õ>
+    else if(strcmp(store[now].type,"RPARENT") == 0);    //  <¿Õ>
     fprintf(fp_out,"<²ÎÊý±í>\n");
 }
 void declaration_head()//<ÉùÃ÷Í·²¿>::=int£¼±êÊ¶·û>|char£¼±êÊ¶·û>
@@ -2451,7 +2672,7 @@ void variable_definition_has_no_initialization()//<±äÁ¿¶¨ÒåÎÞ³õÊ¼»¯>::=<ÀàÐÍ±êÊ¶
             if(strcmp(store[now].type,"LBRACK") == 0)
             {
                 getsym();
-                signed_integer();//ÎÞ·ûºÅÕûÊý
+                unsigned_integer();//ÎÞ·ûºÅÕûÊý
                 if(global_flag == 1)
                 {
                     global_tab[gt_num].i = temp_val;
@@ -2467,7 +2688,7 @@ void variable_definition_has_no_initialization()//<±äÁ¿¶¨ÒåÎÞ³õÊ¼»¯>::=<ÀàÐÍ±êÊ¶
                 if(strcmp(store[now].type,"LBRACK") == 0)
                 {
                     getsym();
-                    signed_integer();//ÎÞ·ûºÅÕûÊý
+                    unsigned_integer();//ÎÞ·ûºÅÕûÊý
                     if(global_flag == 1)
                     {
                         global_tab[gt_num].j = temp_val;
@@ -2499,7 +2720,7 @@ void variable_definition_has_no_initialization()//<±äÁ¿¶¨ÒåÎÞ³õÊ¼»¯>::=<ÀàÐÍ±êÊ¶
             if(strcmp(store[now].type,"LBRACK") == 0)
             {
                 getsym();
-                signed_integer();//ÎÞ·ûºÅÕûÊý
+                unsigned_integer();//ÎÞ·ûºÅÕûÊý
                 if(global_flag == 1)
                 {
                     global_tab[gt_num].i = temp_val;
@@ -2515,7 +2736,7 @@ void variable_definition_has_no_initialization()//<±äÁ¿¶¨ÒåÎÞ³õÊ¼»¯>::=<ÀàÐÍ±êÊ¶
                 if(strcmp(store[now].type,"LBRACK") == 0)
                 {
                     getsym();
-                    signed_integer();//ÎÞ·ûºÅÕûÊý
+                    unsigned_integer();//ÎÞ·ûºÅÕûÊý
                     if(global_flag == 1)
                     {
                         global_tab[gt_num].j = temp_val;
@@ -2567,7 +2788,7 @@ void variable_definition_and_initialization()//<±äÁ¿¶¨Òå¼°³õÊ¼»¯>::=<ÀàÐÍ±êÊ¶·û>
             {
                 getsym();
                 fir_def = atoi(store[now].word);//´æ´¢µÚÒ»¸öÊý×éÏÂ±ê
-                signed_integer();//ÎÞ·ûºÅÕûÊý
+                unsigned_integer();//ÎÞ·ûºÅÕûÊý
                 if(global_flag == 1)
                 {
                     global_tab[gt_num].i = temp_val;
@@ -2612,7 +2833,7 @@ void variable_definition_and_initialization()//<±äÁ¿¶¨Òå¼°³õÊ¼»¯>::=<ÀàÐÍ±êÊ¶·û>
                 {
                     getsym();
                     sec_def = atoi(store[now].word);//´æ´¢µÚ¶þ¸öÊý×éÏÂ±ê
-                    signed_integer();//ÎÞ·ûºÅÕûÊý
+                    unsigned_integer();//ÎÞ·ûºÅÕûÊý
                     if(global_flag == 1)
                     {
                         global_tab[gt_num].j = temp_val;
@@ -2855,15 +3076,15 @@ void integer()//<ÕûÊý>::=£Û£«£ü£­£Ý<ÎÞ·ûºÅÕûÊý>
         if(strcmp(store[now].type,"MINU") == 0)
             minu_flag = 1;
         getsym();
-        signed_integer();//ÎÞ·ûºÅÕûÊý
+        unsigned_integer();//ÎÞ·ûºÅÕûÊý
         if(minu_flag == 1)
             temp_val = -temp_val;
     }
     else
-        signed_integer();//ÎÞ·ûºÅÕûÊý
+        unsigned_integer();//ÎÞ·ûºÅÕûÊý
     fprintf(fp_out,"<ÕûÊý>\n");
 }
-void signed_integer()//<ÎÞ·ûºÅÕûÊý>::=<Êý×Ö>£û<Êý×Ö>£ý
+void unsigned_integer()//<ÎÞ·ûºÅÕûÊý>::=<Êý×Ö>£û<Êý×Ö>£ý
 {
     if(strcmp(store[now].type,"INTCON") == 0)
     {
