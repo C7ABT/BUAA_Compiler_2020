@@ -2606,73 +2606,90 @@ void declaration_head()//<声明头部>::=int＜标识符>|char＜标识符>
     int type;
     int i = 0;
     char lower[MAX] = {};
-    if(strcmp(store[now].type,"INTTK") == 0 || strcmp(store[now].type,"CHARTK") == 0)
+    if(isReservedWord(0, "INTTK") || isReservedWord(0, "CHARTK"))
     {
-        if(strcmp(store[now].type,"INTTK") == 0) type = 5;
-        else type = 6;
-        func_tab[func_num].type = type;//存函数返回值类型
+        if(isReservedWord(0, "INTTK")) {
+            type = 5;
+        }
+        else {
+            type = 6;
+        }
+        func_tab[func_num].type = type; //  储存函数返回值类型
         getsym();
-        if(strcmp(store[now].type,"IDENFR") != 0) error_report();
+        if(!isReservedWord(0, "IDENFR")) {
+            error_report();
+        }
         else
         {
-            for(i=0; i<strlen(store[now].word); i++)
+            for(i = 0; i < strlen(store[now].word); i++) {
                 lower[i] = tolower(store[now].word[i]);
-            strcpy(func_tab[func_num].name,lower);//存函数名
-            error_b(type);//错误b分析
+            }
+            strcpy(func_tab[func_num].name, lower); //  储存函数名
+            error_b(type);  //  错误b分析
             global_tab[gt_num].func = 1;
             gt_num++;
-            strcpy(head[headnum++],lower);
+            strcpy(head[headnum++], lower);
             getsym();
         }
     }
     fprintf(fp_out,"<声明头部>\n");
 }
-void variable_description()//<变量说明>::=<变量定义>;{<变量定义>;}
+void variable_description() //  <变量说明>::=<变量定义>;{<变量定义>;}
 {
     do
     {
-        variable_definition();//变量定义
-        if(strcmp(store[now].type,"SEMICN") != 0)
+        variable_definition();  //  变量定义
+        if(!isReservedWord(0, "SEMICN")) {
             error_k();//错误k
-        else
+        }
+        else {
             getsym();
-    }while((strcmp(store[now].type,"INTTK") == 0 || strcmp(store[now].type,"CHARTK") == 0) && strcmp(store[now+2].type,"LPARENT") != 0);
+        }
+    }   while((isReservedWord(0, "INTTK") || isReservedWord(0, "CHARTK")) && !isReservedWord(2, "LPARENT"));
     fprintf(fp_out,"<变量说明>\n");
 }
 void variable_definition()//<变量定义>::=<变量定义无初始化>|<变量定义及初始化>
 {
-    if(strcmp(store[now+2].type,"ASSIGN") == 0 ||
-       (strcmp(store[now+2].type,"LBRACK") == 0 && strcmp(store[now+5].type,"ASSIGN") == 0) ||
-       (strcmp(store[now+2].type,"LBRACK") == 0 && strcmp(store[now+4].type,"ASSIGN") == 0) ||
-       (strcmp(store[now+2].type,"LBRACK") == 0 && strcmp(store[now+7].type,"ASSIGN") == 0) ||
-       (strcmp(store[now+2].type,"LBRACK") == 0 && strcmp(store[now+5].type,"LBRACK") == 0 && strcmp(store[now+8].type,"ASSIGN") == 0))
+    if(isReservedWord(2, "ASSIGN") ||
+       (isReservedWord(2, "LBRACK") && isReservedWord(5, "ASSIGN")) ||
+       (isReservedWord(2, "LBRACK") && isReservedWord(4, "ASSIGN")) ||
+       (isReservedWord(2, "LBRACK") && isReservedWord(7, "ASSIGN")) ||
+       (isReservedWord(2, "LBRACK") && isReservedWord(5, "LBRACK") && isReservedWord(8, "ASSIGN")))
     {
-        variable_definition_and_initialization();//变量定义及初始化
+        variable_definition_and_initialization();   //  变量定义及初始化
     }
     else
     {
-        variable_definition_has_no_initialization();//变量定义无初始化
+        variable_definition_has_no_initialization();    //  变量定义无初始化
     }
     fprintf(fp_out,"<变量定义>\n");
 }
 void variable_definition_has_no_initialization()//<变量定义无初始化>::=<类型标识符><标识符>{'['<无符号整数>']'}02{,<标识符>{'['<无符号整数>']'}02}
 {
     int type;
-    if(strcmp(store[now].type,"INTTK") != 0 && strcmp(store[now].type,"CHARTK") != 0) error_report();
+    if(!isReservedWord(0, "INTTK") && !isReservedWord(0, "CHARTK")) {
+        error_report();
+    }
     else
     {
-        if(strcmp(store[now].type,"INTTK") == 0) type=1;
-        else type=2;
+        if(isReservedWord(0, "INTTK")) {
+            type = 1;
+        }
+        else {
+            type = 2;
+        }
         getsym();
-        if(strcmp(store[now].type,"IDENFR") != 0) error_report();
+        if(!isReservedWord(0, "IDENFR")) {
+            error_report();
+        }
         else
         {
-            error_b(type);//错误b分析
+            error_b(type);  //  错误b分析
             getsym();
-            if(strcmp(store[now].type,"LBRACK") == 0)
+            if(isReservedWord(0, "LBRACK"))
             {
                 getsym();
-                unsigned_integer();//无符号整数
+                unsigned_integer(); //  无符号整数
                 if(global_flag == 1)
                 {
                     global_tab[gt_num].i = temp_val;
@@ -2683,12 +2700,16 @@ void variable_definition_has_no_initialization()//<变量定义无初始化>::=<类型标识
                     local_tab[lt_num].i = temp_val;
                     local_tab[lt_num].dim++;
                 }
-                if(strcmp(store[now].type,"RBRACK") != 0) error_m();//错误m
-                else getsym();
-                if(strcmp(store[now].type,"LBRACK") == 0)
+                if(!isReservedWord(0, "RBRACK")) {
+                    error_m();  //  错误m
+                }
+                else {
+                    getsym();
+                }
+                if(isReservedWord(0, "LBRACK"))
                 {
                     getsym();
-                    unsigned_integer();//无符号整数
+                    unsigned_integer(); //  无符号整数
                     if(global_flag == 1)
                     {
                         global_tab[gt_num].j = temp_val;
@@ -2699,28 +2720,36 @@ void variable_definition_has_no_initialization()//<变量定义无初始化>::=<类型标识
                         local_tab[lt_num].j = temp_val;
                         local_tab[lt_num].dim++;
                     }
-                    if(strcmp(store[now].type,"RBRACK") != 0) error_m();//错误m
-                    else getsym();
+                    if(!isReservedWord(0, "RBRACK")) {
+                        error_m();  //  错误m
+                    }
+                    else {
+                        getsym();
+                    }
                 }
             }
         }
-        if(global_flag == 1)
+        if(global_flag == 1) {
             gt_num++;
-        else if(global_flag == 0)
+        }
+        else if(global_flag == 0) {
             lt_num++;
+        }
     }
-    while(strcmp(store[now].type,"COMMA") == 0)
+    while(isReservedWord(0, "COMMA"))
     {
         getsym();
-        if(strcmp(store[now].type,"IDENFR") != 0) error_report();
+        if(!isReservedWord(0, "IDENFR")) {
+            error_report();
+        }
         else
         {
-            error_b(type);//错误b分析
+            error_b(type);  //  错误b分析
             getsym();
-            if(strcmp(store[now].type,"LBRACK") == 0)
+            if(isReservedWord(0, "LBRACK"))
             {
                 getsym();
-                unsigned_integer();//无符号整数
+                unsigned_integer(); //  无符号整数
                 if(global_flag == 1)
                 {
                     global_tab[gt_num].i = temp_val;
@@ -2731,12 +2760,16 @@ void variable_definition_has_no_initialization()//<变量定义无初始化>::=<类型标识
                     local_tab[lt_num].i = temp_val;
                     local_tab[lt_num].dim++;
                 }
-                if(strcmp(store[now].type,"RBRACK") != 0) error_m();//错误m
-                else getsym();
-                if(strcmp(store[now].type,"LBRACK") == 0)
+                if(!isReservedWord(0, "RBRACK")) {
+                    error_m();  //  错误m
+                }
+                else {
+                    getsym();
+                }
+                if(isReservedWord(0, "LBRACK"))
                 {
                     getsym();
-                    unsigned_integer();//无符号整数
+                    unsigned_integer(); //  无符号整数
                     if(global_flag == 1)
                     {
                         global_tab[gt_num].j = temp_val;
@@ -2747,14 +2780,20 @@ void variable_definition_has_no_initialization()//<变量定义无初始化>::=<类型标识
                         local_tab[lt_num].j = temp_val;
                         local_tab[lt_num].dim++;
                     }
-                    if(strcmp(store[now].type,"RBRACK") != 0) error_m();//错误m
-                    else getsym();
+                    if(!isReservedWord(0, "RBRACK")) {
+                        error_m();  //  错误m
+                    }
+                    else {
+                        getsym();
+                    }
                 }
             }
-            if(global_flag == 1)
+            if(global_flag == 1) {
                 gt_num++;
-            else if(global_flag == 0)
+            }
+            else if(global_flag == 0) {
                 lt_num++;
+            }
         }
     }
     fprintf(fp_out,"<变量定义无初始化>\n");
