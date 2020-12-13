@@ -1147,40 +1147,53 @@ void function_definition_without_return_value(int value[])//<ÎÞ·µ»ØÖµº¯Êý¶¨Òå>::
         lt_num = temp_num;
     }
 }
-void compound_statement()//<¸´ºÏÓï¾ä>::=£Û<³£Á¿ËµÃ÷>£Ý£Û<±äÁ¿ËµÃ÷>£Ý<Óï¾äÁÐ>
+void compound_statement()   //  <¸´ºÏÓï¾ä>::=£Û<³£Á¿ËµÃ÷>£Ý£Û<±äÁ¿ËµÃ÷>£Ý<Óï¾äÁÐ>
 {
-    if(strcmp(store[now].type,"CONSTTK") == 0)
+    if(isReservedWord(0, "CONSTTK"))
     {
-        constant_description();//³£Á¿ËµÃ÷
+        constant_description(); //  ³£Á¿ËµÃ÷
     }
-    if((strcmp(store[now].type,"INTTK") == 0 || strcmp(store[now].type,"CHARTK") == 0) && strcmp(store[now].type,"LPARENT") != 0)
+    if((isReservedWord(0, "INTTK") || isReservedWord(0, "CHARTK"))
+        && !isReservedWord(0, "LPARENT"))
     {
-        variable_description();//±äÁ¿ËµÃ÷
+        variable_description(); //  ±äÁ¿ËµÃ÷
     }
-    statement_column();//Óï¾äÁÐ
+    statement_column(); //  Óï¾äÁÐ
     fprintf(fp_out,"<¸´ºÏÓï¾ä>\n");
 }
-void statement_column()//£¼Óï¾äÁÐ£¾::=£û£¼Óï¾ä£¾£ý
+void statement_column() //  £¼Óï¾äÁÐ£¾::=£û£¼Óï¾ä£¾£ý
 {
-    while(strcmp(store[now].type,"RBRACE") != 0)
-        sentence();//Óï¾ä
+    while(!isReservedWord(0, "RBRACE")) {
+        sentence(); //  Óï¾ä
+    }
     fprintf(fp_out,"<Óï¾äÁÐ>\n");
 }
-void sentence()//£¼Óï¾ä£¾::=£¼Ñ­»·Óï¾ä£¾£ü£¼Ìõ¼þÓï¾ä£¾|£¼ÓÐ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä£¾;|£¼ÎÞ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä£¾;£ü£¼¸³ÖµÓï¾ä£¾;£ü£¼¶ÁÓï¾ä£¾;£ü£¼Ð´Óï¾ä£¾;£ü£¼Çé¿öÓï¾ä£¾£ü£¼¿Õ£¾;|£¼·µ»ØÓï¾ä£¾;|'{'£¼Óï¾äÁÐ£¾'}'
+void sentence() //  £¼Óï¾ä£¾::=£¼Ñ­»·Óï¾ä£¾
+                        // £ü£¼Ìõ¼þÓï¾ä£¾
+                        // |£¼ÓÐ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä£¾;|£¼ÎÞ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä£¾;
+                        // £ü£¼¸³ÖµÓï¾ä£¾;
+                        // £ü£¼¶ÁÓï¾ä£¾;£ü£¼Ð´Óï¾ä£¾;
+                        // £ü£¼Çé¿öÓï¾ä£¾
+                        // £ü£¼¿Õ£¾;
+                        // |£¼·µ»ØÓï¾ä£¾;
+                        // |'{'£¼Óï¾äÁÐ£¾'}'
 {
     int i = 0, j = 0, sign = 0;
     char cmp[MAX] = {};
-    if(strcmp(store[now].type,"WHILETK") == 0 || strcmp(store[now].type,"FORTK") == 0)
-        loop_statement();//Ñ­»·Óï¾ä
-    else if(strcmp(store[now].type,"IFTK") == 0)
-        conditional_statement();//Ìõ¼þÓï¾ä
-    else if(strcmp(store[now].type,"IDENFR") == 0 && strcmp(store[now+1].type,"LPARENT") == 0)
+    if(isReservedWord(0, "WHILETK") || isReservedWord(0, "FORTK")) {
+        loop_statement();   //  Ñ­»·Óï¾ä
+    }
+    else if(isReservedWord(0, "IFTK")) {
+        conditional_statement();    //  Ìõ¼þÓï¾ä
+    }
+    else if(isReservedWord(0, "IDENFR") && isReservedWord(1, "LPARENT"))
     {
-        for(i=0; i<headnum; i++)
+        for(i = 0; i < headnum; i++)
         {
-            for(j=0; j<strlen(store[now].word); j++)
+            for(j = 0; j < strlen(store[now].word); j++) {
                 cmp[j] = tolower(store[now].word[j]);
-            if(strcmp(cmp,head[i]) == 0)
+            }
+            if(strcmp(cmp, head[i]) == 0)
             {
                 sign = 1;
                 break;
@@ -1188,65 +1201,84 @@ void sentence()//£¼Óï¾ä£¾::=£¼Ñ­»·Óï¾ä£¾£ü£¼Ìõ¼þÓï¾ä£¾|£¼ÓÐ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä£¾;
         }
         if(sign == 1)
         {
-            function_call_statement_with_return_value();//ÓÐ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä
+            function_call_statement_with_return_value();    //  ÓÐ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä
             func_label = -1;
         }
-        else
-            function_call_statement_without_return_value();//ÎÞ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä
-        if(strcmp(store[now].type,"SEMICN") != 0)
-            error_k();//´íÎók
-        else
+        else {
+            function_call_statement_without_return_value(); //  ÎÞ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä
+        }
+        if(!isReservedWord(0, "SEMICN")) {
+            error_k();  //  ´íÎók
+        }
+        else {
             getsym();
+        }
     }
-    else if(strcmp(store[now].type,"IDENFR") == 0 && (strcmp(store[now+1].type,"ASSIGN") == 0 || strcmp(store[now+1].type,"LBRACK") == 0))
+    else if(isReservedWord(0, "IDENFR")
+    && (isReservedWord(1, "ASSIGN") || isReservedWord(1, "LBRACK")))
     {
-        assignment_statement();//¸³ÖµÓï¾ä
-        if(strcmp(store[now].type,"SEMICN") != 0)
-            error_k();//´íÎók
-        else
+        assignment_statement(); //  ¸³ÖµÓï¾ä
+        if(!isReservedWord(0, "SEMICN")) {
+            error_k();  //  ´íÎók
+        }
+        else {
             getsym();
+        }
     }
-    else if(strcmp(store[now].type,"SCANFTK") == 0)
+    else if(isReservedWord(0, "SCANFTK"))
     {
-        read_statement();//¶ÁÓï¾ä
-        if(strcmp(store[now].type,"SEMICN") != 0)
-            error_k();//´íÎók
-        else
+        read_statement();   //  ¶ÁÓï¾ä
+        if(!isReservedWord(0, "SEMICN")) {
+            error_k();  //  ´íÎók
+        }
+        else {
             getsym();
+        }
     }
-    else if(strcmp(store[now].type,"PRINTFTK") == 0)
+    else if(isReservedWord(0, "PRINTFTK"))
     {
-        writing_statements();//Ð´Óï¾ä
-        if(strcmp(store[now].type,"SEMICN") != 0)
-            error_k();//´íÎók
-        else
+        writing_statements();   //  Ð´Óï¾ä
+        if(!isReservedWord(0, "SEMICN")) {
+            error_k();  //  ´íÎók
+        }
+        else {
             getsym();
+        }
     }
-    else if(strcmp(store[now].type,"SWITCHTK") == 0)
-        case_statement();//Çé¿öÓï¾ä
-    else if(strcmp(store[now].type,"RETURNTK") == 0)
+    else if(isReservedWord(0, "SWITCHTK")) {
+        case_statement();   //  Çé¿öÓï¾ä
+    }
+    else if(isReservedWord(0, "RETURNTK"))
     {
-        return_statement();//·µ»ØÓï¾ä
-        if(strcmp(store[now].type,"SEMICN") != 0)
-            error_k();//´íÎók
-        else
+        return_statement(); //  ·µ»ØÓï¾ä
+        if(!isReservedWord(0, "SEMICN")) {
+            error_k();  //  ´íÎók
+        }
+        else {
             getsym();
+        }
     }
-    else if(strcmp(store[now].type,"LBRACE") == 0)
+    else if(isReservedWord(0, "LBRACE"))
     {
         getsym();
-        statement_column();//Óï¾äÁÐ
-        if(strcmp(store[now].type,"RBRACE") != 0) error_report();
-        else
+        statement_column(); //  Óï¾äÁÐ
+        if(!isReservedWord(0, "RBRACE")) {
+            error_report();
+        }
+        else {
             getsym();
+        }
     }
-    else if(strcmp(store[now].type,"SEMICN") == 0)
-        getsym();//£¼¿Õ£¾
-    else if(strcmp(store[now].type,"SEMICN") != 0)
-        error_k();//´íÎók £¼¿Õ£¾
+    else if(isReservedWord(0, "SEMICN")) {
+        getsym();   //  £¼¿Õ£¾
+    }
+    else if(!isReservedWord(0, "SEMICN")) {
+        error_k();  //  ´íÎók £¼¿Õ£¾
+    }
     fprintf(fp_out,"<Óï¾ä>\n");
 }
-void loop_statement()//£¼Ñ­»·Óï¾ä£¾::=while'('£¼Ìõ¼þ£¾')'£¼Óï¾ä£¾| for'('£¼±êÊ¶·û£¾£½£¼±í´ïÊ½£¾;£¼Ìõ¼þ£¾;£¼±êÊ¶·û£¾£½£¼±êÊ¶·û£¾(+|-)£¼²½³¤£¾')'£¼Óï¾ä£¾
+void loop_statement()   //  £¼Ñ­»·Óï¾ä£¾::=while'('£¼Ìõ¼þ£¾')'£¼Óï¾ä£¾
+                        // | for'('£¼±êÊ¶·û£¾£½£¼±í´ïÊ½£¾;£¼Ìõ¼þ£¾;£¼±êÊ¶·û£¾£½£¼±êÊ¶·û£¾(+|-)£¼²½³¤£¾')'£¼Óï¾ä£¾
 {
     int state = run;
     int con = 0;
@@ -1263,138 +1295,202 @@ void loop_statement()//£¼Ñ­»·Óï¾ä£¾::=while'('£¼Ìõ¼þ£¾')'£¼Óï¾ä£¾| for'('£¼±êÊ¶·
     int step_long = 0;
     char temp_word1[MAX] = {};
     char temp_word2[MAX] = {};
-    if(strcmp(store[now].type,"WHILETK") == 0)
+    if(isReservedWord(0, "WHILETK"))    // while
     {
         getsym();
-        if(strcmp(store[now].type,"LPARENT") != 0) error_report();
+        if(!isReservedWord(0, "LPARENT")) {
+            error_report();
+        }
         else
         {
             getsym();
             back = now;
-            con = condition();//Ìõ¼þ
-            if(strcmp(store[now].type,"RPARENT") != 0) error_l();//´íÎól
-            else getsym();
-            if(con == 0)
+            con = condition();  //  Ìõ¼þ
+            if(!isReservedWord(0, "RPARENT")) {
+                error_l();  //  ´íÎól
+            }
+            else {
+                getsym();
+            }
+            if(con == 0) {
                 run = 0;
-            sentence();//Óï¾ä
-            if(state == 1 && ret_valid == 0) run = 1;
+            }
+            sentence(); //  Óï¾ä
+            if(state == 1 && ret_valid == 0) {
+                run = 1;
+            }
             renew = now;
-            while(con == 1 && run != 0)//ÔËÐÐ½×¶Î
+            while(con == 1 && run != 0) //  ÔËÐÐ½×¶Î
             {
                 now = back;
-                con = condition();//Ìõ¼þ
-                if(strcmp(store[now].type,"RPARENT") != 0) error_l();//´íÎól
-                else getsym();
+                con = condition();  //  Ìõ¼þ
+                if(!isReservedWord(0, "RPARENT")) {
+                    error_l();  //  ´íÎól
+                }
+                else {
+                    getsym();
+                }
                 if(con == 0 || run == 0)
                 {
                     now = renew;
                     break;
                 }
-                sentence();//Óï¾ä
+                sentence(); //  Óï¾ä
             }
         }
     }
-    else if(strcmp(store[now].type,"FORTK") == 0)
+    else if(isReservedWord(0, "FORTK")) // for
     {
         getsym();
-        if(strcmp(store[now].type,"LPARENT") != 0) error_report();
+        if(!isReservedWord(0, "LPARENT")) {
+            error_report();
+        }
         else
         {
             getsym();
-            if(strcmp(store[now].type,"IDENFR") != 0) error_report();
+            if(!isReservedWord(0, "IDENFR")) {
+                error_report();
+            }
             else
             {
-                error_c(2);//´íÎóc·ÖÎö
-                type = search_const();//¼ì²âÊÇ·ñÎªconstÀàÐÍ
-                if(type == 'x')
-                    error_j();//´íÎój
-                index1 = get_index(store[now].word);//»ñÈ¡±êÊ¶·û±í¶ÔÓ¦±äÁ¿ÏÂ±ê¼°±íºÅ
+                error_c(2); //  ´íÎóc·ÖÎö
+                type = search_const();  //  ¼ì²âÊÇ·ñÎªconstÀàÐÍ
+                if(type == 'x') {
+                    error_j();  //  ´íÎój
+                }
+                index1 = get_index(store[now].word);    //  »ñÈ¡±êÊ¶·û±í¶ÔÓ¦±äÁ¿ÏÂ±ê¼°±íºÅ
                 getsym();
-                if(strcmp(store[now].type,"ASSIGN") != 0) error_report();
+                if(!isReservedWord(0, "ASSIGN")) {
+                    error_report();
+                }
                 else
                 {
                     getsym();
-                    expression();//±í´ïÊ½
+                    expression();   //  ±í´ïÊ½
                     if(run == 1 && ret_valid == 0)
                     {
-                        if(index1[1] == 1)//ÔÚ¾Ö²¿±íÖÐ
+                        if(index1[1] == 1)  //  ÔÚ¾Ö²¿±íÖÐ
+                        {
                             local_tab[index1[0]].value[0] = temp_val;
-                        else if(index1[1] == 2)//ÔÚÈ«¾Ö±íÖÐ
+                        }
+                        else if(index1[1] == 2) //  ÔÚÈ«¾Ö±íÖÐ
+                        {
                             global_tab[index1[0]].value[0] = temp_val;
+                        }
                     }
-                    if(strcmp(store[now].type,"SEMICN") != 0) error_k();//´íÎók
-                    else getsym();
+                    if(!isReservedWord(0, "SEMICN")) {
+                        error_k();  //  ´íÎók
+                    }
+                    else {
+                        getsym();
+                    }
                     back = now;
-                    con = condition();//Ìõ¼þ
-                    if(strcmp(store[now].type,"SEMICN") != 0) error_k();//´íÎók
-                    else getsym();
-                    if(con == 0)
+                    con = condition();  //  Ìõ¼þ
+                    if(!isReservedWord(0, "SEMICN")) {
+                        error_k();  //  ´íÎók
+                    }
+                    else {
+                        getsym();
+                    }
+                    if(con == 0) {
                         run = 0;
-                    if(strcmp(store[now].type,"IDENFR") != 0) error_report();
+                    }
+                    if(!isReservedWord(0, "IDENFR")) {
+                        error_report();
+                    }
                     else
                     {
-                        error_c(2);//´íÎóc·ÖÎö
-                        strcpy(temp_word1,store[now].word);//ÔÝ´æ±»¸³Öµ±êÊ¶·ûµÄ·ûºÅÃû
+                        error_c(2); //  ´íÎóc·ÖÎö
+                        strcpy(temp_word1, store[now].word); //  ÔÝ´æ±»¸³Öµ±êÊ¶·ûµÄ·ûºÅÃû
                         getsym();
-                        if(strcmp(store[now].type,"ASSIGN") != 0) error_report();
+                        if(!isReservedWord(0, "ASSIGN")) {
+                            error_report();
+                        }
                         else
                         {
                             getsym();
-                            if(strcmp(store[now].type,"IDENFR") != 0) error_report();
+                            if(!isReservedWord(0, "IDENFR")) {
+                                error_report();
+                            }
                             else
                             {
-                                error_c(2);//´íÎóc·ÖÎö
-                                strcpy(temp_word2,store[now].word);//ÔÝ´æ¸³Öµ±êÊ¶·ûµÄ·ûºÅÃû
+                                error_c(2); //  ´íÎóc·ÖÎö
+                                strcpy(temp_word2,  store[now].word); //  ÔÝ´æ¸³Öµ±êÊ¶·ûµÄ·ûºÅÃû
                                 getsym();
-                                if(strcmp(store[now].type,"PLUS") != 0 && strcmp(store[now].type,"MINU") != 0) error_report();
+                                if(!isReservedWord(0, "PLUS")
+                                && !isReservedWord(0 ,"MINU")) {
+                                    error_report();
+                                }
                                 else
                                 {
-                                    if(strcmp(store[now].type,"PLUS") == 0)
-                                        opr = 1;//+
-                                    else if(strcmp(store[now].type,"MINU") == 0)
-                                        opr = 2;//-
+                                    if(isReservedWord(0, "PLUS")) {
+                                        opr = 1;    //  +
+                                    }
+                                    else if(isReservedWord(0, "MINU")) {
+                                        opr = 2;    //  -
+                                    }
                                     getsym();
-                                    step();//²½³¤
-                                    step_long = temp_val;//ÔÝ´æ²½³¤
-                                    if(strcmp(store[now].type,"RPARENT") != 0) error_l();//´íÎól
-                                    else getsym();
-                                    sentence();//Óï¾ä
+                                    step(); //  ²½³¤
+                                    step_long = temp_val;   //  ÔÝ´æ²½³¤
+                                    if(!isReservedWord(0, "RPARENT")) {
+                                        error_l();  //  ´íÎól
+                                    }
+                                    else {
+                                        getsym();
+                                    }
+                                    sentence(); //  Óï¾ä
                                     if(run == 1 && ret_valid == 0)
                                     {
-                                        index2 = get_index(temp_word1);//»ñÈ¡±»¸³Öµ±êÊ¶·û±í¶ÔÓ¦±äÁ¿ÏÂ±ê¼°±íºÅ
-                                        index3 = get_index(temp_word2);//»ñÈ¡¸³Öµ±êÊ¶·û±í¶ÔÓ¦±äÁ¿ÏÂ±ê¼°±íºÅ
-                                        if(index2[1] == 1)//ÔÚ¾Ö²¿±íÖÐ
+                                        index2 = get_index(temp_word1); //  »ñÈ¡±»¸³Öµ±êÊ¶·û±í¶ÔÓ¦±äÁ¿ÏÂ±ê¼°±íºÅ
+                                        index3 = get_index(temp_word2); //  »ñÈ¡¸³Öµ±êÊ¶·û±í¶ÔÓ¦±äÁ¿ÏÂ±ê¼°±íºÅ
+                                        if(index2[1] == 1)  //  ÔÚ¾Ö²¿±íÖÐ
                                         {
-                                            if(index3[1] == 1)//ÔÚ¾Ö²¿±íÖÐ
+                                            if(index3[1] == 1)  //  ÔÚ¾Ö²¿±íÖÐ
                                             {
-                                                if(opr == 1)
-                                                    local_tab[index2[0]].value[0] = local_tab[index3[0]].value[0] + step_long;
-                                                else if(opr == 2)
-                                                    local_tab[index2[0]].value[0] = local_tab[index3[0]].value[0] - step_long;
+                                                if(opr == 1) {
+                                                    local_tab[index2[0]].value[0] =
+                                                            local_tab[index3[0]].value[0] + step_long;
+                                                }
+                                                else if(opr == 2) {
+                                                    local_tab[index2[0]].value[0] =
+                                                            local_tab[index3[0]].value[0] - step_long;
+                                                }
                                             }
-                                            else if(index3[1] == 2)//ÔÚÈ«¾Ö±íÖÐ
+                                            else if(index3[1] == 2) //  ÔÚÈ«¾Ö±íÖÐ
                                             {
-                                                if(opr == 1)
-                                                    local_tab[index2[0]].value[0] = global_tab[index3[0]].value[0] + step_long;
-                                                else if(opr == 2)
-                                                    local_tab[index2[0]].value[0] = global_tab[index3[0]].value[0] - step_long;
+                                                if(opr == 1) {
+                                                    local_tab[index2[0]].value[0] =
+                                                            global_tab[index3[0]].value[0] + step_long;
+                                                }
+                                                else if(opr == 2) {
+                                                    local_tab[index2[0]].value[0] =
+                                                            global_tab[index3[0]].value[0] - step_long;
+                                                }
                                             }
                                         }
-                                        else if(index2[1] == 2)//ÔÚÈ«¾Ö±íÖÐ
+                                        else if(index2[1] == 2) //  ÔÚÈ«¾Ö±íÖÐ
                                         {
-                                            if(index3[1] == 1)//ÔÚ¾Ö²¿±íÖÐ
+                                            if(index3[1] == 1)  //  ÔÚ¾Ö²¿±íÖÐ
                                             {
-                                                if(opr == 1)
-                                                    global_tab[index2[0]].value[0] = local_tab[index3[0]].value[0] + step_long;
-                                                else if(opr == 2)
-                                                    global_tab[index2[0]].value[0] = local_tab[index3[0]].value[0] - step_long;
+                                                if(opr == 1) {
+                                                    global_tab[index2[0]].value[0] =
+                                                            local_tab[index3[0]].value[0] + step_long;
+                                                }
+                                                else if(opr == 2) {
+                                                    global_tab[index2[0]].value[0] =
+                                                            local_tab[index3[0]].value[0] - step_long;
+                                                }
                                             }
-                                            else if(index3[1] == 2)//ÔÚÈ«¾Ö±íÖÐ
+                                            else if(index3[1] == 2) //  ÔÚÈ«¾Ö±íÖÐ
                                             {
-                                                if(opr == 1)
-                                                    global_tab[index2[0]].value[0] = global_tab[index3[0]].value[0] + step_long;
-                                                else if(opr == 2)
-                                                    global_tab[index2[0]].value[0] = global_tab[index3[0]].value[0] - step_long;
+                                                if(opr == 1) {
+                                                    global_tab[index2[0]].value[0] =
+                                                            global_tab[index3[0]].value[0] + step_long;
+                                                }
+                                                else if(opr == 2) {
+                                                    global_tab[index2[0]].value[0] =
+                                                            global_tab[index3[0]].value[0] - step_long;
+                                                }
                                             }
                                         }
                                     }
@@ -1402,85 +1498,120 @@ void loop_statement()//£¼Ñ­»·Óï¾ä£¾::=while'('£¼Ìõ¼þ£¾')'£¼Óï¾ä£¾| for'('£¼±êÊ¶·
                             }
                         }
                     }
-                    if(state == 1 && ret_valid == 0)
+                    if(state == 1 && ret_valid == 0) {
                         run = 1;
+                    }
                     renew = now;
-                    while(con == 1 && run != 0)//ÔËÐÐ½×¶Î
+                    while(con == 1 && run != 0) //  ÔËÐÐ½×¶Î
                     {
                         now = back;
-                        con = condition();//Ìõ¼þ
-                        if(strcmp(store[now].type,"SEMICN") != 0) error_k();//´íÎók
-                        else getsym();
+                        con = condition();  //  Ìõ¼þ
+                        if(!isReservedWord(0, "SEMICN")) {
+                            error_k();  //  ´íÎók
+                        }
+                        else {
+                            getsym();
+                        }
                         if(con == 0 || run == 0)
                         {
                             now = renew;
                             break;
                         }
-                        if(strcmp(store[now].type,"IDENFR") != 0) error_report();
+                        if(!isReservedWord(0, "IDENFR")) {
+                            error_report();
+                        }
                         else
                         {
-                            error_c(2);//´íÎóc·ÖÎö
-                            strcpy(temp_word1,store[now].word);//ÔÝ´æ±»¸³Öµ±êÊ¶·ûµÄ·ûºÅÃû
+                            error_c(2); //  ´íÎóc·ÖÎö
+                            strcpy(temp_word1, store[now].word); //  ÔÝ´æ±»¸³Öµ±êÊ¶·ûµÄ·ûºÅÃû
                             getsym();
-                            if(strcmp(store[now].type,"ASSIGN") != 0) error_report();
+                            if(!isReservedWord(0, "ASSIGN")) {
+                                error_report();
+                            }
                             else
                             {
                                 getsym();
-                                if(strcmp(store[now].type,"IDENFR") != 0) error_report();
+                                if(!isReservedWord(0, "IDENFR")) {
+                                    error_report();
+                                }
                                 else
                                 {
-                                    error_c(2);//´íÎóc·ÖÎö
-                                    strcpy(temp_word2,store[now].word);//ÔÝ´æ¸³Öµ±êÊ¶·ûµÄ·ûºÅÃû
+                                    error_c(2); //  ´íÎóc·ÖÎö
+                                    strcpy(temp_word2, store[now].word); //  ÔÝ´æ¸³Öµ±êÊ¶·ûµÄ·ûºÅÃû
                                     getsym();
-                                    if(strcmp(store[now].type,"PLUS") != 0 && strcmp(store[now].type,"MINU") != 0) error_report();
+                                    if(!isReservedWord(0, "PLUS") && !isReservedWord(0, "MINU")) {
+                                        error_report();
+                                    }
                                     else
                                     {
-                                        if(strcmp(store[now].type,"PLUS") == 0)
-                                            opr = 1;//+
-                                        else if(strcmp(store[now].type,"MINU") == 0)
-                                            opr = 2;//-
+                                        if(isReservedWord(0, "PLUS")) {
+                                            opr = 1;    //  +
+                                        }
+                                        else if(isReservedWord(0, "MINU")) {
+                                            opr = 2;    //  -
+                                        }
                                         getsym();
-                                        step();//²½³¤
-                                        step_long = temp_val;//ÔÝ´æ²½³¤
-                                        if(strcmp(store[now].type,"RPARENT") != 0) error_l();//´íÎól
-                                        else getsym();
-                                        sentence();//Óï¾ä
+                                        step(); //  ²½³¤
+                                        step_long = temp_val;   //  ÔÝ´æ²½³¤
+                                        if(!isReservedWord(0, "RPARENT")) {
+                                            error_l();  //  ´íÎól
+                                        }
+                                        else {
+                                            getsym();
+                                        }
+                                        sentence(); //  Óï¾ä
                                         if(run == 1 && ret_valid == 0)
                                         {
-                                            index2 = get_index(temp_word1);//»ñÈ¡±»¸³Öµ±êÊ¶·û±í¶ÔÓ¦±äÁ¿ÏÂ±ê¼°±íºÅ
-                                            index3 = get_index(temp_word2);//»ñÈ¡¸³Öµ±êÊ¶·û±í¶ÔÓ¦±äÁ¿ÏÂ±ê¼°±íºÅ
-                                            if(index2[1] == 1)//ÔÚ¾Ö²¿±íÖÐ
+                                            index2 = get_index(temp_word1); //  »ñÈ¡±»¸³Öµ±êÊ¶·û±í¶ÔÓ¦±äÁ¿ÏÂ±ê¼°±íºÅ
+                                            index3 = get_index(temp_word2); //  »ñÈ¡¸³Öµ±êÊ¶·û±í¶ÔÓ¦±äÁ¿ÏÂ±ê¼°±íºÅ
+                                            if(index2[1] == 1)  //  ÔÚ¾Ö²¿±íÖÐ
                                             {
-                                                if(index3[1] == 1)//ÔÚ¾Ö²¿±íÖÐ
+                                                if(index3[1] == 1)  //  ÔÚ¾Ö²¿±íÖÐ
                                                 {
-                                                    if(opr == 1)
-                                                        local_tab[index2[0]].value[0] = local_tab[index3[0]].value[0] + step_long;
-                                                    else if(opr == 2)
-                                                        local_tab[index2[0]].value[0] = local_tab[index3[0]].value[0] - step_long;
+                                                    if(opr == 1) {  // +
+                                                        local_tab[index2[0]].value[0] =
+                                                                local_tab[index3[0]].value[0] + step_long;
+                                                    }
+                                                    else if(opr == 2) { // -
+                                                        local_tab[index2[0]].value[0] =
+                                                                local_tab[index3[0]].value[0] - step_long;
+                                                    }
                                                 }
-                                                else if(index3[1] == 2)//ÔÚÈ«¾Ö±íÖÐ
+                                                else if(index3[1] == 2) //  ÔÚÈ«¾Ö±íÖÐ
                                                 {
-                                                    if(opr == 1)
-                                                        local_tab[index2[0]].value[0] = global_tab[index3[0]].value[0] + step_long;
-                                                    else if(opr == 2)
-                                                        local_tab[index2[0]].value[0] = global_tab[index3[0]].value[0] - step_long;
+                                                    if(opr == 1) {
+                                                        local_tab[index2[0]].value[0] =
+                                                                global_tab[index3[0]].value[0] + step_long;
+                                                    }
+                                                    else if(opr == 2) {
+                                                        local_tab[index2[0]].value[0] =
+                                                                global_tab[index3[0]].value[0] - step_long;
+                                                    }
                                                 }
                                             }
-                                            else if(index2[1] == 2)//ÔÚÈ«¾Ö±íÖÐ
+                                            else if(index2[1] == 2) //  ÔÚÈ«¾Ö±íÖÐ
                                             {
-                                                if(index3[1] == 1)//ÔÚ¾Ö²¿±íÖÐ
+                                                if(index3[1] == 1)  //  ÔÚ¾Ö²¿±íÖÐ
                                                 {
-                                                    if(opr == 1)
-                                                        global_tab[index2[0]].value[0] = local_tab[index3[0]].value[0] + step_long;
-                                                    else if(opr == 2)
-                                                        global_tab[index2[0]].value[0] = local_tab[index3[0]].value[0] - step_long;
+                                                    if(opr == 1) {
+                                                        global_tab[index2[0]].value[0] =
+                                                                local_tab[index3[0]].value[0] + step_long;
+                                                    }
+                                                    else if(opr == 2) {
+                                                        global_tab[index2[0]].value[0] =
+                                                                local_tab[index3[0]].value[0] - step_long;
+                                                    }
                                                 }
-                                                else if(index3[1] == 2)//ÔÚÈ«¾Ö±íÖÐ
+                                                else if(index3[1] == 2) //  ÔÚÈ«¾Ö±íÖÐ
                                                 {
-                                                    if(opr == 1)
-                                                        global_tab[index2[0]].value[0] = global_tab[index3[0]].value[0] + step_long;
-                                                    else if(opr == 2)
-                                                        global_tab[index2[0]].value[0] = global_tab[index3[0]].value[0] - step_long;
+                                                    if(opr == 1) {
+                                                        global_tab[index2[0]].value[0] =
+                                                                global_tab[index3[0]].value[0] + step_long;
+                                                    }
+                                                    else if(opr == 2) {
+                                                        global_tab[index2[0]].value[0] =
+                                                                global_tab[index3[0]].value[0] - step_long;
+                                                    }
                                                 }
                                             }
                                         }
