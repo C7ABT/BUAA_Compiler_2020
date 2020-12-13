@@ -790,7 +790,7 @@ int main()
 
     program();
 
-    for(i = 0; i < errnum - 1; i++)//错误输出排序
+    for(i = 0; i < errnum - 1; i++) //  错误输出排序
     {
         for(j = 0; j < errnum - 1 - i; j++)
         {
@@ -2803,31 +2803,41 @@ void variable_definition_and_initialization()//<变量定义及初始化>::=<类型标识符>
     int type;
     int fir_def=0, sec_def=0;
     int fir_use=0, sec_use=0;
-    if(strcmp(store[now].type,"INTTK") != 0 && strcmp(store[now].type,"CHARTK") != 0) error_report();
+    if(!isReservedWord(0, "INTTK") && !isReservedWord(0, "CHARTK")) {
+        error_report();
+    }
     else
     {
-        if(strcmp(store[now].type,"INTTK") == 0) type=1;
-        else type=2;
+        if(isReservedWord(0, "INTTK")) {
+            type = 1;
+        }
+        else {
+            type = 2;
+        }
         getsym();
-        if(strcmp(store[now].type,"IDENFR") != 0) error_report();
+        if(!isReservedWord(0, "IDENFR")) {
+            error_report();
+        }
         else
         {
-            error_b(type);//错误b分析
+            error_b(type);  //  错误b分析
             getsym();
-            if(strcmp(store[now].type,"ASSIGN") == 0)
+            if(isReservedWord(0, "ASSIGN"))
             {
                 getsym();
-                constant(type);//常量
-                if(global_flag == 1)
+                constant(type); //  常量
+                if(global_flag == 1) {
                     global_tab[gt_num].value[0] = temp_val;
-                else if(global_flag == 0)
+                }
+                else if(global_flag == 0) {
                     local_tab[lt_num].value[0] = temp_val;
+                }
             }
-            else if(strcmp(store[now].type,"LBRACK") == 0)
+            else if(isReservedWord(0, "LBRACK"))
             {
                 getsym();
-                fir_def = atoi(store[now].word);//存储第一个数组下标
-                unsigned_integer();//无符号整数
+                fir_def = atoi(store[now].word);    //  存储第一个数组下标
+                unsigned_integer(); //  无符号整数
                 if(global_flag == 1)
                 {
                     global_tab[gt_num].i = temp_val;
@@ -2838,41 +2848,54 @@ void variable_definition_and_initialization()//<变量定义及初始化>::=<类型标识符>
                     local_tab[lt_num].i = temp_val;
                     local_tab[lt_num].dim++;
                 }
-                if(strcmp(store[now].type,"RBRACK") != 0) error_m();//错误m
-                else getsym();
-                if(strcmp(store[now].type,"ASSIGN") == 0)
+                if(!isReservedWord(0, "RBRACK")) {
+                    error_m();  //  错误m
+                }
+                else {
+                    getsym();
+                }
+                if(isReservedWord(0, "ASSIGN"))
                 {
                     getsym();
-                    if(strcmp(store[now].type,"LBRACE") != 0) error_report();
+                    if(!isReservedWord(0, "LBRACE")) {
+                        error_report();
+                    }
                     else
                     {
                         getsym();
-                        constant(type);//常量
-                        if(global_flag == 1)
+                        constant(type); //  常量
+                        if(global_flag == 1) {
                             global_tab[gt_num].value[fir_use] = temp_val;
-                        else if(global_flag == 0)
+                        }
+                        else if(global_flag == 0) {
                             local_tab[lt_num].value[fir_use] = temp_val;
+                        }
                         fir_use++;
-                        while(strcmp(store[now].type,"COMMA") == 0)
+                        while(isReservedWord(0, "COMMA"))
                         {
                             getsym();
-                            constant(type);//常量
-                            if(global_flag == 1)
+                            constant(type); //  常量
+                            if(global_flag == 1) {
                                 global_tab[gt_num].value[fir_use] = temp_val;
-                            else if(global_flag == 0)
+                            }
+                            else if(global_flag == 0) {
                                 local_tab[lt_num].value[fir_use] = temp_val;
+                            }
                             fir_use++;
                         }
-                        if(strcmp(store[now].type,"RBRACE") != 0) error_report();
-                        else
+                        if(!isReservedWord(0, "RBRACE")) {
+                            error_report();
+                        }
+                        else {
                             getsym();
+                        }
                     }
                 }
-                else if(strcmp(store[now].type,"LBRACK") == 0)
+                else if(isReservedWord(0, "LBRACK"))
                 {
                     getsym();
-                    sec_def = atoi(store[now].word);//存储第二个数组下标
-                    unsigned_integer();//无符号整数
+                    sec_def = atoi(store[now].word);    //  存储第二个数组下标
+                    unsigned_integer(); //  无符号整数
                     if(global_flag == 1)
                     {
                         global_tab[gt_num].j = temp_val;
@@ -2883,129 +2906,173 @@ void variable_definition_and_initialization()//<变量定义及初始化>::=<类型标识符>
                         local_tab[lt_num].j = temp_val;
                         local_tab[lt_num].dim++;
                     }
-                    if(strcmp(store[now].type,"RBRACK") != 0) error_m();//错误m
-                    else getsym();
-                    if(strcmp(store[now].type,"ASSIGN") == 0)
+                    if(!isReservedWord(0, "RBRACK")) {
+                        error_m();  //  错误m
+                    }
+                    else {
+                        getsym();
+                    }
+                    if(isReservedWord(0, "ASSIGN"))
                     {
                         getsym();
-                        if(strcmp(store[now].type,"LBRACE") != 0) error_report();
+                        if(!isReservedWord(0, "LBRACE")) {
+                            error_report();
+                        }
                         else
                         {
                             getsym();
-                            if(strcmp(store[now].type,"LBRACE") != 0) error_report();
+                            if(!isReservedWord(0, "LBRACE")) {
+                                error_report();
+                            }
                             else
                             {
                                 getsym();
-                                constant(type);//常量
-                                if(global_flag == 1)
-                                    global_tab[gt_num].value[global_tab[gt_num].j*fir_use+sec_use] = temp_val;
-                                else if(global_flag == 0)
-                                    local_tab[lt_num].value[local_tab[lt_num].j*fir_use+sec_use] = temp_val;
+                                constant(type); //  常量
+                                if(global_flag == 1) {
+                                    global_tab[gt_num].value[global_tab[gt_num].j * fir_use + sec_use] = temp_val;
+                                }
+                                else if(global_flag == 0) {
+                                    local_tab[lt_num].value[local_tab[lt_num].j * fir_use + sec_use] = temp_val;
+                                }
                                 sec_use++;
-                                while(strcmp(store[now].type,"COMMA") == 0)
+                                while(isReservedWord(0, "COMMA"))
                                 {
                                     getsym();
-                                    constant(type);//常量
-                                    if(global_flag == 1)
-                                        global_tab[gt_num].value[global_tab[gt_num].j*fir_use+sec_use] = temp_val;
-                                    else if(global_flag == 0)
-                                        local_tab[lt_num].value[local_tab[lt_num].j*fir_use+sec_use] = temp_val;
+                                    constant(type); //  常量
+                                    if(global_flag == 1) {
+                                        global_tab[gt_num].value[global_tab[gt_num].j * fir_use + sec_use] = temp_val;
+                                    }
+                                    else if(global_flag == 0) {
+                                        local_tab[lt_num].value[local_tab[lt_num].j * fir_use + sec_use] = temp_val;
+                                    }
                                     sec_use++;
                                 }
-                                if(strcmp(store[now].type,"RBRACE") != 0) error_report();
+                                if(!isReservedWord(0, "RBRACE")) {
+                                    error_report();
+                                }
                                 else
                                 {
-                                    if(sec_def!=sec_use)
-                                        error_n();//错误n
+                                    if(sec_def != sec_use) {
+                                        error_n();  //  错误n
+                                    }
                                     sec_use = 0;
                                     fir_use++;
                                     getsym();
                                 }
-                                while(strcmp(store[now].type,"COMMA") == 0)
+                                while(isReservedWord(0, "COMMA"))
                                 {
                                     getsym();
-                                    if(strcmp(store[now].type,"LBRACE") != 0) error_report();
+                                    if(!isReservedWord(0, "LBRACE")) {
+                                        error_report();
+                                    }
                                     else
                                     {
                                         getsym();
-                                        constant(type);//常量
-                                        if(global_flag == 1)
-                                            global_tab[gt_num].value[global_tab[gt_num].j*fir_use+sec_use] = temp_val;
-                                        else if(global_flag == 0)
-                                            local_tab[lt_num].value[local_tab[lt_num].j*fir_use+sec_use] = temp_val;
+                                        constant(type); //  常量
+                                        if(global_flag == 1) {
+                                            global_tab[gt_num].value[global_tab[gt_num].j * fir_use +
+                                                                     sec_use] = temp_val;
+                                        }
+                                        else if(global_flag == 0) {
+                                            local_tab[lt_num].value[local_tab[lt_num].j * fir_use + sec_use] = temp_val;
+                                        }
                                         sec_use++;
-                                        while(strcmp(store[now].type,"COMMA") == 0)
+                                        while(isReservedWord(0, "COMMA"))
                                         {
                                             getsym();
-                                            constant(type);//常量
-                                            if(global_flag == 1)
-                                                global_tab[gt_num].value[global_tab[gt_num].j*fir_use+sec_use] = temp_val;
-                                            else if(global_flag == 0)
-                                                local_tab[lt_num].value[local_tab[lt_num].j*fir_use+sec_use] = temp_val;
+                                            constant(type); //  常量
+                                            if(global_flag == 1) {
+                                                global_tab[gt_num].value[global_tab[gt_num].j * fir_use +
+                                                                         sec_use] = temp_val;
+                                            }
+                                            else if(global_flag == 0) {
+                                                local_tab[lt_num].value[local_tab[lt_num].j * fir_use +
+                                                                        sec_use] = temp_val;
+                                            }
                                             sec_use++;
                                         }
-                                        if(strcmp(store[now].type,"RBRACE") != 0) error_report();
+                                        if(!isReservedWord(0, "RBRACE")) {
+                                            error_report();
+                                        }
                                         else
                                         {
-                                            if(sec_def!=sec_use)
-                                                error_n();//错误n
+                                            if(sec_def != sec_use) {
+                                                error_n();  //  错误n
+                                            }
                                             sec_use = 0;
                                             fir_use++;
                                             getsym();
                                         }
                                     }
                                 }
-                                if(strcmp(store[now].type,"RBRACE") != 0) error_report();
-                                else
+                                if(!isReservedWord(0, "RBRACE")) {
+                                    error_report();
+                                }
+                                else {
                                     getsym();
+                                }
                             }
                         }
                     }
                 }
             }
-            if(global_flag == 1)
+            if(global_flag == 1) {
                 gt_num++;
-            else if(global_flag == 0)
+            }
+            else if(global_flag == 0) {
                 lt_num++;
+            }
         }
     }
-    if(fir_def!=fir_use)
-        error_n();//错误n
+    if(fir_def != fir_use) {
+        error_n();  //  错误n
+    }
     fprintf(fp_out,"<变量定义及初始化>\n");
 }
-void constant_description()//<常量说明>::=const＜常量定义>;{const＜常量定义>;}
+void constant_description() //  <常量说明>::=const＜常量定义>;{const＜常量定义>;}
 {
     do
     {
-        if(strcmp(store[now].type,"CONSTTK") != 0) error_report();
+        if(!isReservedWord(0, "CONSTTK")) {
+            error_report();
+        }
         else
         {
             getsym();
-            constant_definition();//常量定义
-            if(strcmp(store[now].type,"SEMICN") != 0)
-                error_k();//错误k
-            else
+            constant_definition();  //  常量定义
+            if(!isReservedWord(0, "SEMICN")) {
+                error_k();  //  错误k
+            }
+            else {
                 getsym();
+            }
         }
-    }while(strcmp(store[now].type,"CONSTTK") == 0);
+    }   while(isReservedWord(0, "CONSTTK"));
     fprintf(fp_out,"<常量说明>\n");
 }
-void constant_definition()//<常量定义>::=int＜标识符>＝<整数>{,<标识符>＝<整数>}|char＜标识符>＝<字符>{,<标识符>＝<字符>}
+void constant_definition()  //  <常量定义>::=int＜标识符>＝<整数>{,<标识符>＝<整数>}
+                            // |char＜标识符>＝<字符>{,<标识符>＝<字符>}
 {
-    if(strcmp(store[now].type,"INTTK") != 0 && strcmp(store[now].type,"CHARTK") != 0) error_report();
-    else if(strcmp(store[now].type,"INTTK") == 0)
+    if(!isReservedWord(0, "INTTK") && !isReservedWord(0, "CHARTK")) {
+        error_report();
+    }
+    else if(isReservedWord(0, "INTTK"))
     {
         getsym();
-        if(strcmp(store[now].type,"IDENFR") != 0) error_report();
+        if(!isReservedWord(0, "IDENFR")) {
+            error_report();
+        }
         else
         {
-            error_b(3);//错误b分析 const int
+            error_b(3); //  错误b分析 const int
             getsym();
-            if(strcmp(store[now].type,"ASSIGN") != 0) error_report();
+            if(!isReservedWord(0, "ASSIGN")) {
+                error_report();
+            }
             else
             {
                 getsym();
-                integer();//整数
+                integer();  //  整数
                 if(global_flag == 1)
                 {
                     global_tab[gt_num].value[0] = temp_val;
@@ -3016,19 +3083,23 @@ void constant_definition()//<常量定义>::=int＜标识符>＝<整数>{,<标识符>＝<整数>}
                     local_tab[lt_num].value[0] = temp_val;
                     lt_num++;
                 }
-                while(strcmp(store[now].type,"COMMA") == 0)
+                while(isReservedWord(0, "COMMA"))
                 {
                     getsym();
-                    if(strcmp(store[now].type,"IDENFR") != 0) error_report();
+                    if(!isReservedWord(0, "IDENFR")) {
+                        error_report();
+                    }
                     else
                     {
-                        error_b(3);//错误b分析 const int
+                        error_b(3); //  错误b分析 const int
                         getsym();
-                        if(strcmp(store[now].type,"ASSIGN") != 0) error_report();
+                        if(!isReservedWord(0, "ASSIGN")) {
+                            error_report();
+                        }
                         else
                         {
                             getsym();
-                            integer();//整数
+                            integer();  //  整数
                             if(global_flag == 1)
                             {
                                 global_tab[gt_num].value[0] = temp_val;
@@ -3045,19 +3116,25 @@ void constant_definition()//<常量定义>::=int＜标识符>＝<整数>{,<标识符>＝<整数>}
             }
         }
     }
-    else if(strcmp(store[now].type,"CHARTK") == 0)
+    else if(isReservedWord(0, "CHARTK"))
     {
         getsym();
-        if(strcmp(store[now].type,"IDENFR") != 0) error_report();
+        if(!isReservedWord(0, "IDENFR")) {
+            error_report();
+        }
         else
         {
-            error_b(4);//错误b分析 const char
+            error_b(4); //  错误b分析 const char
             getsym();
-            if(strcmp(store[now].type,"ASSIGN") != 0) error_report();
+            if(!isReservedWord(0, "ASSIGN")) {
+                error_report();
+            }
             else
             {
                 getsym();
-                if(strcmp(store[now].type,"CHARCON") != 0) error_report();
+                if(!isReservedWord(0, "CHARCON")) {
+                    error_report();
+                }
                 else
                 {
                     if(global_flag == 1)
@@ -3071,19 +3148,25 @@ void constant_definition()//<常量定义>::=int＜标识符>＝<整数>{,<标识符>＝<整数>}
                         lt_num++;
                     }
                     getsym();
-                    while(strcmp(store[now].type,"COMMA") == 0)
+                    while(isReservedWord(0, "COMMA"))
                     {
                         getsym();
-                        if(strcmp(store[now].type,"IDENFR") != 0) error_report();
+                        if(!isReservedWord(0, "IDENFR")) {
+                            error_report();
+                        }
                         else
                         {
-                            error_b(4);//错误b分析 const char
+                            error_b(4); //  错误b分析 const char
                             getsym();
-                            if(strcmp(store[now].type,"ASSIGN") != 0) error_report();
+                            if(!isReservedWord(0, "ASSIGN")) {
+                                error_report();
+                            }
                             else
                             {
                                 getsym();
-                                if(strcmp(store[now].type,"CHARCON") != 0) error_report();
+                                if(!isReservedWord(0, "CHARCON")) {
+                                    error_report();
+                                }
                                 else
                                 {
                                     if(global_flag == 1)
@@ -3107,44 +3190,51 @@ void constant_definition()//<常量定义>::=int＜标识符>＝<整数>{,<标识符>＝<整数>}
     }
     fprintf(fp_out,"<常量定义>\n");
 }
-void integer()//<整数>::=［＋｜－］<无符号整数>
+void integer()  //  <整数>::=［＋｜－］<无符号整数>
 {
     int minu_flag = 0;
-    if(strcmp(store[now].type,"PLUS") == 0 || strcmp(store[now].type,"MINU") == 0)
+    if(isReservedWord(0, "PLUS") || isReservedWord(0, "MINU"))
     {
-        if(strcmp(store[now].type,"MINU") == 0)
+        if(isReservedWord(0, "MINU")) {
             minu_flag = 1;
+        }
         getsym();
-        unsigned_integer();//无符号整数
-        if(minu_flag == 1)
+        unsigned_integer(); //  无符号整数
+        if(minu_flag == 1) {
             temp_val = -temp_val;
+        }
     }
-    else
-        unsigned_integer();//无符号整数
+    else {
+        unsigned_integer(); //  无符号整数
+    }
     fprintf(fp_out,"<整数>\n");
 }
-void unsigned_integer()//<无符号整数>::=<数字>｛<数字>｝
+void unsigned_integer() //  <无符号整数>::=<数字>｛<数字>｝
 {
-    if(strcmp(store[now].type,"INTCON") == 0)
+    if(isReservedWord(0, "INTCON"))
     {
         temp_val = atoi(store[now].word);
         getsym();
     }
     fprintf(fp_out,"<无符号整数>\n");
 }
-void constant(int type)//<常量>::=<整数>|<字符>
+void constant(int type) //  <常量>::=<整数>|<字符>
 {
-    if(strcmp(store[now].type,"PLUS") == 0 || strcmp(store[now].type,"MINU") == 0 || strcmp(store[now].type,"INTCON") == 0)
+    if(isReservedWord(0, "PLUS") || isReservedWord(0, "MINU") || isReservedWord(0, "INTCON"))
     {
-        integer();//<整数>
-        if(type != 1)
-            error_o();//错误o
+        integer();  //  <整数>
+        if(type != 1) {
+            error_o();  //  错误o
+        }
     }
-    else if(strcmp(store[now].type,"CHARCON") != 0) error_report();
+    else if(!isReservedWord(0, "CHARCON")) {
+        error_report();
+    }
     else
     {
-        if(type != 2)
-            error_o();//错误o
+        if(type != 2) {
+            error_o();  //  错误o
+        }
         temp_val = store[now].word[0];
         getsym();
     }
