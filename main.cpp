@@ -2,6 +2,7 @@
 #include<stdlib.h>
 #include<string.h>
 #include<ctype.h>
+
 #define MAX 255
 char name[20][20] = {"const", "int", "char",
                      "void", "main",
@@ -11,45 +12,41 @@ char name[20][20] = {"const", "int", "char",
                      "scanf", "printf",
                      "return"};
 char reserved_word[20][20] = {"CONSTTK", "INTTK", "CHARTK",
-                     "VOIDTK", "MAINTK",
-                     "IFTK", "ELSETK",
-                     "SWITCHTK", "CASETK", "DEFAULTTK",
-                     "WHILETK", "FORTK",
-                     "SCANFTK", "PRINTFTK",
-                     "RETURNTK"};
+                              "VOIDTK", "MAINTK",
+                              "IFTK", "ELSETK",
+                              "SWITCHTK", "CASETK", "DEFAULTTK",
+                              "WHILETK", "FORTK",
+                              "SCANFTK", "PRINTFTK",
+                              "RETURNTK"};
 char head[100][MAX];    // head_statement
 
-typedef struct node
-{
+typedef struct node {
     char word[MAX];
     char type[20];
     int line;   //  ÐÐºÅ
-}   user;
+} user;
 
-typedef struct node2
-{
+typedef struct node2 {
     int line;   //  ÐÐºÅ
     char type;  //  ´íÎóÀàÐÍ
-}   user2;
+} user2;
 
-typedef struct node3
-{
+typedef struct node3 {
     char word[MAX]; //   ³£Á¿ or ±äÁ¿Ãû
     int type;   // ³£Á¿ or ±äÁ¿ÀàÐÍ±àºÅ
     int func;   //  ±íÊ¾·ûºÅÔÚºÎ´¦¶¨Òå
     int dim;    //  ÖµµÄÎ¬Êý
     int i, j;   //  ´æ´¢Êý×éµÄÏÂ±ê
     int value[30];  //    ³£Á¿ or ±äÁ¿Öµ
-}   user3;
+} user3;
 
-typedef struct func
-{
+typedef struct func {
     char name[MAX]; //  ÉùÃ÷µÄº¯ÊýÃû
     int type;   //  º¯ÊýµÄ·µ»ØÀàÐÍ
     int num;    //  ²ÎÊý¸öÊý
     char id[MAX];   //  ²ÎÊýÀàÐÍ±ê¼Ç
     int loc;    //  º¯Êý¿ªÊ¼Î»ÖÃ
-}   user4;
+} user4;
 
 user store[10000];
 user2 err_store[100];
@@ -62,7 +59,7 @@ char err_type;  //  ´íÎóÀàÐÍ
 int global_flag = 1;    //  È«¾ÖÖ¸Ê¾·û
 user3 global_tab[100];  //  È«¾Ö·ûºÅ±í
 user3 local_tab[100];   //  ¾Ö²¿·ûºÅ±í
-int gt_num = 0, lt_num = 0; //  ¼ÇÂ¼È«¾Ö±íºÍ¾Ö²¿±íµÄ³¤¶È
+int gt_num = 0, lt_num = 0; //  È«¾Ö±í\¾Ö²¿±íµÄ³¤¶È
 int temp_val = 0;   //  ÔÝ´æ³£Á¿»ò±äÁ¿Öµ
 char temp_str[MAX]; //  ÔÝ´æ×Ö·û´®
 
@@ -86,53 +83,53 @@ FILE *fp_out = NULL;
 FILE *fp_err = NULL;
 FILE *fp_result = NULL;
 
-int isletter(char letter)//ÅÐ¶ÏÊÇ·ñÎª×Ö·û
+int isletter(char letter)   //  ÅÐ¶ÏÊÇ·ñÎª×Ö·û
 {
-    if((letter >= 65 && letter <= 90)
-    || (letter >= 97 && letter <= 122)
-    || letter == 95)
+    if ((letter >= 65 && letter <= 90)
+        || (letter >= 97 && letter <= 122)
+        || letter == 95) {
         return 1;
-    else
+    }
+    else {
         return 0;
+    }
 }
 
-void getsym()   //È¡´Ê
+void getsym()   //  È¡´Ê
 {
-    fprintf(fp_out,"%s %s\n", store[now].type, store[now].word);
+    fprintf(fp_out, "%s %s\n", store[now].type, store[now].word);
     now++;
 }
 
-int* get_index(char name[]) //  »ñÈ¡ÔÚ±êÊ¶·û±íÖÐµÄÏÂ±êÒÔ¼°ÔÚÄÄ¸ö±íÖÐ(¾Ö²¿1 È«¾Ö2)
+int *get_index(char name[]) //  »ñÈ¡ÔÚ±êÊ¶·û±íÖÐµÄÏÂ±êÒÔ¼°ÔÚÄÄ¸ö±íÖÐ(¾Ö²¿1 È«¾Ö2)
 //·µ»Ø³¤¶ÈÎª2µÄÊý×éarray£ºarray[0]ÎªÏÂ±ê£¬array[1]Îª±íºÅ
 {
     int i = 0, j = 0;
     int *array;
     char sym[MAX] = {};
     char tab[MAX] = {};
-    array = (int *)malloc(2*sizeof(int));
-    for(i = 0; i < strlen(name); i++) {
+    array = (int *) malloc(2 * sizeof(int));
+    for (i = 0; i < strlen(name); i++) {
         sym[i] = tolower(name[i]);
     }
-    for(i = 0; i < lt_num; i++) // 1st: ¼ìË÷¾Ö²¿±í
+    for (i = 0; i < lt_num; i++) // 1st: ¼ìË÷¾Ö²¿±í
     {
-        for(j = 0; j < strlen(local_tab[i].word); j++) {
+        for (j = 0; j < strlen(local_tab[i].word); j++) {
             tab[j] = tolower(local_tab[i].word[j]);
         }
-        if(strcmp(sym, tab) == 0)
-        {
+        if (strcmp(sym, tab) == 0) {
             array[0] = i;
             array[1] = 1;
             return array;
         }
         memset(tab, 0, sizeof(tab));
     }
-    for(i = 0; i < gt_num; i++) //  2nd: ¼ìË÷È«¾Ö±í
+    for (i = 0; i < gt_num; i++) //  2nd: ¼ìË÷È«¾Ö±í
     {
-        for(j = 0; j < strlen(global_tab[i].word); j++) {
+        for (j = 0; j < strlen(global_tab[i].word); j++) {
             tab[j] = tolower(global_tab[i].word[j]);
         }
-        if(strcmp(sym,tab) == 0)
-        {
+        if (strcmp(sym, tab) == 0) {
             array[0] = i;
             array[1] = 2;
             return array;
@@ -146,36 +143,32 @@ char search_nametab()   //  ²éÈ«¾Ö or ¾Ö²¿±í·µ»ØÊý¾ÝÀàÐÍ
     int i = 0, j = 0;
     char sym[MAX] = {};
     char tab[MAX] = {};
-    for(i = 0; i < strlen(store[now].word); i++) {
+    for (i = 0; i < strlen(store[now].word); i++) {
         sym[i] = tolower(store[now].word[i]);
     }
-    for(i = 0; i < lt_num; i++) // 1st: ¼ìË÷¾Ö²¿±í
+    for (i = 0; i < lt_num; i++) // 1st: ¼ìË÷¾Ö²¿±í
     {
-        for(j = 0; j < strlen(local_tab[i].word); j++) {
+        for (j = 0; j < strlen(local_tab[i].word); j++) {
             tab[j] = tolower(local_tab[i].word[j]);
         }
-        if(strcmp(sym,tab) == 0)
-        {
-            if(local_tab[i].type == 1 || local_tab[i].type == 3) {
+        if (strcmp(sym, tab) == 0) {
+            if (local_tab[i].type == 1 || local_tab[i].type == 3) {
                 return 'i';
-            }
-            else if(local_tab[i].type == 2 || local_tab[i].type == 4) {
+            } else if (local_tab[i].type == 2 || local_tab[i].type == 4) {
                 return 'c';
             }
         }
         memset(tab, 0, sizeof(tab));
     }
-    for(i = 0; i<gt_num; i++)   // 2nd: ¼ìË÷È«¾Ö±í
+    for (i = 0; i < gt_num; i++)   // 2nd: ¼ìË÷È«¾Ö±í
     {
-        for(j = 0; j < strlen(global_tab[i].word); j++) {
+        for (j = 0; j < strlen(global_tab[i].word); j++) {
             tab[j] = tolower(global_tab[i].word[j]);
         }
-        if(strcmp(sym,tab) == 0)
-        {
-            if(global_tab[i].type == 1 || global_tab[i].type == 3) {
+        if (strcmp(sym, tab) == 0) {
+            if (global_tab[i].type == 1 || global_tab[i].type == 3) {
                 return 'i';
-            }
-            else if(global_tab[i].type == 2 || global_tab[i].type == 4) {
+            } else if (global_tab[i].type == 2 || global_tab[i].type == 4) {
                 return 'c';
             }
         }
@@ -188,30 +181,26 @@ char search_const() //  ²éconst
     int i = 0, j = 0;
     char sym[MAX] = {};
     char tab[MAX] = {};
-    for(i = 0; i < strlen(store[now].word); i++) {
+    for (i = 0; i < strlen(store[now].word); i++) {
         sym[i] = tolower(store[now].word[i]);
     }
-    for(i = 0; i < lt_num; i++)
-    {
-        for(j = 0; j < strlen(local_tab[i].word); j++) {
+    for (i = 0; i < lt_num; i++) {
+        for (j = 0; j < strlen(local_tab[i].word); j++) {
             tab[j] = tolower(local_tab[i].word[j]);
         }
-        if(strcmp(sym,tab) == 0)
-        {
-            if(local_tab[i].type == 3 || local_tab[i].type == 4) {
+        if (strcmp(sym, tab) == 0) {
+            if (local_tab[i].type == 3 || local_tab[i].type == 4) {
                 return 'x'; //  constÀàÐÍ
             }
         }
         memset(tab, 0, sizeof(tab));
     }
-    for(i = 0; i < gt_num; i++)
-    {
-        for(j = 0; j < strlen(global_tab[i].word); j++) {
+    for (i = 0; i < gt_num; i++) {
+        for (j = 0; j < strlen(global_tab[i].word); j++) {
             tab[j] = tolower(global_tab[i].word[j]);
         }
-        if(strcmp(sym,tab) == 0)
-        {
-            if(global_tab[i].type == 3 || global_tab[i].type == 4) {
+        if (strcmp(sym, tab) == 0) {
+            if (global_tab[i].type == 3 || global_tab[i].type == 4) {
                 return 'x'; //  constÀàÐÍ
             }
         }
@@ -222,198 +211,204 @@ char search_const() //  ²éconst
 
 void error_report() //  ´íÎó±¨¸æ
 {
-    printf("error : %s at line: %d\n",store[now].word,store[now].line);
+    printf("error : %s at line: %d\n", store[now].word, store[now].line);
 }
+
 void error_a()  //  ´íÎó´¦Àía
 {
     err_store[errnum].line = store[addr].line;
     err_store[errnum].type = 'a';
     errnum++;
 }
+
 void error_b(int type)  //  ´íÎó´¦Àíb
 {
     int i = 0, j = 0;
-    int flag = 0;//ÅÐ¶ÏÊÇ·ñÖØ¸´¶¨Òå±êÊ¶·û
+    int flag = 0;   //  ÅÐ¶ÏÊÇ·ñÖØ¸´¶¨Òå±êÊ¶·û
     char sym[MAX] = {};
     char tab[MAX] = {};
-    for(i=0; i<strlen(store[now].word); i++)
+    for (i = 0; i < strlen(store[now].word); i++) {
         sym[i] = tolower(store[now].word[i]);
-    if(global_flag == 1)//È«¾Ö±äÁ¿ÅÐ¶Ï
+    }
+    if (global_flag == 1)   //  È«¾Ö±äÁ¿ÅÐ¶Ï
     {
-        for(i=0; i<gt_num; i++)
-        {
-            for(j=0; j<strlen(global_tab[i].word); j++)
+        for (i = 0; i < gt_num; i++) {
+            for (j = 0; j < strlen(global_tab[i].word); j++) {
                 tab[j] = tolower(global_tab[i].word[j]);
-            if(strcmp(sym,tab) == 0)
-            {
+            }
+            if (strcmp(sym, tab) == 0) {
                 flag = 1;
                 break;
             }
             memset(tab, 0, sizeof(tab));
         }
-    }
-    else if(global_flag == 0)//¾Ö²¿±äÁ¿ÅÐ¶Ï
+    } else if (global_flag == 0)    //  ¾Ö²¿±äÁ¿ÅÐ¶Ï
     {
-        for(i=0; i<lt_num; i++)
-        {
-            for(j=0; j<strlen(local_tab[i].word); j++)
+        for (i = 0; i < lt_num; i++) {
+            for (j = 0; j < strlen(local_tab[i].word); j++) {
                 tab[j] = tolower(local_tab[i].word[j]);
-            if(strcmp(sym,tab) == 0)
-            {
+            }
+            if (strcmp(sym, tab) == 0) {
                 flag = 1;
                 break;
             }
             memset(tab, 0, sizeof(tab));
         }
     }
-    if(flag == 1)
-    {
+    if (flag == 1) {
         err_store[errnum].line = store[now].line;
         err_store[errnum].type = 'b';
         errnum++;
-    }
-    else
-    {
-        if(global_flag == 1)
-        {
-            strcpy(global_tab[gt_num].word,store[now].word);
+    } else {
+        if (global_flag == 1) {
+            strcpy(global_tab[gt_num].word, store[now].word);
             global_tab[gt_num].type = type;
             //gt_num++;
-        }
-        else
-        {
-            strcpy(local_tab[lt_num].word,store[now].word);
+        } else {
+            strcpy(local_tab[lt_num].word, store[now].word);
             local_tab[lt_num].type = type;
             //lt_num++;
         }
     }
 }
+
 void error_c(int diff)  //  ´íÎó´¦Àíc
 {
     int i = 0, j = 0;
-    int flag = 0;//ÅÐ¶ÏÊÇ·ñÉùÃ÷
+    int flag = 0;   //  ÅÐ¶ÏÊÇ·ñÉùÃ÷
     char sym[MAX] = {};
     char tab[MAX] = {};
-    for(i=0; i<strlen(store[now].word); i++)
+    for (i = 0; i < strlen(store[now].word); i++) {
         sym[i] = tolower(store[now].word[i]);
-    if(diff == 1)//º¯ÊýÃû
-    {
-        for(i=0; i<gt_num; i++)//±éÀúÈ«¾ÖÕ»ÖÐµÄº¯ÊýÃû
-        {
-            for(j=0; j<strlen(global_tab[i].word); j++)
-                tab[j] = tolower(global_tab[i].word[j]);
-            if(strcmp(sym,tab) == 0 && (global_tab[i].type>=5 && global_tab[i].type<=7))
-            {
-                flag = 1;
-                break;
-            }
-            memset(tab, 0, sizeof(tab));
-        }
     }
-    else if(diff == 2)//³£Á¿\±äÁ¿Ãû
+    if (diff == 1)  //  º¯ÊýÃû
     {
-        for(i=0; i<gt_num; i++)//±éÀúÈ«¾ÖÕ»ÖÐµÄ³£Á¿\±äÁ¿Ãû
+        for (i = 0; i < gt_num; i++)    //  ±éÀúÈ«¾ÖÕ»ÖÐµÄº¯ÊýÃû
         {
-            for(j=0; j<strlen(global_tab[i].word); j++)
+            for (j = 0; j < strlen(global_tab[i].word); j++) {
                 tab[j] = tolower(global_tab[i].word[j]);
-            if(strcmp(sym,tab) == 0 && (global_tab[i].type>=1 && global_tab[i].type<=4))
-            {
+            }
+            if (strcmp(sym, tab) == 0 && (global_tab[i].type >= 5 && global_tab[i].type <= 7)) {
                 flag = 1;
                 break;
             }
             memset(tab, 0, sizeof(tab));
         }
-        for(i=0; i<lt_num && flag!=1; i++)//±éÀú¾Ö²¿Õ»ÖÐµÄ³£Á¿\±äÁ¿Ãû
+    } else if (diff == 2)   //  ³£Á¿\±äÁ¿Ãû
+    {
+        for (i = 0; i < gt_num; i++)    //  ±éÀúÈ«¾ÖÕ»ÖÐµÄ³£Á¿\±äÁ¿Ãû
         {
-            for(j=0; j<strlen(local_tab[i].word); j++)
+            for (j = 0; j < strlen(global_tab[i].word); j++) {
+                tab[j] = tolower(global_tab[i].word[j]);
+            }
+            if (strcmp(sym, tab) == 0 && (global_tab[i].type >= 1 && global_tab[i].type <= 4)) {
+                flag = 1;
+                break;
+            }
+            memset(tab, 0, sizeof(tab));
+        }
+        for (i = 0; i < lt_num && flag != 1; i++)   //  ±éÀú¾Ö²¿Õ»ÖÐµÄ³£Á¿\±äÁ¿Ãû
+        {
+            for (j = 0; j < strlen(local_tab[i].word); j++)
                 tab[j] = tolower(local_tab[i].word[j]);
-            if(strcmp(sym,tab) == 0)
-            {
+            if (strcmp(sym, tab) == 0) {
                 flag = 1;
                 break;
             }
             memset(tab, 0, sizeof(tab));
         }
     }
-    if(flag == 0)
-    {
+    if (flag == 0) {
         err_store[errnum].line = store[now].line;
         err_store[errnum].type = 'c';
         errnum++;
     }
 }
+
 void error_d()  //  ´íÎó´¦Àíd
 {
     err_store[errnum].line = store[now].line;
     err_store[errnum].type = 'd';
     errnum++;
 }
+
 void error_e()  //  ´íÎó´¦Àíe
 {
     err_store[errnum].line = store[now].line;
     err_store[errnum].type = 'e';
     errnum++;
 }
+
 void error_f()  //  ´íÎó´¦Àíf
 {
     err_store[errnum].line = store[now].line;
     err_store[errnum].type = 'f';
     errnum++;
 }
+
 void error_g()  //  ´íÎó´¦Àíg
 {
     err_store[errnum].line = store[now].line;
     err_store[errnum].type = 'g';
     errnum++;
 }
+
 void error_h()  //  ´íÎó´¦Àíh
 {
     err_store[errnum].line = store[now].line;
     err_store[errnum].type = 'h';
     errnum++;
 }
+
 void error_i()  //  ´íÎó´¦Àíi
 {
     err_store[errnum].line = store[now].line;
     err_store[errnum].type = 'i';
     errnum++;
 }
+
 void error_j()  //  ´íÎó´¦Àíj
 {
     err_store[errnum].line = store[now].line;
     err_store[errnum].type = 'j';
     errnum++;
 }
+
 void error_k()  //  ´íÎó´¦Àík
 {
-    err_store[errnum].line = store[now-1].line;
+    err_store[errnum].line = store[now - 1].line;
     err_store[errnum].type = 'k';
     errnum++;
 }
+
 void error_l()  //  ´íÎó´¦Àíl
 {
-    err_store[errnum].line = store[now-1].line;
+    err_store[errnum].line = store[now - 1].line;
     err_store[errnum].type = 'l';
     errnum++;
 }
+
 void error_m()  //  ´íÎó´¦Àím
 {
     err_store[errnum].line = store[now].line;
     err_store[errnum].type = 'm';
     errnum++;
 }
+
 void error_n()  //  ´íÎó´¦Àín
 {
     err_store[errnum].line = store[now].line;
     err_store[errnum].type = 'n';
     errnum++;
 }
+
 void error_o()  //  ´íÎó´¦Àío
 {
     err_store[errnum].line = store[now].line;
     err_store[errnum].type = 'o';
     errnum++;
 }
+
 void error_p()  //  ´íÎó´¦Àíp
 {
     err_store[errnum].line = store[now].line;
@@ -480,8 +475,8 @@ void fopen_initialize() {
     fp_err = fopen("error.txt", "w");
     fp_result = fopen("pcoderesult.txt", "w");
 }
-int main()
-{
+
+int main() {
     int i = 0, j = 0, k = 0;
     int pin = 0, len = 0, flag = 0;
     int line = 1;
@@ -492,42 +487,32 @@ int main()
     char temp[MAX] = "", lower[MAX] = "";
 //    fopen_initialize_debug();
     fopen_initialize();
-    while(fgets(buff, MAX, fp_in) != NULL)
-    {
+    while (fgets(buff, MAX, fp_in) != NULL) {
         len = strlen(buff);
-        for(i = 0; i < len; i++, pin = 0, memset(temp, 0, sizeof(temp)))
-        {
+        for (i = 0; i < len; i++, pin = 0, memset(temp, 0, sizeof(temp))) {
             token = buff[i];
-            if(isspace(token) || token == '\0')
-            {
-                if(token == '\n' || token == '\0') {
+            if (isspace(token) || token == '\0') {
+                if (token == '\n' || token == '\0') {
                     break;
-                }
-                else {
+                } else {
                     continue;
                 }
-            }
-            else if(isletter(token))
-            {
+            } else if (isletter(token)) {
                 temp[pin++] = token;
-                for(i = i + 1; i < len; i++)
-                {
+                for (i = i + 1; i < len; i++) {
                     token = buff[i];
-                    if(isletter(token) || isdigit(token)) {
+                    if (isletter(token) || isdigit(token)) {
                         temp[pin++] = token;
-                    }
-                    else {
+                    } else {
                         break;
                     }
                 }
                 i--;
-                for(j = 0; j < strlen(temp); j++) {
+                for (j = 0; j < strlen(temp); j++) {
                     lower[j] = tolower(temp[j]);
                 }
-                for(j = 0; j < 15; j++)
-                {
-                    if(strcmp(lower, name[j]) == 0)
-                    {
+                for (j = 0; j < 15; j++) {
+                    if (strcmp(lower, name[j]) == 0) {
                         flag = 1;
                         strcpy(store[addr].word, temp);
                         strcpy(store[addr].type, reserved_word[j]);
@@ -536,266 +521,214 @@ int main()
                         break;
                     }
                 }
-                if(flag == 0)
-                {
+                if (flag == 0) {
                     strcpy(store[addr].word, temp);
-                    strcpy(store[addr].type,"IDENFR");
+                    strcpy(store[addr].type, "IDENFR");
                     store[addr].line = line;
                     addr++;
                 }
                 flag = 0;
                 memset(lower, 0, sizeof(lower));
-            }
-            else if(isdigit(token))
-            {
+            } else if (isdigit(token)) {
                 temp[pin++] = token;
-                for(i = i+1; i < len; i++)
-                {
+                for (i = i + 1; i < len; i++) {
                     token = buff[i];
-                    if(isdigit(token)) {
+                    if (isdigit(token)) {
                         temp[pin++] = token;
-                    }
-                    else {
+                    } else {
                         break;
                     }
                 }
                 i--;
                 strcpy(store[addr].word, temp);
-                strcpy(store[addr].type,"INTCON");
+                strcpy(store[addr].type, "INTCON");
                 store[addr].line = line;
                 addr++;
-            }
-            else if(token == '\'') {
+            } else if (token == '\'') {
                 i++;
                 token = buff[i];
-                while(token != '\'') {
-                    if((buff[i] < 48 || buff[i] > 57)
-                    && (buff[i] < 65 || buff[i] > 90)
-                    && (buff[i] < 97 || buff[i] > 122)
-                    &&  buff[i] != 42 && buff[i] != 43 && buff[i] != 45 && buff[i] != 47
-                    && buff[i] != 95) {
-                        flag=1;
+                while (token != '\'') {
+                    if ((buff[i] < 48 || buff[i] > 57)
+                        && (buff[i] < 65 || buff[i] > 90)
+                        && (buff[i] < 97 || buff[i] > 122)
+                        && buff[i] != 42 && buff[i] != 43 && buff[i] != 45 && buff[i] != 47
+                        && buff[i] != 95) {
+                        flag = 1;
                     }
                     temp[pin++] = buff[i++];
                     token = buff[i];
                 }
                 strcpy(store[addr].word, temp);
-                strcpy(store[addr].type,"CHARCON");
+                strcpy(store[addr].type, "CHARCON");
                 store[addr].line = line;
-                if(flag == 1) {
+                if (flag == 1) {
                     error_a();
                 }
                 addr++;
                 flag = 0;
-            }
-            else if(token == '\"'){
+            } else if (token == '\"') {
                 i++;
                 token = buff[i];
-                if(token == '\"') flag = 1;
-                while(token != '\"'){
-                    if((buff[i] < 35 || buff[i] > 126)
-                    && buff[i] != 33 && buff[i] != 32) {
-                        flag=1;
+                if (token == '\"') flag = 1;
+                while (token != '\"') {
+                    if ((buff[i] < 35 || buff[i] > 126)
+                        && buff[i] != 33 && buff[i] != 32) {
+                        flag = 1;
                     }
                     temp[pin++] = buff[i++];
                     token = buff[i];
                 }
                 strcpy(store[addr].word, temp);
-                strcpy(store[addr].type,"STRCON");
+                strcpy(store[addr].type, "STRCON");
                 store[addr].line = line;
-                if(flag == 1) {
+                if (flag == 1) {
                     error_a();
                 }
                 addr++;
                 flag = 0;
-            }
-            else if(token == '+')
-            {
-                strcpy(store[addr].word,"+");
-                strcpy(store[addr].type,"PLUS");
+            } else if (token == '+') {
+                strcpy(store[addr].word, "+");
+                strcpy(store[addr].type, "PLUS");
                 store[addr].line = line;
                 addr++;
-            }
-            else if(token == '-')
-            {
-                strcpy(store[addr].word,"-");
-                strcpy(store[addr].type,"MINU");
+            } else if (token == '-') {
+                strcpy(store[addr].word, "-");
+                strcpy(store[addr].type, "MINU");
                 store[addr].line = line;
                 addr++;
-            }
-            else if(token == '*')
-            {
-                strcpy(store[addr].word,"*");
-                strcpy(store[addr].type,"MULT");
+            } else if (token == '*') {
+                strcpy(store[addr].word, "*");
+                strcpy(store[addr].type, "MULT");
                 store[addr].line = line;
                 addr++;
-            }
-            else if(token == '/')
-            {
-                strcpy(store[addr].word,"/");
-                strcpy(store[addr].type,"DIV");
+            } else if (token == '/') {
+                strcpy(store[addr].word, "/");
+                strcpy(store[addr].type, "DIV");
                 store[addr].line = line;
                 addr++;
-            }
-            else if(token == ':')
-            {
-                strcpy(store[addr].word,":");
-                strcpy(store[addr].type,"COLON");
+            } else if (token == ':') {
+                strcpy(store[addr].word, ":");
+                strcpy(store[addr].type, "COLON");
                 store[addr].line = line;
                 addr++;
-            }
-            else if(token == ';')
-            {
-                strcpy(store[addr].word,";");
-                strcpy(store[addr].type,"SEMICN");
+            } else if (token == ';') {
+                strcpy(store[addr].word, ";");
+                strcpy(store[addr].type, "SEMICN");
                 store[addr].line = line;
                 addr++;
-            }
-            else if(token == ',')
-            {
-                strcpy(store[addr].word,",");
-                strcpy(store[addr].type,"COMMA");
+            } else if (token == ',') {
+                strcpy(store[addr].word, ",");
+                strcpy(store[addr].type, "COMMA");
                 store[addr].line = line;
                 addr++;
-            }
-            else if(token == '(')
-            {
-                strcpy(store[addr].word,"(");
-                strcpy(store[addr].type,"LPARENT");
+            } else if (token == '(') {
+                strcpy(store[addr].word, "(");
+                strcpy(store[addr].type, "LPARENT");
                 store[addr].line = line;
                 addr++;
-            }
-            else if(token == ')')
-            {
-                strcpy(store[addr].word,")");
-                strcpy(store[addr].type,"RPARENT");
+            } else if (token == ')') {
+                strcpy(store[addr].word, ")");
+                strcpy(store[addr].type, "RPARENT");
                 store[addr].line = line;
                 addr++;
-            }
-            else if(token =='[')
-            {
-                strcpy(store[addr].word,"[");
-                strcpy(store[addr].type,"LBRACK");
+            } else if (token == '[') {
+                strcpy(store[addr].word, "[");
+                strcpy(store[addr].type, "LBRACK");
                 store[addr].line = line;
                 addr++;
-            }
-            else if(token == ']')
-            {
-                strcpy(store[addr].word,"]");
-                strcpy(store[addr].type,"RBRACK");
+            } else if (token == ']') {
+                strcpy(store[addr].word, "]");
+                strcpy(store[addr].type, "RBRACK");
                 store[addr].line = line;
                 addr++;
-            }
-            else if(token == '{')
-            {
-                strcpy(store[addr].word,"{");
-                strcpy(store[addr].type,"LBRACE");
+            } else if (token == '{') {
+                strcpy(store[addr].word, "{");
+                strcpy(store[addr].type, "LBRACE");
                 store[addr].line = line;
                 addr++;
-            }
-            else if(token == '}')
-            {
-                strcpy(store[addr].word,"}");
-                strcpy(store[addr].type,"RBRACE");
+            } else if (token == '}') {
+                strcpy(store[addr].word, "}");
+                strcpy(store[addr].type, "RBRACE");
                 store[addr].line = line;
                 addr++;
-            }
-            else if(token == '<'){
+            } else if (token == '<') {
                 temp[pin++] = token;
                 i++;
                 token = buff[i];
-                if(token == '=')
-                {
+                if (token == '=') {
                     temp[pin++] = token;
-                    strcpy(store[addr].word,temp);
-                    strcpy(store[addr].type,"LEQ");
+                    strcpy(store[addr].word, temp);
+                    strcpy(store[addr].type, "LEQ");
                     store[addr].line = line;
                     addr++;
-                }
-                else
-                {
-                    strcpy(store[addr].word,temp);
-                    strcpy(store[addr].type,"LSS");
+                } else {
+                    strcpy(store[addr].word, temp);
+                    strcpy(store[addr].type, "LSS");
                     store[addr].line = line;
                     addr++;
                     i--;
                 }
-            }
-            else if(token == '>'){
+            } else if (token == '>') {
                 temp[pin++] = token;
                 i++;
                 token = buff[i];
-                if(token == '=')
-                {
+                if (token == '=') {
                     temp[pin++] = token;
-                    strcpy(store[addr].word,temp);
-                    strcpy(store[addr].type,"GEQ");
+                    strcpy(store[addr].word, temp);
+                    strcpy(store[addr].type, "GEQ");
                     store[addr].line = line;
                     addr++;
-                }
-                else
-                {
-                    strcpy(store[addr].word,temp);
-                    strcpy(store[addr].type,"GRE");
+                } else {
+                    strcpy(store[addr].word, temp);
+                    strcpy(store[addr].type, "GRE");
                     store[addr].line = line;
                     addr++;
                     i--;
                 }
-            }
-            else if(token == '='){
+            } else if (token == '=') {
                 temp[pin++] = token;
                 i++;
                 token = buff[i];
-                if(token == '=')
-                {
+                if (token == '=') {
                     temp[pin++] = token;
-                    strcpy(store[addr].word,temp);
-                    strcpy(store[addr].type,"EQL");
+                    strcpy(store[addr].word, temp);
+                    strcpy(store[addr].type, "EQL");
                     store[addr].line = line;
                     addr++;
-                }
-                else
-                {
-                    strcpy(store[addr].word,temp);
-                    strcpy(store[addr].type,"ASSIGN");
+                } else {
+                    strcpy(store[addr].word, temp);
+                    strcpy(store[addr].type, "ASSIGN");
                     store[addr].line = line;
                     addr++;
                     i--;
                 }
-            }
-            else if(token == '!'){
+            } else if (token == '!') {
                 temp[pin++] = token;
                 i++;
                 token = buff[i];
-                if(token == '=')
-                {
+                if (token == '=') {
                     temp[pin++] = token;
-                    strcpy(store[addr].word,temp);
-                    strcpy(store[addr].type,"NEQ");
+                    strcpy(store[addr].word, temp);
+                    strcpy(store[addr].type, "NEQ");
                     store[addr].line = line;
                     addr++;
-                }
-                else
-                {
+                } else {
                     printf("ERROR1:WRONG INPUT IN LINE %d\n", line);
                     i--;
                 }
-            }
-            else
+            } else
                 printf("ERROR2:WRONG INPUT IN LINE %d\n", line);
         }
         line++;
-        memset(buff,0,sizeof(buff));
+        memset(buff, 0, sizeof(buff));
     }
 
     program();
 
-    for(i = 0; i < errnum - 1; i++) //  ´íÎóÊä³öÅÅÐò
+    for (i = 0; i < errnum - 1; i++) //  ´íÎóÊä³öÅÅÐò
     {
-        for(j = 0; j < errnum - 1 - i; j++)
-        {
-            if(err_store[j + 1].line < err_store[j].line)
-            {
+        for (j = 0; j < errnum - 1 - i; j++) {
+            if (err_store[j + 1].line < err_store[j].line) {
                 tempi = err_store[j + 1].line;
                 err_store[j + 1].line = err_store[j].line;
                 err_store[j].line = tempi;
@@ -805,52 +738,40 @@ int main()
             }
         }
     }
-    for(i = 0; i < errnum; i++) {
+    for (i = 0; i < errnum; i++) {
         fprintf(fp_err, "%d %c\n", err_store[i].line, err_store[i].type);
     }
-    for(i = 0; i < gt_num; i++) // È«¾Ö±í²âÊÔ
+    for (i = 0; i < gt_num; i++) // È«¾Ö±í²âÊÔ
     {
-        if(global_tab[i].dim == 0)
-        {
-            if(global_tab[i].type == 1 || global_tab[i].type == 3) {
+        if (global_tab[i].dim == 0) {
+            if (global_tab[i].type == 1 || global_tab[i].type == 3) {
                 printf("%s %d %d %d\n", global_tab[i].word, global_tab[i].type, global_tab[i].func,
                        global_tab[i].value[0]);
-            }
-            else if(global_tab[i].type == 2 || global_tab[i].type == 4) {
+            } else if (global_tab[i].type == 2 || global_tab[i].type == 4) {
                 printf("%s %d %d %c\n", global_tab[i].word, global_tab[i].type, global_tab[i].func,
                        global_tab[i].value[0]);
-            }
-            else {
+            } else {
                 printf("%s %d %d\n", global_tab[i].word, global_tab[i].type, global_tab[i].func);
             }
-        }
-        else if(global_tab[i].dim == 1)
-        {
+        } else if (global_tab[i].dim == 1) {
             printf("%s[%d] %d\n", global_tab[i].word, global_tab[i].i, global_tab[i].type);
             printf("\t");
-            for(j = 0; j < global_tab[i].i; j++)
-            {
-                if(global_tab[i].type == 1 || global_tab[i].type == 3) {
+            for (j = 0; j < global_tab[i].i; j++) {
+                if (global_tab[i].type == 1 || global_tab[i].type == 3) {
                     printf("%d ", global_tab[i].value[j]);
-                }
-                else if(global_tab[i].type == 2 || global_tab[i].type == 4) {
+                } else if (global_tab[i].type == 2 || global_tab[i].type == 4) {
                     printf("%c ", global_tab[i].value[j]);
                 }
             }
             printf("\n");
-        }
-        else if(global_tab[i].dim == 2)
-        {
+        } else if (global_tab[i].dim == 2) {
             printf("%s[%d][%d] %d\n", global_tab[i].word, global_tab[i].i, global_tab[i].j, global_tab[i].type);
-            for(j = 0; j < global_tab[i].i; j++)
-            {
+            for (j = 0; j < global_tab[i].i; j++) {
                 printf("\t");
-                for(k = 0; k < global_tab[i].j; k++)
-                {
-                    if(global_tab[i].type == 1 || global_tab[i].type == 3) {
+                for (k = 0; k < global_tab[i].j; k++) {
+                    if (global_tab[i].type == 1 || global_tab[i].type == 3) {
                         printf("%d ", global_tab[i].value[j * global_tab[i].j + k]);
-                    }
-                    else if(global_tab[i].type == 2 || global_tab[i].type == 4) {
+                    } else if (global_tab[i].type == 2 || global_tab[i].type == 4) {
                         printf("%c ", global_tab[i].value[j * global_tab[i].j + k]);
                     }
                 }
@@ -858,47 +779,35 @@ int main()
             }
         }
     }
-    for(i = 0; i < lt_num; i++)//¾Ö²¿±í²âÊÔ
+    for (i = 0; i < lt_num; i++)//¾Ö²¿±í²âÊÔ
     {
-        if(local_tab[i].dim == 0)
-        {
-            if(local_tab[i].type == 1|| local_tab[i].type == 3) {
+        if (local_tab[i].dim == 0) {
+            if (local_tab[i].type == 1 || local_tab[i].type == 3) {
                 printf("%s %d %d %d\n", local_tab[i].word, local_tab[i].type, local_tab[i].func, local_tab[i].value[0]);
-            }
-            else if(local_tab[i].type == 2 || local_tab[i].type == 4) {
+            } else if (local_tab[i].type == 2 || local_tab[i].type == 4) {
                 printf("%s %d %d %c\n", local_tab[i].word, local_tab[i].type, local_tab[i].func, local_tab[i].value[0]);
-            }
-            else {
+            } else {
                 printf("%s %d %d\n", local_tab[i].word, local_tab[i].type, local_tab[i].func);
             }
-        }
-        else if(local_tab[i].dim == 1)
-        {
+        } else if (local_tab[i].dim == 1) {
             printf("%s[%d] %d\n", local_tab[i].word, local_tab[i].i, local_tab[i].type);
             printf("\t");
-            for(j = 0; j < local_tab[i].i; j++)
-            {
-                if(local_tab[i].type == 1 || local_tab[i].type == 3) {
+            for (j = 0; j < local_tab[i].i; j++) {
+                if (local_tab[i].type == 1 || local_tab[i].type == 3) {
                     printf("%d ", local_tab[i].value[j]);
-                }
-                else if(local_tab[i].type == 2 || local_tab[i].type == 4) {
+                } else if (local_tab[i].type == 2 || local_tab[i].type == 4) {
                     printf("%c ", local_tab[i].value[j]);
                 }
             }
             printf("\n");
-        }
-        else if(local_tab[i].dim == 2)
-        {
-            printf("%s[%d][%d] %d\n",local_tab[i].word, local_tab[i].i, local_tab[i].j, local_tab[i].type);
-            for(j = 0; j < local_tab[i].i; j++)
-            {
+        } else if (local_tab[i].dim == 2) {
+            printf("%s[%d][%d] %d\n", local_tab[i].word, local_tab[i].i, local_tab[i].j, local_tab[i].type);
+            for (j = 0; j < local_tab[i].i; j++) {
                 printf("\t");
-                for(k = 0; k < local_tab[i].j; k++)
-                {
-                    if(local_tab[i].type == 1 || local_tab[i].type == 3) {
+                for (k = 0; k < local_tab[i].j; k++) {
+                    if (local_tab[i].type == 1 || local_tab[i].type == 3) {
                         printf("%d ", local_tab[i].value[j * local_tab[i].j + k]);
-                    }
-                    else if(local_tab[i].type == 2 || local_tab[i].type == 4) {
+                    } else if (local_tab[i].type == 2 || local_tab[i].type == 4) {
                         printf("%c ", local_tab[i].value[j * local_tab[i].j + k]);
                     }
                 }
@@ -913,33 +822,29 @@ int main()
     fclose(fp_result);
     return 0;
 }
+
 int isReservedWord(int addr, char s[]) {
     if (strcmp(store[now + addr].type, s) == 0) {
         return 1;
     }
     return 0;
 }
+
 void program()  //  <³ÌÐò>::=£Û<³£Á¿ËµÃ÷>£Ý£Û<±äÁ¿ËµÃ÷>£Ý{<ÓÐ·µ»ØÖµº¯Êý¶¨Òå>|<ÎÞ·µ»ØÖµº¯Êý¶¨Òå>}<Ö÷º¯Êý>
 {
     int *p = NULL;
-    if(isReservedWord(0, "CONSTTK"))
-    {
+    if (isReservedWord(0, "CONSTTK")) {
         constant_description(); // ³£Á¿ËµÃ÷
     }
-    if((isReservedWord(0, "INTTK") || isReservedWord(0, "CHARTK")) && !isReservedWord(2, "LPARENT"))
-    {
+    if ((isReservedWord(0, "INTTK") || isReservedWord(0, "CHARTK")) && !isReservedWord(2, "LPARENT")) {
         variable_description(); // ±äÁ¿ËµÃ÷
     }
     run = 0;
-    while((isReservedWord(0, "INTTK") || isReservedWord(0, "CHARTK")) || (isReservedWord(0, "VOIDTK")
-        && isReservedWord(1, "IDENFR")))
-    {
-        if((isReservedWord(0, "INTTK") || isReservedWord(0, "CHARTK")))
-        {
+    while ((isReservedWord(0, "INTTK") || isReservedWord(0, "CHARTK")) || (isReservedWord(0, "VOIDTK")
+                                                                           && isReservedWord(1, "IDENFR"))) {
+        if ((isReservedWord(0, "INTTK") || isReservedWord(0, "CHARTK"))) {
             function_definition_with_return_value(p);   // ÓÐ·µ»ØÖµº¯Êý¶¨Òå
-        }
-        else if((isReservedWord(0, "VOIDTK") && isReservedWord(1, "IDENFR")))
-        {
+        } else if ((isReservedWord(0, "VOIDTK") && isReservedWord(1, "IDENFR"))) {
             function_definition_without_return_value(p);    // ÎÞ·µ»ØÖµº¯Êý¶¨Òå
         }
     }
@@ -948,41 +853,34 @@ void program()  //  <³ÌÐò>::=£Û<³£Á¿ËµÃ÷>£Ý£Û<±äÁ¿ËµÃ÷>£Ý{<ÓÐ·µ»ØÖµº¯Êý¶¨Òå>|<ÎÞ
     if ((isReservedWord(0, "VOIDTK") && isReservedWord(1, "MAINTK"))) {
         principal_function();   // Ö÷º¯Êý
     }
-    fprintf(fp_out,"<³ÌÐò>\n");
+    fprintf(fp_out, "<³ÌÐò>\n");
 }
+
 void principal_function()   //  £¼Ö÷º¯Êý£¾::=void main'('')''{'£¼¸´ºÏÓï¾ä£¾'}'
 {
     global_flag = 0;
     void_ret = 1;
-    if(isReservedWord(0, "VOIDTK"))
-    {
+    if (isReservedWord(0, "VOIDTK")) {
         getsym();
-        if(isReservedWord(0, "MAINTK"))
-        {
+        if (isReservedWord(0, "MAINTK")) {
             getsym();
-            if(!isReservedWord(0, "LPARENT")) {
+            if (!isReservedWord(0, "LPARENT")) {
                 error_report();
-            }
-            else
-            {
+            } else {
                 getsym();
-                if(!isReservedWord(0, "RPARENT")) {
+                if (!isReservedWord(0, "RPARENT")) {
                     error_l();  //  ´íÎól
-                }
-                else {
+                } else {
                     getsym();
                 }
-                if(!isReservedWord(0, "LBRACE")) {
+                if (!isReservedWord(0, "LBRACE")) {
                     error_report();
-                }
-                else
-                {
+                } else {
                     getsym();
                     compound_statement();   //  ¸´ºÏÓï¾ä
-                    if(!isReservedWord(0, "RBRACE")) {
+                    if (!isReservedWord(0, "RBRACE")) {
                         error_report();
-                    }
-                    else {
+                    } else {
                         getsym();
                     }
                 }
@@ -990,45 +888,38 @@ void principal_function()   //  £¼Ö÷º¯Êý£¾::=void main'('')''{'£¼¸´ºÏÓï¾ä£¾'}'
         }
     }
     void_ret = 0;
-    fprintf(fp_out,"<Ö÷º¯Êý>\n");
+    fprintf(fp_out, "<Ö÷º¯Êý>\n");
 }
+
 void function_definition_with_return_value(int value[])//<ÓÐ·µ»ØÖµº¯Êý¶¨Òå>::=<ÉùÃ÷Í·²¿>'('<²ÎÊý±í>')''{'<¸´ºÏÓï¾ä>'}'
 {
     int i = 0;
     have_ret = 1;
     user3 temp_tab[100];    //  ÔÝ´æ·ûºÅ±í
     int temp_num = 0;
-    if(def == 1)
-    {
+    if (def == 1) {
         declaration_head(); //  ÉùÃ÷Í·²¿
         global_flag = 0;
-        if(!isReservedWord(0, "LPARENT")) {
+        if (!isReservedWord(0, "LPARENT")) {
             error_report();
-        }
-        else
-        {
+        } else {
             getsym();
             func_tab[func_num].loc = now;   //  ¼ÇÂ¼Î»ÖÃ
             parameter_table(0); //  ²ÎÊý±í
-            if(!isReservedWord(0, "RPARENT")) {
+            if (!isReservedWord(0, "RPARENT")) {
                 error_l();  //  ´íÎól
-            }
-            else {
+            } else {
                 getsym();
             }
-            if(!isReservedWord(0, "LBRACE")) {
+            if (!isReservedWord(0, "LBRACE")) {
                 error_report();
-            }
-            else
-            {
+            } else {
                 getsym();
                 compound_statement();   //  ¸´ºÏÓï¾ä
-                if(!isReservedWord(0, "RBRACE")) {
+                if (!isReservedWord(0, "RBRACE")) {
                     error_report();
-                }
-                else
-                {
-                    if(ret_valid == 0) {
+                } else {
+                    if (ret_valid == 0) {
                         error_h();  //  ´íÎóh - È±ÉÙreturnÓï¾ä
                     }
                     getsym();
@@ -1041,10 +932,8 @@ void function_definition_with_return_value(int value[])//<ÓÐ·µ»ØÖµº¯Êý¶¨Òå>::=<É
         func_num++;
         ret_valid = 0;
         have_ret = 0;
-    }
-    else if(def == 0 && ret_valid == 0)
-    {
-        for(i=0; i<lt_num; i++) {
+    } else if (def == 0 && ret_valid == 0) {
+        for (i = 0; i < lt_num; i++) {
             temp_tab[i] = local_tab[i]; //  ÔÝ´æ¾Ö²¿±í
         }
         temp_num = lt_num;
@@ -1056,13 +945,14 @@ void function_definition_with_return_value(int value[])//<ÓÐ·µ»ØÖµº¯Êý¶¨Òå>::=<É
         compound_statement();   //  ¸´ºÏÓï¾ä
         getsym();
         memset(&local_tab, 0, sizeof(local_tab));//Çå¿Õ¾Ö²¿±í
-        for(i = 0; i < temp_num; i++) {
+        for (i = 0; i < temp_num; i++) {
             local_tab[i] = temp_tab[i]; //  »¹Ô­¾Ö²¿±í
         }
         lt_num = temp_num;
     }
-    fprintf(fp_out,"<ÓÐ·µ»ØÖµº¯Êý¶¨Òå>\n");
+    fprintf(fp_out, "<ÓÐ·µ»ØÖµº¯Êý¶¨Òå>\n");
 }
+
 void function_definition_without_return_value(int value[])//<ÎÞ·µ»ØÖµº¯Êý¶¨Òå>::=void£¼±êÊ¶·û>'('<²ÎÊý±í>')''{'<¸´ºÏÓï¾ä>'}'
 {
     int i = 0;
@@ -1071,14 +961,11 @@ void function_definition_without_return_value(int value[])//<ÎÞ·µ»ØÖµº¯Êý¶¨Òå>::
     user3 temp_tab[100];    //  ÔÝ´æ·ûºÅ±í
     int temp_num = 0;
     int *p = NULL;
-    if(def == 1)
-    {
-        if(isReservedWord(0, "VOIDTK"))
-        {
+    if (def == 1) {
+        if (isReservedWord(0, "VOIDTK")) {
             getsym();
-            if(isReservedWord(0, "IDENFR"))
-            {
-                for(i = 0; i < strlen(store[now].word); i++) {
+            if (isReservedWord(0, "IDENFR")) {
+                for (i = 0; i < strlen(store[now].word); i++) {
                     lower[i] = tolower(store[now].word[i]);
                 }
                 strcpy(func_tab[func_num].name, lower);  //  ´æº¯ÊýÃû
@@ -1088,31 +975,25 @@ void function_definition_without_return_value(int value[])//<ÎÞ·µ»ØÖµº¯Êý¶¨Òå>::
                 gt_num++;
                 global_flag = 0;
                 getsym();
-                if(!isReservedWord(0, "LPARENT")) {
+                if (!isReservedWord(0, "LPARENT")) {
                     error_report();
-                }
-                else
-                {
+                } else {
                     getsym();
                     func_tab[func_num].loc = now;   //  ¼ÇÂ¼Î»ÖÃ
                     parameter_table(p); //  ²ÎÊý±í
-                    if(!isReservedWord(0, "RPARENT")) {
+                    if (!isReservedWord(0, "RPARENT")) {
                         error_l();  //  ´íÎól
-                    }
-                    else {
+                    } else {
                         getsym();
                     }
-                    if(!isReservedWord(0, "LBRACE")) {
+                    if (!isReservedWord(0, "LBRACE")) {
                         error_report();
-                    }
-                    else
-                    {
+                    } else {
                         getsym();
                         compound_statement();   //  ¸´ºÏÓï¾ä
-                        if(!isReservedWord(0, "RBRACE")) {
+                        if (!isReservedWord(0, "RBRACE")) {
                             error_report();
-                        }
-                        else {
+                        } else {
                             getsym();
                         }
                     }
@@ -1125,11 +1006,9 @@ void function_definition_without_return_value(int value[])//<ÎÞ·µ»ØÖµº¯Êý¶¨Òå>::
         func_num++;
         ret_valid = 0;
         void_ret = 0;
-        fprintf(fp_out,"<ÎÞ·µ»ØÖµº¯Êý¶¨Òå>\n");
-    }
-    else if (def == 0 && ret_valid == 0)
-    {
-        for(i = 0; i < lt_num; i++) {
+        fprintf(fp_out, "<ÎÞ·µ»ØÖµº¯Êý¶¨Òå>\n");
+    } else if (def == 0 && ret_valid == 0) {
+        for (i = 0; i < lt_num; i++) {
             temp_tab[i] = local_tab[i]; //  ÔÝ´æ¾Ö²¿±í
         }
         temp_num = lt_num;
@@ -1141,144 +1020,120 @@ void function_definition_without_return_value(int value[])//<ÎÞ·µ»ØÖµº¯Êý¶¨Òå>::
         compound_statement();   //  ¸´ºÏÓï¾ä
         getsym();
         memset(&local_tab, 0, sizeof(local_tab));   //  Çå¿Õ¾Ö²¿±í
-        for(i = 0; i < temp_num; i++) {
+        for (i = 0; i < temp_num; i++) {
             local_tab[i] = temp_tab[i]; //  »¹Ô­¾Ö²¿±í
         }
         lt_num = temp_num;
     }
 }
+
 void compound_statement()   //  <¸´ºÏÓï¾ä>::=£Û<³£Á¿ËµÃ÷>£Ý£Û<±äÁ¿ËµÃ÷>£Ý<Óï¾äÁÐ>
 {
-    if(isReservedWord(0, "CONSTTK"))
-    {
+    if (isReservedWord(0, "CONSTTK")) {
         constant_description(); //  ³£Á¿ËµÃ÷
     }
-    if((isReservedWord(0, "INTTK") || isReservedWord(0, "CHARTK"))
-        && !isReservedWord(0, "LPARENT"))
-    {
+    if ((isReservedWord(0, "INTTK") || isReservedWord(0, "CHARTK"))
+        && !isReservedWord(0, "LPARENT")) {
         variable_description(); //  ±äÁ¿ËµÃ÷
     }
     statement_column(); //  Óï¾äÁÐ
-    fprintf(fp_out,"<¸´ºÏÓï¾ä>\n");
+    fprintf(fp_out, "<¸´ºÏÓï¾ä>\n");
 }
+
 void statement_column() //  £¼Óï¾äÁÐ£¾::=£û£¼Óï¾ä£¾£ý
 {
-    while(!isReservedWord(0, "RBRACE")) {
+    while (!isReservedWord(0, "RBRACE")) {
         sentence(); //  Óï¾ä
     }
-    fprintf(fp_out,"<Óï¾äÁÐ>\n");
+    fprintf(fp_out, "<Óï¾äÁÐ>\n");
 }
+
 void sentence() //  £¼Óï¾ä£¾::=£¼Ñ­»·Óï¾ä£¾
-                        // £ü£¼Ìõ¼þÓï¾ä£¾
-                        // |£¼ÓÐ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä£¾;|£¼ÎÞ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä£¾;
-                        // £ü£¼¸³ÖµÓï¾ä£¾;
-                        // £ü£¼¶ÁÓï¾ä£¾;£ü£¼Ð´Óï¾ä£¾;
-                        // £ü£¼Çé¿öÓï¾ä£¾
-                        // £ü£¼¿Õ£¾;
-                        // |£¼·µ»ØÓï¾ä£¾;
-                        // |'{'£¼Óï¾äÁÐ£¾'}'
+// £ü£¼Ìõ¼þÓï¾ä£¾
+// |£¼ÓÐ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä£¾;|£¼ÎÞ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä£¾;
+// £ü£¼¸³ÖµÓï¾ä£¾;
+// £ü£¼¶ÁÓï¾ä£¾;£ü£¼Ð´Óï¾ä£¾;
+// £ü£¼Çé¿öÓï¾ä£¾
+// £ü£¼¿Õ£¾;
+// |£¼·µ»ØÓï¾ä£¾;
+// |'{'£¼Óï¾äÁÐ£¾'}'
 {
     int i = 0, j = 0, sign = 0;
     char cmp[MAX] = {};
-    if(isReservedWord(0, "WHILETK") || isReservedWord(0, "FORTK")) {
+    if (isReservedWord(0, "WHILETK") || isReservedWord(0, "FORTK")) {
         loop_statement();   //  Ñ­»·Óï¾ä
-    }
-    else if(isReservedWord(0, "IFTK")) {
+    } else if (isReservedWord(0, "IFTK")) {
         conditional_statement();    //  Ìõ¼þÓï¾ä
-    }
-    else if(isReservedWord(0, "IDENFR") && isReservedWord(1, "LPARENT"))
-    {
-        for(i = 0; i < headnum; i++)
-        {
-            for(j = 0; j < strlen(store[now].word); j++) {
+    } else if (isReservedWord(0, "IDENFR") && isReservedWord(1, "LPARENT")) {
+        for (i = 0; i < headnum; i++) {
+            for (j = 0; j < strlen(store[now].word); j++) {
                 cmp[j] = tolower(store[now].word[j]);
             }
-            if(strcmp(cmp, head[i]) == 0)
-            {
+            if (strcmp(cmp, head[i]) == 0) {
                 sign = 1;
                 break;
             }
         }
-        if(sign == 1)
-        {
+        if (sign == 1) {
             function_call_statement_with_return_value();    //  ÓÐ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä
             func_label = -1;
-        }
-        else {
+        } else {
             function_call_statement_without_return_value(); //  ÎÞ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä
         }
-        if(!isReservedWord(0, "SEMICN")) {
+        if (!isReservedWord(0, "SEMICN")) {
             error_k();  //  ´íÎók
-        }
-        else {
+        } else {
             getsym();
         }
-    }
-    else if(isReservedWord(0, "IDENFR")
-    && (isReservedWord(1, "ASSIGN") || isReservedWord(1, "LBRACK")))
-    {
+    } else if (isReservedWord(0, "IDENFR")
+               && (isReservedWord(1, "ASSIGN") || isReservedWord(1, "LBRACK"))) {
         assignment_statement(); //  ¸³ÖµÓï¾ä
-        if(!isReservedWord(0, "SEMICN")) {
+        if (!isReservedWord(0, "SEMICN")) {
             error_k();  //  ´íÎók
-        }
-        else {
+        } else {
             getsym();
         }
-    }
-    else if(isReservedWord(0, "SCANFTK"))
-    {
+    } else if (isReservedWord(0, "SCANFTK")) {
         read_statement();   //  ¶ÁÓï¾ä
-        if(!isReservedWord(0, "SEMICN")) {
+        if (!isReservedWord(0, "SEMICN")) {
             error_k();  //  ´íÎók
-        }
-        else {
+        } else {
             getsym();
         }
-    }
-    else if(isReservedWord(0, "PRINTFTK"))
-    {
+    } else if (isReservedWord(0, "PRINTFTK")) {
         writing_statements();   //  Ð´Óï¾ä
-        if(!isReservedWord(0, "SEMICN")) {
+        if (!isReservedWord(0, "SEMICN")) {
             error_k();  //  ´íÎók
-        }
-        else {
+        } else {
             getsym();
         }
-    }
-    else if(isReservedWord(0, "SWITCHTK")) {
+    } else if (isReservedWord(0, "SWITCHTK")) {
         case_statement();   //  Çé¿öÓï¾ä
-    }
-    else if(isReservedWord(0, "RETURNTK"))
-    {
+    } else if (isReservedWord(0, "RETURNTK")) {
         return_statement(); //  ·µ»ØÓï¾ä
-        if(!isReservedWord(0, "SEMICN")) {
+        if (!isReservedWord(0, "SEMICN")) {
             error_k();  //  ´íÎók
-        }
-        else {
+        } else {
             getsym();
         }
-    }
-    else if(isReservedWord(0, "LBRACE"))
-    {
+    } else if (isReservedWord(0, "LBRACE")) {
         getsym();
         statement_column(); //  Óï¾äÁÐ
-        if(!isReservedWord(0, "RBRACE")) {
+        if (!isReservedWord(0, "RBRACE")) {
             error_report();
-        }
-        else {
+        } else {
             getsym();
         }
-    }
-    else if(isReservedWord(0, "SEMICN")) {
+    } else if (isReservedWord(0, "SEMICN")) {
         getsym();   //  £¼¿Õ£¾
-    }
-    else if(!isReservedWord(0, "SEMICN")) {
+    } else if (!isReservedWord(0, "SEMICN")) {
         error_k();  //  ´íÎók £¼¿Õ£¾
     }
-    fprintf(fp_out,"<Óï¾ä>\n");
+    fprintf(fp_out, "<Óï¾ä>\n");
 }
+
 void loop_statement()   //  £¼Ñ­»·Óï¾ä£¾::=while'('£¼Ìõ¼þ£¾')'£¼Óï¾ä£¾
-                        // | for'('£¼±êÊ¶·û£¾£½£¼±í´ïÊ½£¾;£¼Ìõ¼þ£¾;£¼±êÊ¶·û£¾£½£¼±êÊ¶·û£¾(+|-)£¼²½³¤£¾')'£¼Óï¾ä£¾
+// | for'('£¼±êÊ¶·û£¾£½£¼±í´ïÊ½£¾;£¼Ìõ¼þ£¾;£¼±êÊ¶·û£¾£½£¼±êÊ¶·û£¾(+|-)£¼²½³¤£¾')'£¼Óï¾ä£¾
 {
     int state = run;
     int con = 0;
@@ -1295,199 +1150,165 @@ void loop_statement()   //  £¼Ñ­»·Óï¾ä£¾::=while'('£¼Ìõ¼þ£¾')'£¼Óï¾ä£¾
     int step_long = 0;
     char temp_word1[MAX] = {};
     char temp_word2[MAX] = {};
-    if(isReservedWord(0, "WHILETK"))    // while
+    if (isReservedWord(0, "WHILETK"))    // while
     {
         getsym();
-        if(!isReservedWord(0, "LPARENT")) {
+        if (!isReservedWord(0, "LPARENT")) {
             error_report();
-        }
-        else
-        {
+        } else {
             getsym();
             back = now;
             con = condition();  //  Ìõ¼þ
-            if(!isReservedWord(0, "RPARENT")) {
+            if (!isReservedWord(0, "RPARENT")) {
                 error_l();  //  ´íÎól
-            }
-            else {
+            } else {
                 getsym();
             }
-            if(con == 0) {
+            if (con == 0) {
                 run = 0;
             }
             sentence(); //  Óï¾ä
-            if(state == 1 && ret_valid == 0) {
+            if (state == 1 && ret_valid == 0) {
                 run = 1;
             }
             renew = now;
-            while(con == 1 && run != 0) //  ÔËÐÐ½×¶Î
+            while (con == 1 && run != 0) //  ÔËÐÐ½×¶Î
             {
                 now = back;
                 con = condition();  //  Ìõ¼þ
-                if(!isReservedWord(0, "RPARENT")) {
+                if (!isReservedWord(0, "RPARENT")) {
                     error_l();  //  ´íÎól
-                }
-                else {
+                } else {
                     getsym();
                 }
-                if(con == 0 || run == 0)
-                {
+                if (con == 0 || run == 0) {
                     now = renew;
                     break;
                 }
                 sentence(); //  Óï¾ä
             }
         }
-    }
-    else if(isReservedWord(0, "FORTK")) // for
+    } else if (isReservedWord(0, "FORTK")) // for
     {
         getsym();
-        if(!isReservedWord(0, "LPARENT")) {
+        if (!isReservedWord(0, "LPARENT")) {
             error_report();
-        }
-        else
-        {
+        } else {
             getsym();
-            if(!isReservedWord(0, "IDENFR")) {
+            if (!isReservedWord(0, "IDENFR")) {
                 error_report();
-            }
-            else
-            {
+            } else {
                 error_c(2); //  ´íÎóc·ÖÎö
                 type = search_const();  //  ¼ì²âÊÇ·ñÎªconstÀàÐÍ
-                if(type == 'x') {
+                if (type == 'x') {
                     error_j();  //  ´íÎój
                 }
                 index1 = get_index(store[now].word);    //  »ñÈ¡±êÊ¶·û±í¶ÔÓ¦±äÁ¿ÏÂ±ê¼°±íºÅ
                 getsym();
-                if(!isReservedWord(0, "ASSIGN")) {
+                if (!isReservedWord(0, "ASSIGN")) {
                     error_report();
-                }
-                else
-                {
+                } else {
                     getsym();
                     expression();   //  ±í´ïÊ½
-                    if(run == 1 && ret_valid == 0)
-                    {
-                        if(index1[1] == 1)  //  ÔÚ¾Ö²¿±íÖÐ
+                    if (run == 1 && ret_valid == 0) {
+                        if (index1[1] == 1)  //  ÔÚ¾Ö²¿±íÖÐ
                         {
                             local_tab[index1[0]].value[0] = temp_val;
-                        }
-                        else if(index1[1] == 2) //  ÔÚÈ«¾Ö±íÖÐ
+                        } else if (index1[1] == 2) //  ÔÚÈ«¾Ö±íÖÐ
                         {
                             global_tab[index1[0]].value[0] = temp_val;
                         }
                     }
-                    if(!isReservedWord(0, "SEMICN")) {
+                    if (!isReservedWord(0, "SEMICN")) {
                         error_k();  //  ´íÎók
-                    }
-                    else {
+                    } else {
                         getsym();
                     }
                     back = now;
                     con = condition();  //  Ìõ¼þ
-                    if(!isReservedWord(0, "SEMICN")) {
+                    if (!isReservedWord(0, "SEMICN")) {
                         error_k();  //  ´íÎók
-                    }
-                    else {
+                    } else {
                         getsym();
                     }
-                    if(con == 0) {
+                    if (con == 0) {
                         run = 0;
                     }
-                    if(!isReservedWord(0, "IDENFR")) {
+                    if (!isReservedWord(0, "IDENFR")) {
                         error_report();
-                    }
-                    else
-                    {
+                    } else {
                         error_c(2); //  ´íÎóc·ÖÎö
                         strcpy(temp_word1, store[now].word); //  ÔÝ´æ±»¸³Öµ±êÊ¶·ûµÄ·ûºÅÃû
                         getsym();
-                        if(!isReservedWord(0, "ASSIGN")) {
+                        if (!isReservedWord(0, "ASSIGN")) {
                             error_report();
-                        }
-                        else
-                        {
+                        } else {
                             getsym();
-                            if(!isReservedWord(0, "IDENFR")) {
+                            if (!isReservedWord(0, "IDENFR")) {
                                 error_report();
-                            }
-                            else
-                            {
+                            } else {
                                 error_c(2); //  ´íÎóc·ÖÎö
-                                strcpy(temp_word2,  store[now].word); //  ÔÝ´æ¸³Öµ±êÊ¶·ûµÄ·ûºÅÃû
+                                strcpy(temp_word2, store[now].word); //  ÔÝ´æ¸³Öµ±êÊ¶·ûµÄ·ûºÅÃû
                                 getsym();
-                                if(!isReservedWord(0, "PLUS")
-                                && !isReservedWord(0 ,"MINU")) {
+                                if (!isReservedWord(0, "PLUS")
+                                    && !isReservedWord(0, "MINU")) {
                                     error_report();
-                                }
-                                else
-                                {
-                                    if(isReservedWord(0, "PLUS")) {
+                                } else {
+                                    if (isReservedWord(0, "PLUS")) {
                                         opr = 1;    //  +
-                                    }
-                                    else if(isReservedWord(0, "MINU")) {
+                                    } else if (isReservedWord(0, "MINU")) {
                                         opr = 2;    //  -
                                     }
                                     getsym();
                                     step(); //  ²½³¤
                                     step_long = temp_val;   //  ÔÝ´æ²½³¤
-                                    if(!isReservedWord(0, "RPARENT")) {
+                                    if (!isReservedWord(0, "RPARENT")) {
                                         error_l();  //  ´íÎól
-                                    }
-                                    else {
+                                    } else {
                                         getsym();
                                     }
                                     sentence(); //  Óï¾ä
-                                    if(run == 1 && ret_valid == 0)
-                                    {
+                                    if (run == 1 && ret_valid == 0) {
                                         index2 = get_index(temp_word1); //  »ñÈ¡±»¸³Öµ±êÊ¶·û±í¶ÔÓ¦±äÁ¿ÏÂ±ê¼°±íºÅ
                                         index3 = get_index(temp_word2); //  »ñÈ¡¸³Öµ±êÊ¶·û±í¶ÔÓ¦±äÁ¿ÏÂ±ê¼°±íºÅ
-                                        if(index2[1] == 1)  //  ÔÚ¾Ö²¿±íÖÐ
+                                        if (index2[1] == 1)  //  ÔÚ¾Ö²¿±íÖÐ
                                         {
-                                            if(index3[1] == 1)  //  ÔÚ¾Ö²¿±íÖÐ
+                                            if (index3[1] == 1)  //  ÔÚ¾Ö²¿±íÖÐ
                                             {
-                                                if(opr == 1) {
+                                                if (opr == 1) {
                                                     local_tab[index2[0]].value[0] =
                                                             local_tab[index3[0]].value[0] + step_long;
-                                                }
-                                                else if(opr == 2) {
+                                                } else if (opr == 2) {
                                                     local_tab[index2[0]].value[0] =
                                                             local_tab[index3[0]].value[0] - step_long;
                                                 }
-                                            }
-                                            else if(index3[1] == 2) //  ÔÚÈ«¾Ö±íÖÐ
+                                            } else if (index3[1] == 2) //  ÔÚÈ«¾Ö±íÖÐ
                                             {
-                                                if(opr == 1) {
+                                                if (opr == 1) {
                                                     local_tab[index2[0]].value[0] =
                                                             global_tab[index3[0]].value[0] + step_long;
-                                                }
-                                                else if(opr == 2) {
+                                                } else if (opr == 2) {
                                                     local_tab[index2[0]].value[0] =
                                                             global_tab[index3[0]].value[0] - step_long;
                                                 }
                                             }
-                                        }
-                                        else if(index2[1] == 2) //  ÔÚÈ«¾Ö±íÖÐ
+                                        } else if (index2[1] == 2) //  ÔÚÈ«¾Ö±íÖÐ
                                         {
-                                            if(index3[1] == 1)  //  ÔÚ¾Ö²¿±íÖÐ
+                                            if (index3[1] == 1)  //  ÔÚ¾Ö²¿±íÖÐ
                                             {
-                                                if(opr == 1) {
+                                                if (opr == 1) {
                                                     global_tab[index2[0]].value[0] =
                                                             local_tab[index3[0]].value[0] + step_long;
-                                                }
-                                                else if(opr == 2) {
+                                                } else if (opr == 2) {
                                                     global_tab[index2[0]].value[0] =
                                                             local_tab[index3[0]].value[0] - step_long;
                                                 }
-                                            }
-                                            else if(index3[1] == 2) //  ÔÚÈ«¾Ö±íÖÐ
+                                            } else if (index3[1] == 2) //  ÔÚÈ«¾Ö±íÖÐ
                                             {
-                                                if(opr == 1) {
+                                                if (opr == 1) {
                                                     global_tab[index2[0]].value[0] =
                                                             global_tab[index3[0]].value[0] + step_long;
-                                                }
-                                                else if(opr == 2) {
+                                                } else if (opr == 2) {
                                                     global_tab[index2[0]].value[0] =
                                                             global_tab[index3[0]].value[0] - step_long;
                                                 }
@@ -1498,117 +1319,97 @@ void loop_statement()   //  £¼Ñ­»·Óï¾ä£¾::=while'('£¼Ìõ¼þ£¾')'£¼Óï¾ä£¾
                             }
                         }
                     }
-                    if(state == 1 && ret_valid == 0) {
+                    if (state == 1 && ret_valid == 0) {
                         run = 1;
                     }
                     renew = now;
-                    while(con == 1 && run != 0) //  ÔËÐÐ½×¶Î
+                    while (con == 1 && run != 0) //  ÔËÐÐ½×¶Î
                     {
                         now = back;
                         con = condition();  //  Ìõ¼þ
-                        if(!isReservedWord(0, "SEMICN")) {
+                        if (!isReservedWord(0, "SEMICN")) {
                             error_k();  //  ´íÎók
-                        }
-                        else {
+                        } else {
                             getsym();
                         }
-                        if(con == 0 || run == 0)
-                        {
+                        if (con == 0 || run == 0) {
                             now = renew;
                             break;
                         }
-                        if(!isReservedWord(0, "IDENFR")) {
+                        if (!isReservedWord(0, "IDENFR")) {
                             error_report();
-                        }
-                        else
-                        {
+                        } else {
                             error_c(2); //  ´íÎóc·ÖÎö
                             strcpy(temp_word1, store[now].word); //  ÔÝ´æ±»¸³Öµ±êÊ¶·ûµÄ·ûºÅÃû
                             getsym();
-                            if(!isReservedWord(0, "ASSIGN")) {
+                            if (!isReservedWord(0, "ASSIGN")) {
                                 error_report();
-                            }
-                            else
-                            {
+                            } else {
                                 getsym();
-                                if(!isReservedWord(0, "IDENFR")) {
+                                if (!isReservedWord(0, "IDENFR")) {
                                     error_report();
-                                }
-                                else
-                                {
+                                } else {
                                     error_c(2); //  ´íÎóc·ÖÎö
                                     strcpy(temp_word2, store[now].word); //  ÔÝ´æ¸³Öµ±êÊ¶·ûµÄ·ûºÅÃû
                                     getsym();
-                                    if(!isReservedWord(0, "PLUS") && !isReservedWord(0, "MINU")) {
+                                    if (!isReservedWord(0, "PLUS") && !isReservedWord(0, "MINU")) {
                                         error_report();
-                                    }
-                                    else
-                                    {
-                                        if(isReservedWord(0, "PLUS")) {
+                                    } else {
+                                        if (isReservedWord(0, "PLUS")) {
                                             opr = 1;    //  +
-                                        }
-                                        else if(isReservedWord(0, "MINU")) {
+                                        } else if (isReservedWord(0, "MINU")) {
                                             opr = 2;    //  -
                                         }
                                         getsym();
                                         step(); //  ²½³¤
                                         step_long = temp_val;   //  ÔÝ´æ²½³¤
-                                        if(!isReservedWord(0, "RPARENT")) {
+                                        if (!isReservedWord(0, "RPARENT")) {
                                             error_l();  //  ´íÎól
-                                        }
-                                        else {
+                                        } else {
                                             getsym();
                                         }
                                         sentence(); //  Óï¾ä
-                                        if(run == 1 && ret_valid == 0)
-                                        {
+                                        if (run == 1 && ret_valid == 0) {
                                             index2 = get_index(temp_word1); //  »ñÈ¡±»¸³Öµ±êÊ¶·û±í¶ÔÓ¦±äÁ¿ÏÂ±ê¼°±íºÅ
                                             index3 = get_index(temp_word2); //  »ñÈ¡¸³Öµ±êÊ¶·û±í¶ÔÓ¦±äÁ¿ÏÂ±ê¼°±íºÅ
-                                            if(index2[1] == 1)  //  ÔÚ¾Ö²¿±íÖÐ
+                                            if (index2[1] == 1)  //  ÔÚ¾Ö²¿±íÖÐ
                                             {
-                                                if(index3[1] == 1)  //  ÔÚ¾Ö²¿±íÖÐ
+                                                if (index3[1] == 1)  //  ÔÚ¾Ö²¿±íÖÐ
                                                 {
-                                                    if(opr == 1) {  // +
+                                                    if (opr == 1) {  // +
                                                         local_tab[index2[0]].value[0] =
                                                                 local_tab[index3[0]].value[0] + step_long;
-                                                    }
-                                                    else if(opr == 2) { // -
+                                                    } else if (opr == 2) { // -
                                                         local_tab[index2[0]].value[0] =
                                                                 local_tab[index3[0]].value[0] - step_long;
                                                     }
-                                                }
-                                                else if(index3[1] == 2) //  ÔÚÈ«¾Ö±íÖÐ
+                                                } else if (index3[1] == 2) //  ÔÚÈ«¾Ö±íÖÐ
                                                 {
-                                                    if(opr == 1) {
+                                                    if (opr == 1) {
                                                         local_tab[index2[0]].value[0] =
                                                                 global_tab[index3[0]].value[0] + step_long;
-                                                    }
-                                                    else if(opr == 2) {
+                                                    } else if (opr == 2) {
                                                         local_tab[index2[0]].value[0] =
                                                                 global_tab[index3[0]].value[0] - step_long;
                                                     }
                                                 }
-                                            }
-                                            else if(index2[1] == 2) //  ÔÚÈ«¾Ö±íÖÐ
+                                            } else if (index2[1] == 2) //  ÔÚÈ«¾Ö±íÖÐ
                                             {
-                                                if(index3[1] == 1)  //  ÔÚ¾Ö²¿±íÖÐ
+                                                if (index3[1] == 1)  //  ÔÚ¾Ö²¿±íÖÐ
                                                 {
-                                                    if(opr == 1) {
+                                                    if (opr == 1) {
                                                         global_tab[index2[0]].value[0] =
                                                                 local_tab[index3[0]].value[0] + step_long;
-                                                    }
-                                                    else if(opr == 2) {
+                                                    } else if (opr == 2) {
                                                         global_tab[index2[0]].value[0] =
                                                                 local_tab[index3[0]].value[0] - step_long;
                                                     }
-                                                }
-                                                else if(index3[1] == 2) //  ÔÚÈ«¾Ö±íÖÐ
+                                                } else if (index3[1] == 2) //  ÔÚÈ«¾Ö±íÖÐ
                                                 {
-                                                    if(opr == 1) {
+                                                    if (opr == 1) {
                                                         global_tab[index2[0]].value[0] =
                                                                 global_tab[index3[0]].value[0] + step_long;
-                                                    }
-                                                    else if(opr == 2) {
+                                                    } else if (opr == 2) {
                                                         global_tab[index2[0]].value[0] =
                                                                 global_tab[index3[0]].value[0] - step_long;
                                                     }
@@ -1624,51 +1425,48 @@ void loop_statement()   //  £¼Ñ­»·Óï¾ä£¾::=while'('£¼Ìõ¼þ£¾')'£¼Óï¾ä£¾
             }
         }
     }
-    fprintf(fp_out,"<Ñ­»·Óï¾ä>\n");
+    fprintf(fp_out, "<Ñ­»·Óï¾ä>\n");
 }
+
 void conditional_statement()    //  £¼Ìõ¼þÓï¾ä£¾::=if'('£¼Ìõ¼þ£¾')'£¼Óï¾ä£¾£Ûelse£¼Óï¾ä£¾£Ý
 {
-    int con=0;  //  ±íÊ¾Ìõ¼þÕæ¼Ù£º1ÎªÕæ, 0Îª¼Ù
+    int con = 0;  //  ±íÊ¾Ìõ¼þÕæ¼Ù£º1ÎªÕæ, 0Îª¼Ù
     int state;
     state = run;
-    if(isReservedWord(0, "IFTK"))
-    {
+    if (isReservedWord(0, "IFTK")) {
         getsym();
-        if(!isReservedWord(0, "LPARENT")) {
+        if (!isReservedWord(0, "LPARENT")) {
             error_report();
-        }
-        else
-        {
+        } else {
             getsym();
             con = condition();  //  Ìõ¼þ
-            if(!isReservedWord(0, "RPARENT")) {
+            if (!isReservedWord(0, "RPARENT")) {
                 error_l();  //  ´íÎól
-            }
-            else {
+            } else {
                 getsym();
             }
-            if(con == 0) {
+            if (con == 0) {
                 run = 0;
             }
             sentence(); //  Óï¾ä
-            if(state == 1 && ret_valid == 0) {
+            if (state == 1 && ret_valid == 0) {
                 run = 1;
             }
-            if(isReservedWord(0, "ELSETK"))
-            {
+            if (isReservedWord(0, "ELSETK")) {
                 getsym();
-                if(con == 1) {
+                if (con == 1) {
                     run = 0;
                 }
                 sentence(); //  Óï¾ä
-                if(state == 1 && ret_valid == 0) {
+                if (state == 1 && ret_valid == 0) {
                     run = 1;
                 }
             }
         }
     }
-    fprintf(fp_out,"<Ìõ¼þÓï¾ä>\n");
+    fprintf(fp_out, "<Ìõ¼þÓï¾ä>\n");
 }
+
 void function_call_statement_with_return_value()    //  £¼ÓÐ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä£¾::=£¼±êÊ¶·û£¾'('£¼Öµ²ÎÊý±í£¾')'
 {
     int i = 0;
@@ -1679,72 +1477,13 @@ void function_call_statement_with_return_value()    //  £¼ÓÐ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä£¾
     int to = 0;
     int state = 0;
     state = run;
-    if(isReservedWord(0, "IDENFR"))
-    {
-        error_c(1); //  ´íÎóc·ÖÎö
-        for(i = 0; i < strlen(store[now].word); i++) {
-            use_name[i] = tolower(store[now].word[i]);
-        }
-        for(i = 0; i < func_num; i++)
-        {
-            if(strcmp(use_name, func_tab[i].name) == 0)
-            {
-                func_label = i;
-                to = func_tab[i].loc;
-                flag = 1;
-                break;
-            }
-        }
-        if(flag == 0) {
-            func_label = -1;
-        }
-        getsym();
-        if(!isReservedWord(0, "LPARENT")) {
-            error_report();
-        }
-        else
-        {
-            getsym();
-            value_parameter_table(value);   //  Öµ²ÎÊý±í
-            if(state == 1 && ret_valid == 0)
-            {
-                back = now;
-                now = to;
-                function_definition_with_return_value(value);   //  ÓÐ·µ»ØÖµº¯Êý¶¨Òå
-                now = back;
-                run = 1;
-                ret_valid = 0;
-            }
-            if(!isReservedWord(0, "RPARENT")) {
-                error_l();  //  ´íÎól
-            }
-            else {
-                getsym();
-            }
-        }
-    }
-    fprintf(fp_out,"<ÓÐ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä>\n");
-}
-void function_call_statement_without_return_value() //  £¼ÎÞ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä£¾::=£¼±êÊ¶·û£¾'('£¼Öµ²ÎÊý±í£¾')'
-{
-    int i = 0;
-    int flag = 0;
-    int value[30] = {};
-    int back = 0;
-    int to = 0;
-    char use_name[MAX] = {};    //  º¯ÊýÃûÐ¡Ð´ÐÎÊ½
-    int state = 0;
-    state = run;
-    if (isReservedWord(0, "IDENFR"))
-    {
+    if (isReservedWord(0, "IDENFR")) {
         error_c(1); //  ´íÎóc·ÖÎö
         for (i = 0; i < strlen(store[now].word); i++) {
             use_name[i] = tolower(store[now].word[i]);
         }
-        for (i = 0; i < func_num; i++)
-        {
-            if(strcmp(use_name, func_tab[i].name) == 0)
-            {
+        for (i = 0; i < func_num; i++) {
+            if (strcmp(use_name, func_tab[i].name) == 0) {
                 func_label = i;
                 to = func_tab[i].loc;
                 flag = 1;
@@ -1755,15 +1494,62 @@ void function_call_statement_without_return_value() //  £¼ÎÞ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä£¾
             func_label = -1;
         }
         getsym();
-        if(!isReservedWord(0, "LPARENT")) {
+        if (!isReservedWord(0, "LPARENT")) {
             error_report();
-        }
-        else
-        {
+        } else {
             getsym();
             value_parameter_table(value);   //  Öµ²ÎÊý±í
-            if(state == 1 && ret_valid == 0)
-            {
+            if (state == 1 && ret_valid == 0) {
+                back = now;
+                now = to;
+                function_definition_with_return_value(value);   //  ÓÐ·µ»ØÖµº¯Êý¶¨Òå
+                now = back;
+                run = 1;
+                ret_valid = 0;
+            }
+            if (!isReservedWord(0, "RPARENT")) {
+                error_l();  //  ´íÎól
+            } else {
+                getsym();
+            }
+        }
+    }
+    fprintf(fp_out, "<ÓÐ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä>\n");
+}
+
+void function_call_statement_without_return_value() //  £¼ÎÞ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä£¾::=£¼±êÊ¶·û£¾'('£¼Öµ²ÎÊý±í£¾')'
+{
+    int i = 0;
+    int flag = 0;
+    int value[30] = {};
+    int back = 0;
+    int to = 0;
+    char use_name[MAX] = {};    //  º¯ÊýÃûÐ¡Ð´ÐÎÊ½
+    int state = 0;
+    state = run;
+    if (isReservedWord(0, "IDENFR")) {
+        error_c(1); //  ´íÎóc·ÖÎö
+        for (i = 0; i < strlen(store[now].word); i++) {
+            use_name[i] = tolower(store[now].word[i]);
+        }
+        for (i = 0; i < func_num; i++) {
+            if (strcmp(use_name, func_tab[i].name) == 0) {
+                func_label = i;
+                to = func_tab[i].loc;
+                flag = 1;
+                break;
+            }
+        }
+        if (flag == 0) {
+            func_label = -1;
+        }
+        getsym();
+        if (!isReservedWord(0, "LPARENT")) {
+            error_report();
+        } else {
+            getsym();
+            value_parameter_table(value);   //  Öµ²ÎÊý±í
+            if (state == 1 && ret_valid == 0) {
                 back = now;
                 now = to;
                 function_definition_without_return_value(value);    //  ÎÞ·µ»ØÖµº¯Êý¶¨Òå
@@ -1771,99 +1557,82 @@ void function_call_statement_without_return_value() //  £¼ÎÞ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä£¾
                 run = 1;
                 ret_valid = 0;
             }
-            if(!isReservedWord(0, "RPARENT")) {
+            if (!isReservedWord(0, "RPARENT")) {
                 error_l();  //  ´íÎól
-            }
-            else {
+            } else {
                 getsym();
             }
         }
     }
     func_label = -1;
-    fprintf(fp_out,"<ÎÞ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä>\n");
+    fprintf(fp_out, "<ÎÞ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä>\n");
 }
+
 void assignment_statement() //  £¼¸³ÖµÓï¾ä£¾::=£¼±êÊ¶·û£¾{'['£¼±í´ïÊ½£¾']'}£½£¼±í´ïÊ½£¾
 {
     int *index;
     int i = 0, j = 0;
     char type = ' ';
-    if(isReservedWord(0, "IDENFR"))
-    {
+    if (isReservedWord(0, "IDENFR")) {
         error_c(2); //  ´íÎóc·ÖÎö
         type = search_const();  //  ¼ì²âÊÇ·ñÎªconstÀàÐÍ
-        if(type == 'x') {
+        if (type == 'x') {
             error_j();  //  ´íÎój
         }
         index = get_index(store[now].word); //  »ñÈ¡±êÊ¶·û±í¶ÔÓ¦±äÁ¿ÏÂ±ê¼°±íºÅ
         getsym();
-        if(isReservedWord(0, "ASSIGN"))
-        {
+        if (isReservedWord(0, "ASSIGN")) {
             getsym();
             expression();   //  ±í´ïÊ½
-            if(run == 1 && ret_valid == 0)
-            {
-                if(index[1] == 1)   //  ÔÚ¾Ö²¿±íÖÐ
+            if (run == 1 && ret_valid == 0) {
+                if (index[1] == 1)   //  ÔÚ¾Ö²¿±íÖÐ
                 {
                     local_tab[index[0]].value[0] = temp_val;
-                }
-                else if(index[1] == 2)  //  ÔÚÈ«¾Ö±íÖÐ
+                } else if (index[1] == 2)  //  ÔÚÈ«¾Ö±íÖÐ
                 {
                     global_tab[index[0]].value[0] = temp_val;
                 }
             }
-        }
-        else if(isReservedWord(0, "LBRACK"))
-        {
+        } else if (isReservedWord(0, "LBRACK")) {
             getsym();
             expression();   //  ±í´ïÊ½
             i = temp_val;
-            if(!isReservedWord(0, "RBRACK")) {
+            if (!isReservedWord(0, "RBRACK")) {
                 error_m();  //  ´íÎóm
-            }
-            else {
+            } else {
                 getsym();
             }
-            if(isReservedWord(0, "ASSIGN"))
-            {
+            if (isReservedWord(0, "ASSIGN")) {
                 getsym();
                 expression();   //  ±í´ïÊ½
-                if(run == 1 && ret_valid == 0)
-                {
-                    if(index[1] == 1)   //  ÔÚ¾Ö²¿±íÖÐ
+                if (run == 1 && ret_valid == 0) {
+                    if (index[1] == 1)   //  ÔÚ¾Ö²¿±íÖÐ
                     {
                         local_tab[index[0]].value[i] = temp_val;
-                    }
-                    else if(index[1] == 2)  //  ÔÚÈ«¾Ö±íÖÐ
+                    } else if (index[1] == 2)  //  ÔÚÈ«¾Ö±íÖÐ
                     {
                         global_tab[index[0]].value[i] = temp_val;
                     }
                 }
-            }
-            else if(isReservedWord(0, "LBRACK"))
-            {
+            } else if (isReservedWord(0, "LBRACK")) {
                 getsym();
                 expression();   //  ±í´ïÊ½
                 j = temp_val;
-                if(!isReservedWord(0, "RBRACK")) {
+                if (!isReservedWord(0, "RBRACK")) {
                     error_m();  //  ´íÎóm
-                }
-                else {
+                } else {
                     getsym();
                 }
-                if(!isReservedWord(0, "ASSIGN")) {
+                if (!isReservedWord(0, "ASSIGN")) {
                     error_report();
-                }
-                else
-                {
+                } else {
                     getsym();
                     expression();   //  ±í´ïÊ½
-                    if(run == 1 && ret_valid == 0)
-                    {
-                        if(index[1] == 1)   //  ÔÚ¾Ö²¿±íÖÐ
+                    if (run == 1 && ret_valid == 0) {
+                        if (index[1] == 1)   //  ÔÚ¾Ö²¿±íÖÐ
                         {
                             local_tab[index[0]].value[i * local_tab[index[0]].j + j] = temp_val;
-                        }
-                        else if(index[1] == 2)  //  ÔÚÈ«¾Ö±íÖÐ
+                        } else if (index[1] == 2)  //  ÔÚÈ«¾Ö±íÖÐ
                         {
                             global_tab[index[0]].value[i * global_tab[index[0]].j + j] = temp_val;
                         }
@@ -1872,319 +1641,280 @@ void assignment_statement() //  £¼¸³ÖµÓï¾ä£¾::=£¼±êÊ¶·û£¾{'['£¼±í´ïÊ½£¾']'}£½£¼±
             }
         }
     }
-    fprintf(fp_out,"<¸³ÖµÓï¾ä>\n");
+    fprintf(fp_out, "<¸³ÖµÓï¾ä>\n");
 }
+
 void read_statement()   //  £¼¶ÁÓï¾ä£¾::=scanf'('£¼±êÊ¶·û£¾')'
 {
     int *index;
     char temp[30] = {};
     char type = ' ';
-    if(isReservedWord(0, "SCANFTK"))
-    {
+    if (isReservedWord(0, "SCANFTK")) {
         getsym();
-        if(!isReservedWord(0, "LPARENT")) {
+        if (!isReservedWord(0, "LPARENT")) {
             error_report();
-        }
-        else
-        {
+        } else {
             getsym();
-            if(!isReservedWord(0, "IDENFR")) {
+            if (!isReservedWord(0, "IDENFR")) {
                 error_report();
-            }
-            else
-            {
+            } else {
                 error_c(2); //  ´íÎóc·ÖÎö
                 type = search_const();  //  ¼ì²âÊÇ·ñÎªconstÀàÐÍ
-                if(type == 'x') {
+                if (type == 'x') {
                     error_j();  //  ´íÎój
                 }
                 index = get_index(store[now].word); //  »ñÈ¡±êÊ¶·û±í¶ÔÓ¦±äÁ¿ÏÂ±ê¼°±íºÅ
-                if(run == 1 && ret_valid == 0)
-                {
+                if (run == 1 && ret_valid == 0) {
                     gets(temp);
-                    if(index[1] == 1)   //  ÔÚ¾Ö²¿±íÖÐ
+                    if (index[1] == 1)   //  ÔÚ¾Ö²¿±íÖÐ
                     {
-                        if(local_tab[index[0]].type == 1)   //  intÀàÐÍ
+                        if (local_tab[index[0]].type == 1)   //  intÀàÐÍ
                         {
                             local_tab[index[0]].value[0] = atoi(temp);
-                        }
-                        else if(local_tab[index[0]].type == 2)  //  charÀàÐÍ
+                        } else if (local_tab[index[0]].type == 2)  //  charÀàÐÍ
                         {
                             local_tab[index[0]].value[0] = temp[0];
                         }
-                    }
-                    else if(index[1] == 2)  //  ÔÚÈ«¾Ö±íÖÐ
+                    } else if (index[1] == 2)  //  ÔÚÈ«¾Ö±íÖÐ
                     {
-                        if(global_tab[index[0]].type == 1)  //  intÀàÐÍ
+                        if (global_tab[index[0]].type == 1)  //  intÀàÐÍ
                         {
                             global_tab[index[0]].value[0] = atoi(temp);
-                        }
-                        else if(global_tab[index[0]].type == 2) //  charÀàÐÍ
+                        } else if (global_tab[index[0]].type == 2) //  charÀàÐÍ
                         {
                             global_tab[index[0]].value[0] = temp[0];
                         }
                     }
                 }
                 getsym();
-                if(!isReservedWord(0, "RPARENT")) {
+                if (!isReservedWord(0, "RPARENT")) {
                     error_l();  //  ´íÎól
-                }
-                else {
+                } else {
                     getsym();
                 }
             }
         }
     }
-    fprintf(fp_out,"<¶ÁÓï¾ä>\n");
+    fprintf(fp_out, "<¶ÁÓï¾ä>\n");
 }
+
 void writing_statements()   //  £¼Ð´Óï¾ä£¾::=printf'('£¼×Ö·û´®£¾,£¼±í´ïÊ½£¾')'
-                            // |printf'('£¼×Ö·û´®£¾')'
-                            // |printf'('£¼±í´ïÊ½£¾')'
+// |printf'('£¼×Ö·û´®£¾')'
+// |printf'('£¼±í´ïÊ½£¾')'
 {
-    if(isReservedWord(0, "PRINTFTK"))
-    {
+    if (isReservedWord(0, "PRINTFTK")) {
         getsym();
-        if(!isReservedWord(0, "LPARENT")) {
+        if (!isReservedWord(0, "LPARENT")) {
             error_report();
-        }
-        else
-        {
+        } else {
             getsym();
-            if(isReservedWord(0, "STRCON"))
-            {
+            if (isReservedWord(0, "STRCON")) {
                 string();   //  ×Ö·û´®
-                if(isReservedWord(0, "COMMA"))
-                {
-                    if(run == 1 && ret_valid == 0) {
+                if (isReservedWord(0, "COMMA")) {
+                    if (run == 1 && ret_valid == 0) {
                         fprintf(fp_result, "%s", temp_str);
                     }
                     getsym();
                     expression();   //  ±í´ïÊ½
-                    if(run == 1 && ret_valid == 0)
-                    {
-                        if(now_type == 'i') {
+                    if (run == 1 && ret_valid == 0) {
+                        if (now_type == 'i') {
                             fprintf(fp_result, "%d\n", temp_val);
-                        }
-                        else if(now_type == 'c') {
+                        } else if (now_type == 'c') {
                             fprintf(fp_result, "%c\n", temp_val);
                         }
                     }
-                    if(!isReservedWord(0, "RPARENT")) {
+                    if (!isReservedWord(0, "RPARENT")) {
                         error_l();  //  ´íÎól
-                    }
-                    else {
+                    } else {
                         getsym();
                     }
-                }
-                else if(!isReservedWord(0, "RPARENT")) {
+                } else if (!isReservedWord(0, "RPARENT")) {
                     error_l();  //  ´íÎól
-                }
-                else
-                {
-                    if(run == 1 && ret_valid == 0) {
+                } else {
+                    if (run == 1 && ret_valid == 0) {
                         fprintf(fp_result, "%s\n", temp_str);
                     }
                     getsym();
                 }
-            }
-            else
-            {
+            } else {
                 expression();   //  ±í´ïÊ½
-                if(run == 1 && ret_valid == 0)
-                {
-                    if(now_type == 'i') {
+                if (run == 1 && ret_valid == 0) {
+                    if (now_type == 'i') {
                         fprintf(fp_result, "%d\n", temp_val);
-                    }
-                    else if(now_type == 'c') {
+                    } else if (now_type == 'c') {
                         fprintf(fp_result, "%c\n", temp_val);
                     }
                 }
-                if(strcmp(store[now].type,"RPARENT") != 0) {
+                if (strcmp(store[now].type, "RPARENT") != 0) {
                     error_l();  //  ´íÎól
-                }
-                else {
+                } else {
                     getsym();
                 }
             }
         }
     }
-    fprintf(fp_out,"<Ð´Óï¾ä>\n");
+    fprintf(fp_out, "<Ð´Óï¾ä>\n");
 }
+
 void case_statement()   //  £¼Çé¿öÓï¾ä£¾::=switch'('£¼±í´ïÊ½£¾')''{'£¼Çé¿ö±í£¾£¼È±Ê¡£¾'}'
 {
     int aim = 0;
     int sign = 0;
-    if(isReservedWord(0, "SWITCHTK"))
-    {
+    if (isReservedWord(0, "SWITCHTK")) {
         getsym();
-        if(!isReservedWord(0, "LPARENT")) {
+        if (!isReservedWord(0, "LPARENT")) {
             error_report();
-        }
-        else
-        {
+        } else {
             getsym();
             expression();   //  ±í´ïÊ½
             aim = temp_val;
-            if(now_type == 'i') {
+            if (now_type == 'i') {
                 switch_type = 1;
-            }
-            else if(now_type == 'c') {
+            } else if (now_type == 'c') {
                 switch_type = 2;
             }
-            if(!isReservedWord(0, "RPARENT")) {
+            if (!isReservedWord(0, "RPARENT")) {
                 error_l();  //  ´íÎól
-            }
-            else {
+            } else {
                 getsym();
             }
-            if(!isReservedWord(0, "LBRACE")) {
+            if (!isReservedWord(0, "LBRACE")) {
                 error_report();
-            }
-            else
-            {
+            } else {
                 getsym();
                 sign = situation_table(aim);    //  Çé¿ö±í
                 default_sentence(sign); //  È±Ê¡
-                if(!isReservedWord(0, "RBRACE")) {
+                if (!isReservedWord(0, "RBRACE")) {
                     error_report();
-                }
-                else {
+                } else {
                     getsym();
                 }
             }
         }
     }
-    fprintf(fp_out,"<Çé¿öÓï¾ä>\n");
+    fprintf(fp_out, "<Çé¿öÓï¾ä>\n");
 }
+
 void return_statement() //  £¼·µ»ØÓï¾ä£¾::=return['('£¼±í´ïÊ½£¾')']
 {
     int return_temp = 0;
-    if(isReservedWord(0, "RETURNTK"))
-    {
+    if (isReservedWord(0, "RETURNTK")) {
         getsym();
-        if(void_ret == 1 && def == 1)   //  ÎÞ·µ»ØÖµ
+        if (void_ret == 1 && def == 1)   //  ÎÞ·µ»ØÖµ
         {
-            if(!isReservedWord(0, "SEMICN")) {
+            if (!isReservedWord(0, "SEMICN")) {
                 error_g();  //  ´íÎóg
             }
-        }
-        else if(have_ret == 1 && def == 1)  //  ÓÐ·µ»ØÖµ
+        } else if (have_ret == 1 && def == 1)  //  ÓÐ·µ»ØÖµ
         {
-            if(isReservedWord(0, "SEMICN")) {
+            if (isReservedWord(0, "SEMICN")) {
                 error_h();  //  ´íÎóh - ÐÎÈçreturn;
             }
         }
-        if(isReservedWord(0, "LPARENT"))
-        {
+        if (isReservedWord(0, "LPARENT")) {
             getsym();
-            if(have_ret == 1 && isReservedWord(0, "RPARENT") && def == 1) {
+            if (have_ret == 1 && isReservedWord(0, "RPARENT") && def == 1) {
                 error_h();  //  ´íÎóh - ÐÎÈçreturn();
             }
             expression();   //  ±í´ïÊ½
-            if(run == 1) {
+            if (run == 1) {
                 return_temp = temp_val;
             }
-            if(have_ret == 1
-            && ((now_type == 'i' && func_tab[func_num].type != 5)
-            || (now_type == 'c' && func_tab[func_num].type != 6))
-            && def == 1) {
+            if (have_ret == 1
+                && ((now_type == 'i' && func_tab[func_num].type != 5)
+                    || (now_type == 'c' && func_tab[func_num].type != 6))
+                && def == 1) {
                 error_h();  //  ´íÎóh - returnÓï¾äÖÐ±í´ïÊ½ÀàÐÍÓë·µ»ØÖµÀàÐÍ²»Ò»ÖÂ
             }
-            if(!isReservedWord(0, "RPARENT")) {
+            if (!isReservedWord(0, "RPARENT")) {
                 error_l();  //  ´íÎól
-            }
-            else {
+            } else {
                 getsym();
             }
         }
     }
-    if(run == 1)
-    {
+    if (run == 1) {
         ret_value = return_temp;
         run = 0;
         ret_valid = 1;
     }
-    fprintf(fp_out,"<·µ»ØÓï¾ä>\n");
+    fprintf(fp_out, "<·µ»ØÓï¾ä>\n");
 }
+
 int situation_table(int aim)    //  £¼Çé¿ö±í£¾::=£¼Çé¿ö×ÓÓï¾ä£¾{£¼Çé¿ö×ÓÓï¾ä£¾}
 {
     int flag = 0;
     int sign = 0;
-    do
-    {
+    do {
         flag = case_sub_statement(aim); //  Çé¿ö×ÓÓï¾ä
-        if(flag == 1) {
+        if (flag == 1) {
             sign = 1;
         }
-    }   while(isReservedWord(0, "CASETK"));
-    fprintf(fp_out,"<Çé¿ö±í>\n");
+    } while (isReservedWord(0, "CASETK"));
+    fprintf(fp_out, "<Çé¿ö±í>\n");
     return sign;
 }
+
 int case_sub_statement(int aim) //  £¼Çé¿ö×ÓÓï¾ä£¾::=case£¼³£Á¿£¾£º£¼Óï¾ä£¾
 {
     int state = run;
     int sign = 0;
     int type;
-    if(isReservedWord(0, "CASETK"))
-    {
+    if (isReservedWord(0, "CASETK")) {
         getsym();
         constant(switch_type);  //  ³£Á¿
-        if(aim == temp_val) {
+        if (aim == temp_val) {
             sign = 1;
-        }        
-        if(!isReservedWord(0, "COLON")) {
+        }
+        if (!isReservedWord(0, "COLON")) {
             error_report();
-        }       
-        else
-        {
+        } else {
             getsym();
-            if(sign != 1) {
+            if (sign != 1) {
                 run = 0;
-            }            
+            }
             sentence(); //  Óï¾ä
-            if(state == 1 && ret_valid == 0) {
+            if (state == 1 && ret_valid == 0) {
                 run = 1;
-            }        
+            }
         }
     }
-    fprintf(fp_out,"<Çé¿ö×ÓÓï¾ä>\n");
+    fprintf(fp_out, "<Çé¿ö×ÓÓï¾ä>\n");
     return sign;
 }
+
 void default_sentence(int sign) //  £¼È±Ê¡£¾::=default:£¼Óï¾ä£¾
 {
     int state = run;
-    if(!isReservedWord(0, "DEFAULTTK")) {
+    if (!isReservedWord(0, "DEFAULTTK")) {
         error_p();
-    }
-    else
-    {
+    } else {
         getsym();
-        if(!isReservedWord(0, "COLON")) {
+        if (!isReservedWord(0, "COLON")) {
             error_report();
-        }        
-        else
-        {
+        } else {
             getsym();
-            if(sign == 1) {
+            if (sign == 1) {
                 run = 0;
-            }            
+            }
             sentence(); //  Óï¾ä
-            if(state == 1 && ret_valid == 0) {
+            if (state == 1 && ret_valid == 0) {
                 run = 1;
-            }        
+            }
         }
     }
-    fprintf(fp_out,"<È±Ê¡>\n");
+    fprintf(fp_out, "<È±Ê¡>\n");
 }
+
 void string()   //  £¼×Ö·û´®£¾::="£ûÊ®½øÖÆ±àÂëÎª32,33,35-126µÄASCII×Ö·û£ý"
 {
-    if(isReservedWord(0, "STRCON"))
-    {
+    if (isReservedWord(0, "STRCON")) {
         strcpy(temp_str, store[now].word);
         getsym();
     }
-    fprintf(fp_out,"<×Ö·û´®>\n");
+    fprintf(fp_out, "<×Ö·û´®>\n");
 }
+
 void value_parameter_table(int value[]) //  £¼Öµ²ÎÊý±í£¾::=£¼±í´ïÊ½£¾{,£¼±í´ïÊ½£¾}£ü£¼¿Õ£¾
 {
     int use_num = 0;
@@ -2192,15 +1922,14 @@ void value_parameter_table(int value[]) //  £¼Öµ²ÎÊý±í£¾::=£¼±í´ïÊ½£¾{,£¼±í´ïÊ½£
     int id_num = 0;
     int flag = 0;
     int val_num = 0;
-    if(!isReservedWord(0, "RPARENT") && !isReservedWord(0, "SEMICN"))   //£¼¿Õ£¾
+    if (!isReservedWord(0, "RPARENT") && !isReservedWord(0, "SEMICN"))   //£¼¿Õ£¾
     {
         expression();   //  ±í´ïÊ½
         value[val_num++] = temp_val;
         use_id[id_num] = now_type;
         id_num++;
         use_num++;
-        while(isReservedWord(0, "COMMA"))
-        {
+        while (isReservedWord(0, "COMMA")) {
             getsym();
             expression();   //  ±í´ïÊ½
             value[val_num++] = temp_val;
@@ -2209,23 +1938,24 @@ void value_parameter_table(int value[]) //  £¼Öµ²ÎÊý±í£¾::=£¼±í´ïÊ½£¾{,£¼±í´ïÊ½£
             use_num++;
         }
     }
-    if(func_label != -1 && use_num != func_tab[func_label].num)
-    {
+    if (func_label != -1 && use_num != func_tab[func_label].num) {
         error_d();  //  ´íÎód
         flag = 1;
     }
-    if(func_label != -1     
-    && strcmp(use_id, func_tab[func_label].id) != 0 
-    && flag == 0) {
+    if (func_label != -1
+        && strcmp(use_id, func_tab[func_label].id) != 0
+        && flag == 0) {
         error_e();  //  ´íÎóe
     }
-    fprintf(fp_out,"<Öµ²ÎÊý±í>\n");
+    fprintf(fp_out, "<Öµ²ÎÊý±í>\n");
 }
+
 void step() //  £¼²½³¤£¾::=£¼ÎÞ·ûºÅÕûÊý£¾
 {
     unsigned_integer();   //  ÎÞ·ûºÅÕûÊý
-    fprintf(fp_out,"<²½³¤>\n");
+    fprintf(fp_out, "<²½³¤>\n");
 }
+
 int condition() //  £¼Ìõ¼þ£¾::=£¼±í´ïÊ½£¾£¼¹ØÏµÔËËã·û£¾£¼±í´ïÊ½£¾
 {
     int left = 0, right = 0;
@@ -2233,37 +1963,30 @@ int condition() //  £¼Ìõ¼þ£¾::=£¼±í´ïÊ½£¾£¼¹ØÏµÔËËã·û£¾£¼±í´ïÊ½£¾
     int opr = 0;
     expression();   //  ±í´ïÊ½
     left = temp_val;
-    if(now_type != 'i') {
+    if (now_type != 'i') {
         error_f();  //  ´íÎóf
     }
-    if(!isReservedWord(0,"LSS") && !isReservedWord(0, "LEQ")
-    &&  !isReservedWord(0, "GRE") && !isReservedWord(0, "GEQ")
-    &&  !isReservedWord(0, "EQL") && !isReservedWord(0, "NEQ")) {
+    if (!isReservedWord(0, "LSS") && !isReservedWord(0, "LEQ")
+        && !isReservedWord(0, "GRE") && !isReservedWord(0, "GEQ")
+        && !isReservedWord(0, "EQL") && !isReservedWord(0, "NEQ")) {
         error_report();
-    }
-    else
-    {
+    } else {
         if (isReservedWord(0, "LSS"))    //  <
         {
             opr = 1;
-        }
-        else if (isReservedWord(0, "LEQ"))   //  <=
+        } else if (isReservedWord(0, "LEQ"))   //  <=
         {
             opr = 2;
-        }
-        else if (isReservedWord(0, "GRE"))   //  >
+        } else if (isReservedWord(0, "GRE"))   //  >
         {
             opr = 3;
-        }
-        else if (isReservedWord(0, "GEQ"))  //  >=
+        } else if (isReservedWord(0, "GEQ"))  //  >=
         {
             opr = 4;
-        }
-        else if (isReservedWord(0, "EQL"))  //  ==
+        } else if (isReservedWord(0, "EQL"))  //  ==
         {
             opr = 5;
-        }
-        else if (isReservedWord(0, "NEQ"))    // !=
+        } else if (isReservedWord(0, "NEQ"))    // !=
         {
             opr = 6;
         }
@@ -2273,122 +1996,105 @@ int condition() //  £¼Ìõ¼þ£¾::=£¼±í´ïÊ½£¾£¼¹ØÏµÔËËã·û£¾£¼±í´ïÊ½£¾
         if (now_type != 'i') {
             error_f();  //  ´íÎóf
         }
-        if (opr == 1)
-        {
+        if (opr == 1) {
             if (left < right) {
                 result = 1;
             }
-        }
-        else if (opr == 2)
-        {
+        } else if (opr == 2) {
             if (left <= right) {
                 result = 1;
             }
-        }
-        else if (opr == 3)
-        {
+        } else if (opr == 3) {
             if (left > right) {
                 result = 1;
             }
-        }
-        else if (opr == 4)
-        {
+        } else if (opr == 4) {
             if (left >= right) {
                 result = 1;
             }
-        }
-        else if (opr == 5)
-        {
+        } else if (opr == 5) {
             if (left == right) {
                 result = 1;
             }
-        }
-        else if (opr == 6)
-        {
+        } else if (opr == 6) {
             if (left != right) {
                 result = 1;
             }
         }
     }
-    fprintf(fp_out,"<Ìõ¼þ>\n");
+    fprintf(fp_out, "<Ìõ¼þ>\n");
     return result;
 }
+
 void expression()   //  £¼±í´ïÊ½£¾::=£Û£«£ü£­£Ý£¼Ïî£¾{£¼¼Ó·¨ÔËËã·û£¾£¼Ïî£¾}
 {
     int temp = 0;
     int minu_flag = 0;
     int opr = 0;
-    if(isReservedWord(0, "PLUS")) {
+    if (isReservedWord(0, "PLUS")) {
         getsym();
-    }
-    else if(isReservedWord(0, "MINU"))
-    {
+    } else if (isReservedWord(0, "MINU")) {
         minu_flag = 1;
         getsym();
     }
     term(); //  Ïî
-    if(minu_flag == 1) {
+    if (minu_flag == 1) {
         temp_val = -temp_val;
     }
-    while(isReservedWord(0, "PLUS") || isReservedWord(0, "MINU"))
-    {
-        if(isReservedWord(0, "PLUS")) {
+    while (isReservedWord(0, "PLUS") || isReservedWord(0, "MINU")) {
+        if (isReservedWord(0, "PLUS")) {
             opr = 1;
-        }
-        else {
+        } else {
             opr = 2;
         }
         getsym();
         temp = temp_val;
         term(); //  Ïî
-        if(opr == 1)    //  +
+        if (opr == 1)    //  +
         {
             temp_val = temp + temp_val;
-        }
-        else if(opr == 2)   //  -
+        } else if (opr == 2)   //  -
         {
             temp_val = temp - temp_val;
         }
         now_type = 'i';
     }
-    fprintf(fp_out,"<±í´ïÊ½>\n");
+    fprintf(fp_out, "<±í´ïÊ½>\n");
 }
+
 void term() //  £¼Ïî£¾::=£¼Òò×Ó£¾{£¼³Ë·¨ÔËËã·û£¾£¼Òò×Ó£¾}
 {
     int temp = 0;
     int opr = 0;
     factor();   //  Òò×Ó
-    while(isReservedWord(0, "MULT") || isReservedWord(0, "DIV"))
-    {
-        if(isReservedWord(0, "MULT")) {
+    while (isReservedWord(0, "MULT") || isReservedWord(0, "DIV")) {
+        if (isReservedWord(0, "MULT")) {
             opr = 1;
-        }
-        else {
+        } else {
             opr = 2;
         }
         getsym();
         temp = temp_val;
         factor();   //  Òò×Ó
-        if(run == 1)
-        {
-            if(opr == 1)    //  *
+        if (run == 1) {
+            if (opr == 1)    //  *
             {
                 temp_val = temp * temp_val;
-            }
-            else if(opr == 2)   // /
+            } else if (opr == 2)   // /
             {
                 temp_val = temp / temp_val;
             }
         }
         now_type = 'i';
     }
-    fprintf(fp_out,"<Ïî>\n");
+    fprintf(fp_out, "<Ïî>\n");
 }
+
 void factor()   //  £¼Òò×Ó£¾::=£¼±êÊ¶·û£¾
-                // £ü£¼±êÊ¶·û£¾'['£¼±í´ïÊ½£¾']'
-                // |£¼±êÊ¶·û£¾'['£¼±í´ïÊ½£¾']''['£¼±í´ïÊ½£¾']'
-                // |'('£¼±í´ïÊ½£¾')'
-                // £ü£¼ÕûÊý£¾|£¼×Ö·û£¾£ü£¼ÓÐ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä£¾
+// £ü£¼±êÊ¶·û£¾'['£¼±í´ïÊ½£¾']'
+// |£¼±êÊ¶·û£¾'['£¼±í´ïÊ½£¾']''['£¼±í´ïÊ½£¾']'
+// |'('£¼±í´ïÊ½£¾')'
+// £ü£¼ÕûÊý£¾|£¼×Ö·û£¾£ü£¼ÓÐ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä£¾
 {
     int *index;
     int i = 0, j = 0;
@@ -2398,197 +2104,164 @@ void factor()   //  £¼Òò×Ó£¾::=£¼±êÊ¶·û£¾
     char temp_type = ' ';
     int flag = 0;  //   ÊÇ·ñÕÒµ½ÏàÍ¬º¯ÊýÃûµÄ±êÖ¾
     char use_name[MAX] = {};    //  º¯ÊýÃûÐ¡Ð´ÐÎÊ½
-    if(isReservedWord(0, "IDENFR") && !isReservedWord(1, "LPARENT"))
-    {
+    if (isReservedWord(0, "IDENFR") && !isReservedWord(1, "LPARENT")) {
         error_c(2); //  ´íÎóc·ÖÎö
         temp_type = search_nametab();   //  »ñÈ¡±êÊ¶·ûÀàÐÍ
         index = get_index(store[now].word); //  »ñÈ¡±êÊ¶·û±í¶ÔÓ¦±äÁ¿ÏÂ±ê¼°±íºÅ
-        if(index[1] == 1)   //  ÔÚ¾Ö²¿±íÖÐ
+        if (index[1] == 1)   //  ÔÚ¾Ö²¿±íÖÐ
         {
             temp_val = local_tab[index[0]].value[0];
-        }
-        else if(index[1] == 2)  //  ÔÚÈ«¾Ö±íÖÐ
+        } else if (index[1] == 2)  //  ÔÚÈ«¾Ö±íÖÐ
         {
             temp_val = global_tab[index[0]].value[0];
         }
         getsym();
-        if(isReservedWord(0, "LBRACK"))
-        {
+        if (isReservedWord(0, "LBRACK")) {
             getsym();
             temp_ind = index[0];
             temp_tab = index[1];
             expression();   //  ±í´ïÊ½
             i = temp_val;
-            if(temp_tab == 1)   //  ÔÚ¾Ö²¿±íÖÐ
+            if (temp_tab == 1)   //  ÔÚ¾Ö²¿±íÖÐ
             {
                 temp_val = local_tab[temp_ind].value[i];
-            }
-            else if(temp_tab == 2)  //  ÔÚÈ«¾Ö±íÖÐ
+            } else if (temp_tab == 2)  //  ÔÚÈ«¾Ö±íÖÐ
             {
                 temp_val = global_tab[temp_ind].value[i];
             }
-            if(now_type != 'i') {
+            if (now_type != 'i') {
                 error_i();  //  ´íÎói
             }
             //now_type = 'i';
-            if(!isReservedWord(0, "RBRACK")) {
+            if (!isReservedWord(0, "RBRACK")) {
                 error_m();  //  ´íÎóm
-            }
-            else {
+            } else {
                 getsym();
             }
-            if(isReservedWord(0, "LBRACK"))
-            {
+            if (isReservedWord(0, "LBRACK")) {
                 getsym();
                 expression();   //  ±í´ïÊ½
                 j = temp_val;
-                if(temp_tab == 1)   //  ÔÚ¾Ö²¿±íÖÐ
+                if (temp_tab == 1)   //  ÔÚ¾Ö²¿±íÖÐ
                 {
                     temp_val = local_tab[temp_ind].value[i * local_tab[temp_ind].j + j];
-                }
-                else if(temp_tab == 2)  //  ÔÚÈ«¾Ö±íÖÐ
+                } else if (temp_tab == 2)  //  ÔÚÈ«¾Ö±íÖÐ
                 {
                     temp_val = global_tab[temp_ind].value[i * global_tab[temp_ind].j + j];
                 }
-                if(now_type != 'i') {
+                if (now_type != 'i') {
                     error_i();  //  ´íÎói
                 }
                 //now_type = 'i';
-                if(!isReservedWord(0, "RBRACK")) {
+                if (!isReservedWord(0, "RBRACK")) {
                     error_m();  //  ´íÎóm
-                }
-                else {
+                } else {
                     getsym();
                 }
             }
         }
         now_type = temp_type;
-    }
-    else if(isReservedWord(0, "LPARENT"))
-    {
+    } else if (isReservedWord(0, "LPARENT")) {
         getsym();
         expression();   //  ±í´ïÊ½
-        if(!isReservedWord(0, "RPARENT")) {
+        if (!isReservedWord(0, "RPARENT")) {
             error_l();  //  ´íÎól
-        }
-        else {
+        } else {
             getsym();
         }
         now_type = 'i';
-    }
-    else if(isReservedWord(0, "PLUS") || isReservedWord(0, "MINU") || isReservedWord(0, "INTCON"))
-    {
+    } else if (isReservedWord(0, "PLUS") || isReservedWord(0, "MINU") || isReservedWord(0, "INTCON")) {
         integer();  //  ÕûÊý
         now_type = 'i';
-    }
-    else if(isReservedWord(0, "CHARCON"))
-    {
+    } else if (isReservedWord(0, "CHARCON")) {
         now_type = 'c';
         temp_val = store[now].word[0];
         getsym();
-    }
-    else if(isReservedWord(0, "IDENFR") && isReservedWord(1, "LPARENT"))
-    {
-        for(i = 0; i < strlen(store[now].word); i++) {
+    } else if (isReservedWord(0, "IDENFR") && isReservedWord(1, "LPARENT")) {
+        for (i = 0; i < strlen(store[now].word); i++) {
             use_name[i] = tolower(store[now].word[i]);
         }
-        for(i = 0; i < func_num; i++)
-        {
-            if(strcmp(use_name, func_tab[i].name) == 0)
-            {
+        for (i = 0; i < func_num; i++) {
+            if (strcmp(use_name, func_tab[i].name) == 0) {
                 func_label = i;
                 flag = 1;
                 break;
             }
         }
-        if(flag == 0) {
+        if (flag == 0) {
             func_label = -1;
         }
-        if(func_label != -1)
-        {
+        if (func_label != -1) {
             temp_label = func_label;
             function_call_statement_with_return_value();    //  ÓÐ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä
             func_label = temp_label;
-        }
-        else {
+        } else {
             function_call_statement_with_return_value();    //  ÓÐ·µ»ØÖµº¯Êýµ÷ÓÃÓï¾ä
         }
-        if(func_tab[func_label].type == 5) {
+        if (func_tab[func_label].type == 5) {
             now_type = 'i';
-        }
-        else if(func_tab[func_label].type == 6) {
+        } else if (func_tab[func_label].type == 6) {
             now_type = 'c';
         }
         temp_val = ret_value;
     }
-    fprintf(fp_out,"<Òò×Ó>\n");
+    fprintf(fp_out, "<Òò×Ó>\n");
 }
+
 void parameter_table(int value[])   //  <²ÎÊý±í>::=<ÀàÐÍ±êÊ¶·û><±êÊ¶·û>{,<ÀàÐÍ±êÊ¶·û><±êÊ¶·û>}
-                                    // |<¿Õ>
+// |<¿Õ>
 {
     int val_num = 0;
     int type;
     int id_num = 0;
-    if(isReservedWord(0, "INTTK") || isReservedWord(0, "CHARTK"))
-    {
-        if(isReservedWord(0, "INTTK")) {
+    if (isReservedWord(0, "INTTK") || isReservedWord(0, "CHARTK")) {
+        if (isReservedWord(0, "INTTK")) {
             type = 1;
-        }
-        else {
+        } else {
             type = 2;
         }
         getsym();
-        if(!isReservedWord(0, "IDENFR")) {
+        if (!isReservedWord(0, "IDENFR")) {
             error_report();
-        }
-        else
-        {
-            if(type == 1) {
+        } else {
+            if (type == 1) {
                 func_tab[func_num].id[id_num] = 'i';
-            }
-            else if(type == 2) {
+            } else if (type == 2) {
                 func_tab[func_num].id[id_num] = 'c';
             }
             func_tab[func_num].num++;
             id_num++;
             error_b(type);  //  ´íÎób·ÖÎö
             local_tab[lt_num].func = 1;
-            if(run == 1 && ret_valid == 0) {
+            if (run == 1 && ret_valid == 0) {
                 local_tab[lt_num].value[0] = value[val_num++];
             }
             lt_num++;
             getsym();
-            while(isReservedWord(0, "COMMA"))
-            {
+            while (isReservedWord(0, "COMMA")) {
                 getsym();
-                if((!isReservedWord(0, "INTTK") && !isReservedWord(0, "CHARTK"))) {
+                if ((!isReservedWord(0, "INTTK") && !isReservedWord(0, "CHARTK"))) {
                     error_report();
-                }
-                else
-                {
-                    if(isReservedWord(0, "INTTK")) {
+                } else {
+                    if (isReservedWord(0, "INTTK")) {
                         type = 1;
-                    }
-                    else {
+                    } else {
                         type = 2;
                     }
                     getsym();
-                    if(!isReservedWord(0, "IDENFR")) {
+                    if (!isReservedWord(0, "IDENFR")) {
                         error_report();
-                    }
-                    else
-                    {
-                        if(type == 1) {
+                    } else {
+                        if (type == 1) {
                             func_tab[func_num].id[id_num] = 'i';
-                        }
-                        else if(type == 2) {
+                        } else if (type == 2) {
                             func_tab[func_num].id[id_num] = 'c';
                         }
                         func_tab[func_num].num++;
                         id_num++;
                         error_b(type);  //  ´íÎób·ÖÎö
                         local_tab[lt_num].func = 1;
-                        if(run == 1 && ret_valid == 0) {
+                        if (run == 1 && ret_valid == 0) {
                             local_tab[lt_num].value[0] = value[val_num++];
                         }
                         lt_num++;
@@ -2597,31 +2270,27 @@ void parameter_table(int value[])   //  <²ÎÊý±í>::=<ÀàÐÍ±êÊ¶·û><±êÊ¶·û>{,<ÀàÐÍ±ê
                 }
             }
         }
-    }
-    else if(strcmp(store[now].type,"RPARENT") == 0);    //  <¿Õ>
-    fprintf(fp_out,"<²ÎÊý±í>\n");
+    } else if (strcmp(store[now].type, "RPARENT") == 0);    //  <¿Õ>
+    fprintf(fp_out, "<²ÎÊý±í>\n");
 }
+
 void declaration_head()//<ÉùÃ÷Í·²¿>::=int£¼±êÊ¶·û>|char£¼±êÊ¶·û>
 {
     int type;
     int i = 0;
     char lower[MAX] = {};
-    if(isReservedWord(0, "INTTK") || isReservedWord(0, "CHARTK"))
-    {
-        if(isReservedWord(0, "INTTK")) {
+    if (isReservedWord(0, "INTTK") || isReservedWord(0, "CHARTK")) {
+        if (isReservedWord(0, "INTTK")) {
             type = 5;
-        }
-        else {
+        } else {
             type = 6;
         }
         func_tab[func_num].type = type; //  ´¢´æº¯Êý·µ»ØÖµÀàÐÍ
         getsym();
-        if(!isReservedWord(0, "IDENFR")) {
+        if (!isReservedWord(0, "IDENFR")) {
             error_report();
-        }
-        else
-        {
-            for(i = 0; i < strlen(store[now].word); i++) {
+        } else {
+            for (i = 0; i < strlen(store[now].word); i++) {
                 lower[i] = tolower(store[now].word[i]);
             }
             strcpy(func_tab[func_num].name, lower); //  ´¢´æº¯ÊýÃû
@@ -2632,371 +2301,297 @@ void declaration_head()//<ÉùÃ÷Í·²¿>::=int£¼±êÊ¶·û>|char£¼±êÊ¶·û>
             getsym();
         }
     }
-    fprintf(fp_out,"<ÉùÃ÷Í·²¿>\n");
+    fprintf(fp_out, "<ÉùÃ÷Í·²¿>\n");
 }
+
 void variable_description() //  <±äÁ¿ËµÃ÷>::=<±äÁ¿¶¨Òå>;{<±äÁ¿¶¨Òå>;}
 {
-    do
-    {
+    do {
         variable_definition();  //  ±äÁ¿¶¨Òå
-        if(!isReservedWord(0, "SEMICN")) {
+        if (!isReservedWord(0, "SEMICN")) {
             error_k();//´íÎók
-        }
-        else {
+        } else {
             getsym();
         }
-    }   while((isReservedWord(0, "INTTK") || isReservedWord(0, "CHARTK")) && !isReservedWord(2, "LPARENT"));
-    fprintf(fp_out,"<±äÁ¿ËµÃ÷>\n");
+    } while ((isReservedWord(0, "INTTK") || isReservedWord(0, "CHARTK")) && !isReservedWord(2, "LPARENT"));
+    fprintf(fp_out, "<±äÁ¿ËµÃ÷>\n");
 }
+
 void variable_definition()//<±äÁ¿¶¨Òå>::=<±äÁ¿¶¨ÒåÎÞ³õÊ¼»¯>|<±äÁ¿¶¨Òå¼°³õÊ¼»¯>
 {
-    if(isReservedWord(2, "ASSIGN") ||
-       (isReservedWord(2, "LBRACK") && isReservedWord(5, "ASSIGN")) ||
-       (isReservedWord(2, "LBRACK") && isReservedWord(4, "ASSIGN")) ||
-       (isReservedWord(2, "LBRACK") && isReservedWord(7, "ASSIGN")) ||
-       (isReservedWord(2, "LBRACK") && isReservedWord(5, "LBRACK") && isReservedWord(8, "ASSIGN")))
-    {
+    if (isReservedWord(2, "ASSIGN") ||
+        (isReservedWord(2, "LBRACK") && isReservedWord(5, "ASSIGN")) ||
+        (isReservedWord(2, "LBRACK") && isReservedWord(4, "ASSIGN")) ||
+        (isReservedWord(2, "LBRACK") && isReservedWord(7, "ASSIGN")) ||
+        (isReservedWord(2, "LBRACK") && isReservedWord(5, "LBRACK") && isReservedWord(8, "ASSIGN"))) {
         variable_definition_and_initialization();   //  ±äÁ¿¶¨Òå¼°³õÊ¼»¯
-    }
-    else
-    {
+    } else {
         variable_definition_has_no_initialization();    //  ±äÁ¿¶¨ÒåÎÞ³õÊ¼»¯
     }
-    fprintf(fp_out,"<±äÁ¿¶¨Òå>\n");
+    fprintf(fp_out, "<±äÁ¿¶¨Òå>\n");
 }
+
 void variable_definition_has_no_initialization()//<±äÁ¿¶¨ÒåÎÞ³õÊ¼»¯>::=<ÀàÐÍ±êÊ¶·û><±êÊ¶·û>{'['<ÎÞ·ûºÅÕûÊý>']'}02{,<±êÊ¶·û>{'['<ÎÞ·ûºÅÕûÊý>']'}02}
 {
     int type;
-    if(!isReservedWord(0, "INTTK") && !isReservedWord(0, "CHARTK")) {
+    if (!isReservedWord(0, "INTTK") && !isReservedWord(0, "CHARTK")) {
         error_report();
-    }
-    else
-    {
-        if(isReservedWord(0, "INTTK")) {
+    } else {
+        if (isReservedWord(0, "INTTK")) {
             type = 1;
-        }
-        else {
+        } else {
             type = 2;
         }
         getsym();
-        if(!isReservedWord(0, "IDENFR")) {
+        if (!isReservedWord(0, "IDENFR")) {
             error_report();
-        }
-        else
-        {
+        } else {
             error_b(type);  //  ´íÎób·ÖÎö
             getsym();
-            if(isReservedWord(0, "LBRACK"))
-            {
+            if (isReservedWord(0, "LBRACK")) {
                 getsym();
                 unsigned_integer(); //  ÎÞ·ûºÅÕûÊý
-                if(global_flag == 1)
-                {
+                if (global_flag == 1) {
                     global_tab[gt_num].i = temp_val;
                     global_tab[gt_num].dim++;
-                }
-                else if(global_flag == 0)
-                {
+                } else if (global_flag == 0) {
                     local_tab[lt_num].i = temp_val;
                     local_tab[lt_num].dim++;
                 }
-                if(!isReservedWord(0, "RBRACK")) {
+                if (!isReservedWord(0, "RBRACK")) {
                     error_m();  //  ´íÎóm
-                }
-                else {
+                } else {
                     getsym();
                 }
-                if(isReservedWord(0, "LBRACK"))
-                {
+                if (isReservedWord(0, "LBRACK")) {
                     getsym();
                     unsigned_integer(); //  ÎÞ·ûºÅÕûÊý
-                    if(global_flag == 1)
-                    {
+                    if (global_flag == 1) {
                         global_tab[gt_num].j = temp_val;
                         global_tab[gt_num].dim++;
-                    }
-                    else if(global_flag == 0)
-                    {
+                    } else if (global_flag == 0) {
                         local_tab[lt_num].j = temp_val;
                         local_tab[lt_num].dim++;
                     }
-                    if(!isReservedWord(0, "RBRACK")) {
+                    if (!isReservedWord(0, "RBRACK")) {
                         error_m();  //  ´íÎóm
-                    }
-                    else {
+                    } else {
                         getsym();
                     }
                 }
             }
         }
-        if(global_flag == 1) {
+        if (global_flag == 1) {
             gt_num++;
-        }
-        else if(global_flag == 0) {
+        } else if (global_flag == 0) {
             lt_num++;
         }
     }
-    while(isReservedWord(0, "COMMA"))
-    {
+    while (isReservedWord(0, "COMMA")) {
         getsym();
-        if(!isReservedWord(0, "IDENFR")) {
+        if (!isReservedWord(0, "IDENFR")) {
             error_report();
-        }
-        else
-        {
+        } else {
             error_b(type);  //  ´íÎób·ÖÎö
             getsym();
-            if(isReservedWord(0, "LBRACK"))
-            {
+            if (isReservedWord(0, "LBRACK")) {
                 getsym();
                 unsigned_integer(); //  ÎÞ·ûºÅÕûÊý
-                if(global_flag == 1)
-                {
+                if (global_flag == 1) {
                     global_tab[gt_num].i = temp_val;
                     global_tab[gt_num].dim++;
-                }
-                else if(global_flag == 0)
-                {
+                } else if (global_flag == 0) {
                     local_tab[lt_num].i = temp_val;
                     local_tab[lt_num].dim++;
                 }
-                if(!isReservedWord(0, "RBRACK")) {
+                if (!isReservedWord(0, "RBRACK")) {
                     error_m();  //  ´íÎóm
-                }
-                else {
+                } else {
                     getsym();
                 }
-                if(isReservedWord(0, "LBRACK"))
-                {
+                if (isReservedWord(0, "LBRACK")) {
                     getsym();
                     unsigned_integer(); //  ÎÞ·ûºÅÕûÊý
-                    if(global_flag == 1)
-                    {
+                    if (global_flag == 1) {
                         global_tab[gt_num].j = temp_val;
                         global_tab[gt_num].dim++;
-                    }
-                    else if(global_flag == 0)
-                    {
+                    } else if (global_flag == 0) {
                         local_tab[lt_num].j = temp_val;
                         local_tab[lt_num].dim++;
                     }
-                    if(!isReservedWord(0, "RBRACK")) {
+                    if (!isReservedWord(0, "RBRACK")) {
                         error_m();  //  ´íÎóm
-                    }
-                    else {
+                    } else {
                         getsym();
                     }
                 }
             }
-            if(global_flag == 1) {
+            if (global_flag == 1) {
                 gt_num++;
-            }
-            else if(global_flag == 0) {
+            } else if (global_flag == 0) {
                 lt_num++;
             }
         }
     }
-    fprintf(fp_out,"<±äÁ¿¶¨ÒåÎÞ³õÊ¼»¯>\n");
+    fprintf(fp_out, "<±äÁ¿¶¨ÒåÎÞ³õÊ¼»¯>\n");
 }
-void variable_definition_and_initialization()//<±äÁ¿¶¨Òå¼°³õÊ¼»¯>::=<ÀàÐÍ±êÊ¶·û><±êÊ¶·û>=<³£Á¿>|<ÀàÐÍ±êÊ¶·û><±êÊ¶·û>'['<ÎÞ·ûºÅÕûÊý>']'='{'<³£Á¿>{,<³£Á¿>}'}'|<ÀàÐÍ±êÊ¶·û><±êÊ¶·û>'['<ÎÞ·ûºÅÕûÊý>']''['<ÎÞ·ûºÅÕûÊý>']'='{''{'<³£Á¿>{,<³£Á¿>}'}'{,'{'<³£Á¿>{,<³£Á¿>}'}'}'}'
+
+void
+variable_definition_and_initialization()//<±äÁ¿¶¨Òå¼°³õÊ¼»¯>::=<ÀàÐÍ±êÊ¶·û><±êÊ¶·û>=<³£Á¿>|<ÀàÐÍ±êÊ¶·û><±êÊ¶·û>'['<ÎÞ·ûºÅÕûÊý>']'='{'<³£Á¿>{,<³£Á¿>}'}'|<ÀàÐÍ±êÊ¶·û><±êÊ¶·û>'['<ÎÞ·ûºÅÕûÊý>']''['<ÎÞ·ûºÅÕûÊý>']'='{''{'<³£Á¿>{,<³£Á¿>}'}'{,'{'<³£Á¿>{,<³£Á¿>}'}'}'}'
 {
     int type;
-    int fir_def=0, sec_def=0;
-    int fir_use=0, sec_use=0;
-    if(!isReservedWord(0, "INTTK") && !isReservedWord(0, "CHARTK")) {
+    int fir_def = 0, sec_def = 0;
+    int fir_use = 0, sec_use = 0;
+    if (!isReservedWord(0, "INTTK") && !isReservedWord(0, "CHARTK")) {
         error_report();
-    }
-    else
-    {
-        if(isReservedWord(0, "INTTK")) {
+    } else {
+        if (isReservedWord(0, "INTTK")) {
             type = 1;
-        }
-        else {
+        } else {
             type = 2;
         }
         getsym();
-        if(!isReservedWord(0, "IDENFR")) {
+        if (!isReservedWord(0, "IDENFR")) {
             error_report();
-        }
-        else
-        {
+        } else {
             error_b(type);  //  ´íÎób·ÖÎö
             getsym();
-            if(isReservedWord(0, "ASSIGN"))
-            {
+            if (isReservedWord(0, "ASSIGN")) {
                 getsym();
                 constant(type); //  ³£Á¿
-                if(global_flag == 1) {
+                if (global_flag == 1) {
                     global_tab[gt_num].value[0] = temp_val;
-                }
-                else if(global_flag == 0) {
+                } else if (global_flag == 0) {
                     local_tab[lt_num].value[0] = temp_val;
                 }
-            }
-            else if(isReservedWord(0, "LBRACK"))
-            {
+            } else if (isReservedWord(0, "LBRACK")) {
                 getsym();
                 fir_def = atoi(store[now].word);    //  ´æ´¢µÚÒ»¸öÊý×éÏÂ±ê
                 unsigned_integer(); //  ÎÞ·ûºÅÕûÊý
-                if(global_flag == 1)
-                {
+                if (global_flag == 1) {
                     global_tab[gt_num].i = temp_val;
                     global_tab[gt_num].dim++;
-                }
-                else if(global_flag == 0)
-                {
+                } else if (global_flag == 0) {
                     local_tab[lt_num].i = temp_val;
                     local_tab[lt_num].dim++;
                 }
-                if(!isReservedWord(0, "RBRACK")) {
+                if (!isReservedWord(0, "RBRACK")) {
                     error_m();  //  ´íÎóm
-                }
-                else {
+                } else {
                     getsym();
                 }
-                if(isReservedWord(0, "ASSIGN"))
-                {
+                if (isReservedWord(0, "ASSIGN")) {
                     getsym();
-                    if(!isReservedWord(0, "LBRACE")) {
+                    if (!isReservedWord(0, "LBRACE")) {
                         error_report();
-                    }
-                    else
-                    {
+                    } else {
                         getsym();
                         constant(type); //  ³£Á¿
-                        if(global_flag == 1) {
+                        if (global_flag == 1) {
                             global_tab[gt_num].value[fir_use] = temp_val;
-                        }
-                        else if(global_flag == 0) {
+                        } else if (global_flag == 0) {
                             local_tab[lt_num].value[fir_use] = temp_val;
                         }
                         fir_use++;
-                        while(isReservedWord(0, "COMMA"))
-                        {
+                        while (isReservedWord(0, "COMMA")) {
                             getsym();
                             constant(type); //  ³£Á¿
-                            if(global_flag == 1) {
+                            if (global_flag == 1) {
                                 global_tab[gt_num].value[fir_use] = temp_val;
-                            }
-                            else if(global_flag == 0) {
+                            } else if (global_flag == 0) {
                                 local_tab[lt_num].value[fir_use] = temp_val;
                             }
                             fir_use++;
                         }
-                        if(!isReservedWord(0, "RBRACE")) {
+                        if (!isReservedWord(0, "RBRACE")) {
                             error_report();
-                        }
-                        else {
+                        } else {
                             getsym();
                         }
                     }
-                }
-                else if(isReservedWord(0, "LBRACK"))
-                {
+                } else if (isReservedWord(0, "LBRACK")) {
                     getsym();
                     sec_def = atoi(store[now].word);    //  ´æ´¢µÚ¶þ¸öÊý×éÏÂ±ê
                     unsigned_integer(); //  ÎÞ·ûºÅÕûÊý
-                    if(global_flag == 1)
-                    {
+                    if (global_flag == 1) {
                         global_tab[gt_num].j = temp_val;
                         global_tab[gt_num].dim++;
-                    }
-                    else if(global_flag == 0)
-                    {
+                    } else if (global_flag == 0) {
                         local_tab[lt_num].j = temp_val;
                         local_tab[lt_num].dim++;
                     }
-                    if(!isReservedWord(0, "RBRACK")) {
+                    if (!isReservedWord(0, "RBRACK")) {
                         error_m();  //  ´íÎóm
-                    }
-                    else {
+                    } else {
                         getsym();
                     }
-                    if(isReservedWord(0, "ASSIGN"))
-                    {
+                    if (isReservedWord(0, "ASSIGN")) {
                         getsym();
-                        if(!isReservedWord(0, "LBRACE")) {
+                        if (!isReservedWord(0, "LBRACE")) {
                             error_report();
-                        }
-                        else
-                        {
+                        } else {
                             getsym();
-                            if(!isReservedWord(0, "LBRACE")) {
+                            if (!isReservedWord(0, "LBRACE")) {
                                 error_report();
-                            }
-                            else
-                            {
+                            } else {
                                 getsym();
                                 constant(type); //  ³£Á¿
-                                if(global_flag == 1) {
+                                if (global_flag == 1) {
                                     global_tab[gt_num].value[global_tab[gt_num].j * fir_use + sec_use] = temp_val;
-                                }
-                                else if(global_flag == 0) {
+                                } else if (global_flag == 0) {
                                     local_tab[lt_num].value[local_tab[lt_num].j * fir_use + sec_use] = temp_val;
                                 }
                                 sec_use++;
-                                while(isReservedWord(0, "COMMA"))
-                                {
+                                while (isReservedWord(0, "COMMA")) {
                                     getsym();
                                     constant(type); //  ³£Á¿
-                                    if(global_flag == 1) {
+                                    if (global_flag == 1) {
                                         global_tab[gt_num].value[global_tab[gt_num].j * fir_use + sec_use] = temp_val;
-                                    }
-                                    else if(global_flag == 0) {
+                                    } else if (global_flag == 0) {
                                         local_tab[lt_num].value[local_tab[lt_num].j * fir_use + sec_use] = temp_val;
                                     }
                                     sec_use++;
                                 }
-                                if(!isReservedWord(0, "RBRACE")) {
+                                if (!isReservedWord(0, "RBRACE")) {
                                     error_report();
-                                }
-                                else
-                                {
-                                    if(sec_def != sec_use) {
+                                } else {
+                                    if (sec_def != sec_use) {
                                         error_n();  //  ´íÎón
                                     }
                                     sec_use = 0;
                                     fir_use++;
                                     getsym();
                                 }
-                                while(isReservedWord(0, "COMMA"))
-                                {
+                                while (isReservedWord(0, "COMMA")) {
                                     getsym();
-                                    if(!isReservedWord(0, "LBRACE")) {
+                                    if (!isReservedWord(0, "LBRACE")) {
                                         error_report();
-                                    }
-                                    else
-                                    {
+                                    } else {
                                         getsym();
                                         constant(type); //  ³£Á¿
-                                        if(global_flag == 1) {
+                                        if (global_flag == 1) {
                                             global_tab[gt_num].value[global_tab[gt_num].j * fir_use +
                                                                      sec_use] = temp_val;
-                                        }
-                                        else if(global_flag == 0) {
+                                        } else if (global_flag == 0) {
                                             local_tab[lt_num].value[local_tab[lt_num].j * fir_use + sec_use] = temp_val;
                                         }
                                         sec_use++;
-                                        while(isReservedWord(0, "COMMA"))
-                                        {
+                                        while (isReservedWord(0, "COMMA")) {
                                             getsym();
                                             constant(type); //  ³£Á¿
-                                            if(global_flag == 1) {
+                                            if (global_flag == 1) {
                                                 global_tab[gt_num].value[global_tab[gt_num].j * fir_use +
                                                                          sec_use] = temp_val;
-                                            }
-                                            else if(global_flag == 0) {
+                                            } else if (global_flag == 0) {
                                                 local_tab[lt_num].value[local_tab[lt_num].j * fir_use +
                                                                         sec_use] = temp_val;
                                             }
                                             sec_use++;
                                         }
-                                        if(!isReservedWord(0, "RBRACE")) {
+                                        if (!isReservedWord(0, "RBRACE")) {
                                             error_report();
-                                        }
-                                        else
-                                        {
-                                            if(sec_def != sec_use) {
+                                        } else {
+                                            if (sec_def != sec_use) {
                                                 error_n();  //  ´íÎón
                                             }
                                             sec_use = 0;
@@ -3005,10 +2600,9 @@ void variable_definition_and_initialization()//<±äÁ¿¶¨Òå¼°³õÊ¼»¯>::=<ÀàÐÍ±êÊ¶·û>
                                         }
                                     }
                                 }
-                                if(!isReservedWord(0, "RBRACE")) {
+                                if (!isReservedWord(0, "RBRACE")) {
                                     error_report();
-                                }
-                                else {
+                                } else {
                                     getsym();
                                 }
                             }
@@ -3016,97 +2610,77 @@ void variable_definition_and_initialization()//<±äÁ¿¶¨Òå¼°³õÊ¼»¯>::=<ÀàÐÍ±êÊ¶·û>
                     }
                 }
             }
-            if(global_flag == 1) {
+            if (global_flag == 1) {
                 gt_num++;
-            }
-            else if(global_flag == 0) {
+            } else if (global_flag == 0) {
                 lt_num++;
             }
         }
     }
-    if(fir_def != fir_use) {
+    if (fir_def != fir_use) {
         error_n();  //  ´íÎón
     }
-    fprintf(fp_out,"<±äÁ¿¶¨Òå¼°³õÊ¼»¯>\n");
+    fprintf(fp_out, "<±äÁ¿¶¨Òå¼°³õÊ¼»¯>\n");
 }
+
 void constant_description() //  <³£Á¿ËµÃ÷>::=const£¼³£Á¿¶¨Òå>;{const£¼³£Á¿¶¨Òå>;}
 {
-    do
-    {
-        if(!isReservedWord(0, "CONSTTK")) {
+    do {
+        if (!isReservedWord(0, "CONSTTK")) {
             error_report();
-        }
-        else
-        {
+        } else {
             getsym();
             constant_definition();  //  ³£Á¿¶¨Òå
-            if(!isReservedWord(0, "SEMICN")) {
+            if (!isReservedWord(0, "SEMICN")) {
                 error_k();  //  ´íÎók
-            }
-            else {
+            } else {
                 getsym();
             }
         }
-    }   while(isReservedWord(0, "CONSTTK"));
-    fprintf(fp_out,"<³£Á¿ËµÃ÷>\n");
+    } while (isReservedWord(0, "CONSTTK"));
+    fprintf(fp_out, "<³£Á¿ËµÃ÷>\n");
 }
+
 void constant_definition()  //  <³£Á¿¶¨Òå>::=int£¼±êÊ¶·û>£½<ÕûÊý>{,<±êÊ¶·û>£½<ÕûÊý>}
-                            // |char£¼±êÊ¶·û>£½<×Ö·û>{,<±êÊ¶·û>£½<×Ö·û>}
+// |char£¼±êÊ¶·û>£½<×Ö·û>{,<±êÊ¶·û>£½<×Ö·û>}
 {
-    if(!isReservedWord(0, "INTTK") && !isReservedWord(0, "CHARTK")) {
+    if (!isReservedWord(0, "INTTK") && !isReservedWord(0, "CHARTK")) {
         error_report();
-    }
-    else if(isReservedWord(0, "INTTK"))
-    {
+    } else if (isReservedWord(0, "INTTK")) {
         getsym();
-        if(!isReservedWord(0, "IDENFR")) {
+        if (!isReservedWord(0, "IDENFR")) {
             error_report();
-        }
-        else
-        {
+        } else {
             error_b(3); //  ´íÎób·ÖÎö const int
             getsym();
-            if(!isReservedWord(0, "ASSIGN")) {
+            if (!isReservedWord(0, "ASSIGN")) {
                 error_report();
-            }
-            else
-            {
+            } else {
                 getsym();
                 integer();  //  ÕûÊý
-                if(global_flag == 1)
-                {
+                if (global_flag == 1) {
                     global_tab[gt_num].value[0] = temp_val;
                     gt_num++;
-                }
-                else if(global_flag == 0)
-                {
+                } else if (global_flag == 0) {
                     local_tab[lt_num].value[0] = temp_val;
                     lt_num++;
                 }
-                while(isReservedWord(0, "COMMA"))
-                {
+                while (isReservedWord(0, "COMMA")) {
                     getsym();
-                    if(!isReservedWord(0, "IDENFR")) {
+                    if (!isReservedWord(0, "IDENFR")) {
                         error_report();
-                    }
-                    else
-                    {
+                    } else {
                         error_b(3); //  ´íÎób·ÖÎö const int
                         getsym();
-                        if(!isReservedWord(0, "ASSIGN")) {
+                        if (!isReservedWord(0, "ASSIGN")) {
                             error_report();
-                        }
-                        else
-                        {
+                        } else {
                             getsym();
                             integer();  //  ÕûÊý
-                            if(global_flag == 1)
-                            {
+                            if (global_flag == 1) {
                                 global_tab[gt_num].value[0] = temp_val;
                                 gt_num++;
-                            }
-                            else if(global_flag == 0)
-                            {
+                            } else if (global_flag == 0) {
                                 local_tab[lt_num].value[0] = temp_val;
                                 lt_num++;
                             }
@@ -3115,67 +2689,46 @@ void constant_definition()  //  <³£Á¿¶¨Òå>::=int£¼±êÊ¶·û>£½<ÕûÊý>{,<±êÊ¶·û>£½<Õû
                 }
             }
         }
-    }
-    else if(isReservedWord(0, "CHARTK"))
-    {
+    } else if (isReservedWord(0, "CHARTK")) {
         getsym();
-        if(!isReservedWord(0, "IDENFR")) {
+        if (!isReservedWord(0, "IDENFR")) {
             error_report();
-        }
-        else
-        {
+        } else {
             error_b(4); //  ´íÎób·ÖÎö const char
             getsym();
-            if(!isReservedWord(0, "ASSIGN")) {
+            if (!isReservedWord(0, "ASSIGN")) {
                 error_report();
-            }
-            else
-            {
+            } else {
                 getsym();
-                if(!isReservedWord(0, "CHARCON")) {
+                if (!isReservedWord(0, "CHARCON")) {
                     error_report();
-                }
-                else
-                {
-                    if(global_flag == 1)
-                    {
+                } else {
+                    if (global_flag == 1) {
                         global_tab[gt_num].value[0] = store[now].word[0];
                         gt_num++;
-                    }
-                    else if(global_flag == 0)
-                    {
+                    } else if (global_flag == 0) {
                         local_tab[lt_num].value[0] = store[now].word[0];
                         lt_num++;
                     }
                     getsym();
-                    while(isReservedWord(0, "COMMA"))
-                    {
+                    while (isReservedWord(0, "COMMA")) {
                         getsym();
-                        if(!isReservedWord(0, "IDENFR")) {
+                        if (!isReservedWord(0, "IDENFR")) {
                             error_report();
-                        }
-                        else
-                        {
+                        } else {
                             error_b(4); //  ´íÎób·ÖÎö const char
                             getsym();
-                            if(!isReservedWord(0, "ASSIGN")) {
+                            if (!isReservedWord(0, "ASSIGN")) {
                                 error_report();
-                            }
-                            else
-                            {
+                            } else {
                                 getsym();
-                                if(!isReservedWord(0, "CHARCON")) {
+                                if (!isReservedWord(0, "CHARCON")) {
                                     error_report();
-                                }
-                                else
-                                {
-                                    if(global_flag == 1)
-                                    {
+                                } else {
+                                    if (global_flag == 1) {
                                         global_tab[gt_num].value[0] = store[now].word[0];
                                         gt_num++;
-                                    }
-                                    else if(global_flag == 0)
-                                    {
+                                    } else if (global_flag == 0) {
                                         local_tab[lt_num].value[0] = store[now].word[0];
                                         lt_num++;
                                     }
@@ -3188,55 +2741,51 @@ void constant_definition()  //  <³£Á¿¶¨Òå>::=int£¼±êÊ¶·û>£½<ÕûÊý>{,<±êÊ¶·û>£½<Õû
             }
         }
     }
-    fprintf(fp_out,"<³£Á¿¶¨Òå>\n");
+    fprintf(fp_out, "<³£Á¿¶¨Òå>\n");
 }
+
 void integer()  //  <ÕûÊý>::=£Û£«£ü£­£Ý<ÎÞ·ûºÅÕûÊý>
 {
     int minu_flag = 0;
-    if(isReservedWord(0, "PLUS") || isReservedWord(0, "MINU"))
-    {
-        if(isReservedWord(0, "MINU")) {
+    if (isReservedWord(0, "PLUS") || isReservedWord(0, "MINU")) {
+        if (isReservedWord(0, "MINU")) {
             minu_flag = 1;
         }
         getsym();
         unsigned_integer(); //  ÎÞ·ûºÅÕûÊý
-        if(minu_flag == 1) {
+        if (minu_flag == 1) {
             temp_val = -temp_val;
         }
-    }
-    else {
+    } else {
         unsigned_integer(); //  ÎÞ·ûºÅÕûÊý
     }
-    fprintf(fp_out,"<ÕûÊý>\n");
+    fprintf(fp_out, "<ÕûÊý>\n");
 }
+
 void unsigned_integer() //  <ÎÞ·ûºÅÕûÊý>::=<Êý×Ö>£û<Êý×Ö>£ý
 {
-    if(isReservedWord(0, "INTCON"))
-    {
+    if (isReservedWord(0, "INTCON")) {
         temp_val = atoi(store[now].word);
         getsym();
     }
-    fprintf(fp_out,"<ÎÞ·ûºÅÕûÊý>\n");
+    fprintf(fp_out, "<ÎÞ·ûºÅÕûÊý>\n");
 }
+
 void constant(int type) //  <³£Á¿>::=<ÕûÊý>|<×Ö·û>
 {
-    if(isReservedWord(0, "PLUS") || isReservedWord(0, "MINU") || isReservedWord(0, "INTCON"))
-    {
+    if (isReservedWord(0, "PLUS") || isReservedWord(0, "MINU") || isReservedWord(0, "INTCON")) {
         integer();  //  <ÕûÊý>
-        if(type != 1) {
+        if (type != 1) {
             error_o();  //  ´íÎóo
         }
-    }
-    else if(!isReservedWord(0, "CHARCON")) {
+    } else if (!isReservedWord(0, "CHARCON")) {
         error_report();
-    }
-    else
-    {
-        if(type != 2) {
+    } else {
+        if (type != 2) {
             error_o();  //  ´íÎóo
         }
         temp_val = store[now].word[0];
         getsym();
     }
-    fprintf(fp_out,"<³£Á¿>\n");
+    fprintf(fp_out, "<³£Á¿>\n");
 }
