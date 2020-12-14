@@ -94,7 +94,90 @@ int isletter(char letter)   //  ÅÐ¶ÏÊÇ·ñÎª×Ö·û
         return 0;
     }
 }
+bool isPlus(char c) {
+    return (c == '+');
+}   // +
+bool isMinus(char c) {
+    return (c == '-');
+}   // -
+bool isStar(char c) {
+    return (c == '*');
+}   // *
+bool isDiv(char c) {
+    return (c == '/');
+}      // /
+bool isColon(char c) {
+    return (c == ':');
+}   // :
+bool isComma(char c) {
+    return (c == ',');
+}   // ,
+bool isSemicolon(char c) {
+    return (c == ';');
+}   // ;
+bool isEqual(char c) {
+    return (c == '=');
+}   // =
+bool isLParent(char c) {
+    return (c == '(');
+}   // (
+bool isRParent(char c) {
+    return (c == ')');
+}   // )
+bool isLBrack(char c) {
+    return (c == '[');
+}   // [
+bool isRBrack(char c) {
+    return (c == ']');
+}   // ]
+bool isLBrace(char c) {
+    return (c == '{');
+}   // {
+bool isRBrace(char c) {
+    return (c == '}');
+}   // }
+bool isLess(char c) {
+    return (c == '<');
+}   // <
+bool isGreater(char c) {
+    return (c == '>');
+}   // >
+bool isExclamation(char c) {
+    return (c == '!');
+}   // !
+bool isSpace(char c) {
+    return (c == ' ');
+}   // " "
+bool isTab(char c) {
+    return (c == '\t' || c == '\r');
+}   // \t \r
+bool isInvisibleSymbol(char c) {
+    return (c > 0 && c <= 32);
+}   // Lee Sin
+bool isEOF(char c) {
+    return (c == EOF);
+}   // EOF
+bool isNextline(char c) {
+    return (c == '\n');
+}   // \n
+bool isDigit(char c) {
+    return (isdigit(c));
+}   // 0-9
+bool isUnderscore(char c) {
+    return (c == '_');
+}   // _
+bool isSingleQuote(char c) {
+    return (c == '\'');
+}   // \'
+bool isDoubleQuote(char c) {
+    return (c == '\"');
+}   // \"
 
+void catToken(char *word, char *type, int line) {
+    strcpy(store[addr].word, word);
+    strcpy(store[addr].type, type);
+    store[addr].line = line;
+}
 void getsym()   //  È¡´Ê
 {
     fprintf(fp_out, "%s %s\n", store[now].type, store[now].word);
@@ -514,17 +597,13 @@ int main() {
                 for (j = 0; j < 15; j++) {
                     if (strcmp(lower, name[j]) == 0) {
                         flag = 1;
-                        strcpy(store[addr].word, temp);
-                        strcpy(store[addr].type, reserved_word[j]);
-                        store[addr].line = line;
+                        catToken(temp, reserved_word[j], line);
                         addr++;
                         break;
                     }
                 }
                 if (flag == 0) {
-                    strcpy(store[addr].word, temp);
-                    strcpy(store[addr].type, "IDENFR");
-                    store[addr].line = line;
+                    catToken(temp, "IDENFR", line);
                     addr++;
                 }
                 flag = 0;
@@ -540,14 +619,12 @@ int main() {
                     }
                 }
                 i--;
-                strcpy(store[addr].word, temp);
-                strcpy(store[addr].type, "INTCON");
-                store[addr].line = line;
+                catToken(temp, "INTCON", line);
                 addr++;
-            } else if (token == '\'') {
+            } else if (isSingleQuote(token)) {
                 i++;
                 token = buff[i];
-                while (token != '\'') {
+                while (!isSingleQuote(token)) {
                     if ((buff[i] < 48 || buff[i] > 57)
                         && (buff[i] < 65 || buff[i] > 90)
                         && (buff[i] < 97 || buff[i] > 122)
@@ -558,19 +635,19 @@ int main() {
                     temp[pin++] = buff[i++];
                     token = buff[i];
                 }
-                strcpy(store[addr].word, temp);
-                strcpy(store[addr].type, "CHARCON");
-                store[addr].line = line;
+                catToken(temp, "CHARCON", line);
                 if (flag == 1) {
                     error_a();
                 }
                 addr++;
                 flag = 0;
-            } else if (token == '\"') {
+            } else if (isDoubleQuote(token)) {
                 i++;
                 token = buff[i];
-                if (token == '\"') flag = 1;
-                while (token != '\"') {
+                if (isDoubleQuote(token)) {
+                    flag = 1;
+                }
+                while (!isDoubleQuote(token)) {
                     if ((buff[i] < 35 || buff[i] > 126)
                         && buff[i] != 33 && buff[i] != 32) {
                         flag = 1;
@@ -578,146 +655,105 @@ int main() {
                     temp[pin++] = buff[i++];
                     token = buff[i];
                 }
-                strcpy(store[addr].word, temp);
-                strcpy(store[addr].type, "STRCON");
-                store[addr].line = line;
+                catToken(temp, "STRCON", line);
                 if (flag == 1) {
                     error_a();
                 }
                 addr++;
                 flag = 0;
-            } else if (token == '+') {
-                strcpy(store[addr].word, "+");
-                strcpy(store[addr].type, "PLUS");
-                store[addr].line = line;
+            } else if (isPlus(token)) {
+                catToken("+", "PLUS", line);
                 addr++;
-            } else if (token == '-') {
-                strcpy(store[addr].word, "-");
-                strcpy(store[addr].type, "MINU");
-                store[addr].line = line;
+            } else if (isMinus(token)) {
+                catToken("-", "MINU", line);
                 addr++;
-            } else if (token == '*') {
-                strcpy(store[addr].word, "*");
-                strcpy(store[addr].type, "MULT");
-                store[addr].line = line;
+            } else if (isStar(token)) {
+                catToken("*", "MULT", line);
                 addr++;
-            } else if (token == '/') {
-                strcpy(store[addr].word, "/");
-                strcpy(store[addr].type, "DIV");
-                store[addr].line = line;
+            } else if (isDiv(token)) {
+                catToken("/", "DIV", line);
                 addr++;
-            } else if (token == ':') {
-                strcpy(store[addr].word, ":");
-                strcpy(store[addr].type, "COLON");
-                store[addr].line = line;
+            } else if (isColon(token)) {
+                catToken(":", "COLON", line);
                 addr++;
-            } else if (token == ';') {
-                strcpy(store[addr].word, ";");
-                strcpy(store[addr].type, "SEMICN");
-                store[addr].line = line;
+            } else if (isSemicolon(token)) {
+                catToken(";", "SEMICN", line);
                 addr++;
-            } else if (token == ',') {
-                strcpy(store[addr].word, ",");
-                strcpy(store[addr].type, "COMMA");
-                store[addr].line = line;
+            } else if (isComma(token)) {
+                catToken(",", "COMMA", line);
                 addr++;
-            } else if (token == '(') {
-                strcpy(store[addr].word, "(");
-                strcpy(store[addr].type, "LPARENT");
-                store[addr].line = line;
+            } else if (isLParent(token)) {
+                catToken("(", "LPARENT", line);
                 addr++;
-            } else if (token == ')') {
-                strcpy(store[addr].word, ")");
-                strcpy(store[addr].type, "RPARENT");
-                store[addr].line = line;
+            } else if (isRParent(token)) {
+                catToken(")", "RPARENT", line);
                 addr++;
-            } else if (token == '[') {
-                strcpy(store[addr].word, "[");
-                strcpy(store[addr].type, "LBRACK");
-                store[addr].line = line;
+            } else if (isLBrack(token)) {
+                catToken("[", "LBRACK", line);
                 addr++;
-            } else if (token == ']') {
-                strcpy(store[addr].word, "]");
-                strcpy(store[addr].type, "RBRACK");
-                store[addr].line = line;
+            } else if (isRBrack(token)) {
+                catToken("]", "RBRACK", line);
                 addr++;
-            } else if (token == '{') {
-                strcpy(store[addr].word, "{");
-                strcpy(store[addr].type, "LBRACE");
-                store[addr].line = line;
+            } else if (isLBrace(token)) {
+                catToken("{", "LBRACE", line);
                 addr++;
-            } else if (token == '}') {
-                strcpy(store[addr].word, "}");
-                strcpy(store[addr].type, "RBRACE");
-                store[addr].line = line;
+            } else if (isRBrace(token)) {
+                catToken("}", "RBRACE", line);
                 addr++;
-            } else if (token == '<') {
+            } else if (isLess(token)) {
                 temp[pin++] = token;
                 i++;
                 token = buff[i];
-                if (token == '=') {
+                if (isEqual(token)) {
                     temp[pin++] = token;
-                    strcpy(store[addr].word, temp);
-                    strcpy(store[addr].type, "LEQ");
-                    store[addr].line = line;
+                    catToken(temp, "LEQ", line);
                     addr++;
                 } else {
-                    strcpy(store[addr].word, temp);
-                    strcpy(store[addr].type, "LSS");
-                    store[addr].line = line;
+                    catToken(temp, "LSS", line);
                     addr++;
                     i--;
                 }
-            } else if (token == '>') {
+            } else if (isGreater(token)) {
                 temp[pin++] = token;
                 i++;
                 token = buff[i];
-                if (token == '=') {
+                if (isEqual(token)) {
                     temp[pin++] = token;
-                    strcpy(store[addr].word, temp);
-                    strcpy(store[addr].type, "GEQ");
-                    store[addr].line = line;
+                    catToken(temp, "GEQ", line);
                     addr++;
                 } else {
-                    strcpy(store[addr].word, temp);
-                    strcpy(store[addr].type, "GRE");
-                    store[addr].line = line;
+                    catToken(temp, "GRE", line);
                     addr++;
                     i--;
                 }
-            } else if (token == '=') {
+            } else if (isEqual(token)) {
                 temp[pin++] = token;
                 i++;
                 token = buff[i];
-                if (token == '=') {
+                if (isEqual(token)) {
                     temp[pin++] = token;
-                    strcpy(store[addr].word, temp);
-                    strcpy(store[addr].type, "EQL");
-                    store[addr].line = line;
+                    catToken(temp, "EQL", line);
                     addr++;
                 } else {
-                    strcpy(store[addr].word, temp);
-                    strcpy(store[addr].type, "ASSIGN");
-                    store[addr].line = line;
+                    catToken(temp, "ASSIGN", line);
                     addr++;
                     i--;
                 }
-            } else if (token == '!') {
+            } else if (isExclamation(token)) {
                 temp[pin++] = token;
                 i++;
                 token = buff[i];
-                if (token == '=') {
+                if (isEqual(token)) {
                     temp[pin++] = token;
-                    strcpy(store[addr].word, temp);
-                    strcpy(store[addr].type, "NEQ");
-                    store[addr].line = line;
+                    catToken(temp, "NEQ", line);
                     addr++;
                 } else {
                     printf("ERROR1:WRONG INPUT IN LINE %d\n", line);
                     i--;
                 }
-            } else
+            } else {
                 printf("ERROR2:WRONG INPUT IN LINE %d\n", line);
+            }
         }
         line++;
         memset(buff, 0, sizeof(buff));
